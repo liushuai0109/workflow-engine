@@ -28,23 +28,10 @@ class BPMNExplorer {
     setupEventListeners() {
         // File operations
         document.getElementById('open-file').addEventListener('click', () => this.openFile());
-        document.getElementById('open-file-welcome').addEventListener('click', () => this.openFile());
         document.getElementById('save-file').addEventListener('click', () => this.saveFile());
-        document.getElementById('file-input').addEventListener('change', (e) => this.handleFileSelect(e));
         
         // Create new diagram
         document.getElementById('create-new').addEventListener('click', () => this.createNewDiagram());
-        
-        // Toolbar buttons
-        document.getElementById('undo').addEventListener('click', () => this.undo());
-        document.getElementById('redo').addEventListener('click', () => this.redo());
-        document.getElementById('hand-tool').addEventListener('click', () => this.setTool('hand'));
-        document.getElementById('lasso-tool').addEventListener('click', () => this.setTool('lasso'));
-        document.getElementById('space-tool').addEventListener('click', () => this.setTool('space'));
-        document.getElementById('append-tool').addEventListener('click', () => this.setTool('append'));
-        document.getElementById('create-tool').addEventListener('click', () => this.setTool('create'));
-        
-        // Properties panel removed
     }
 
     initializeBPMN() {
