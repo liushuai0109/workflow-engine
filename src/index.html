@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>BPMN Explorer - Create and Edit BPMN Diagrams</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="bpmn-js-dist/assets/diagram-js.css">
+    <link rel="stylesheet" href="bpmn-js-dist/assets/bpmn-js.css">
+    <link rel="stylesheet" href="bpmn-js-dist/assets/bpmn-font/css/bpmn-embedded.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">BPMN Explorer</h1>
+                <div class="header-actions">
+                    <button id="open-file" class="btn btn-secondary" title="Open diagram from local file system (Ctrl+O)">
+                        <span class="icon">📁</span>
+                        Open
+                    </button>
+                    <button id="save-file" class="btn btn-primary" title="Download BPMN 2.0 diagram (Ctrl+S)">
+                        <span class="icon">💾</span>
+                        Save
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button id="undo" class="btn btn-tool" title="Undo (Ctrl+Z)">
+                        <span class="icon">↶</span>
+                    </button>
+                    <button id="redo" class="btn btn-tool" title="Redo (Ctrl+Shift+Z)">
+                        <span class="icon">↷</span>
+                    </button>
+                </div>
+                <div class="toolbar-group">
+                    <button id="hand-tool" class="btn btn-tool active" title="Hand Tool (H)">
+                        <span class="icon">✋</span>
+                    </button>
+                    <button id="lasso-tool" class="btn btn-tool" title="Lasso Tool (L)">
+                        <span class="icon">🪃</span>
+                    </button>
+                    <button id="space-tool" class="btn btn-tool" title="Space Tool (S)">
+                        <span class="icon">␣</span>
+                    </button>
+                </div>
+                <div class="toolbar-group">
+                    <button id="append-tool" class="btn btn-tool" title="Append anything (A)">
+                        <span class="icon">+</span>
+                    </button>
+                    <button id="create-tool" class="btn btn-tool" title="Create anything (N)">
+                        <span class="icon">⚡</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="canvas-container">
+                <div id="canvas" class="canvas"></div>
+                <div class="canvas-overlay">
+                    <div class="welcome-message" id="welcome-message">
+                        <h2>Open or create a BPMN diagram</h2>
+                        <p>Use bpmn-js to view, create and edit BPMN 2.0 diagrams in your browser.</p>
+                        <div class="welcome-actions">
+                            <button id="create-new" class="btn btn-primary">Create New Diagram</button>
+                            <button id="open-file-welcome" class="btn btn-secondary">Open from File</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+        <!-- File Input (Hidden) -->
+        <input type="file" id="file-input" accept=".bpmn,.xml" style="display: none;">
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Ensure we're on the correct URL
+        if (window.location.pathname.includes('/src/')) {
+            window.location.replace('/');
+        }
+    </script>
+    <script src="bpmn-js-dist/bpmn-modeler.development.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

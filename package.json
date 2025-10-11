@@ -1,0 +1,23 @@
+{
+  "name": "bpmn-explorer",
+  "version": "1.0.0",
+  "description": "A BPMN diagram editor based on bpmn-js",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server src -p 9000 --cors -c-1"
+  },
+  "dependencies": {
+    "bpmn-js": "^9.4.1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "keywords": [
+    "bpmn",
+    "diagram",
+    "editor",
+    "workflow"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
