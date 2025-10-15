@@ -1,498 +1,534 @@
 <template>
   <div class="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <h1 class="logo">BPMN Explorer</h1>
-        <div class="header-actions">
-          <button 
-            @click="togglePalette" 
-            class="btn btn-secondary" 
-            title="Toggle element palette"
-          >
-            <span class="icon">🎨</span>
-            Palette
-          </button>
-          <button 
-            @click="openFile" 
-            class="btn btn-secondary" 
-            title="Open diagram from local file system (Ctrl+O)"
-          >
-            <span class="icon">📁</span>
-            Open
-          </button>
-          <button 
-            @click="saveFile" 
-            class="btn btn-primary" 
-            title="Download BPMN 2.0 diagram (Ctrl+S)"
-          >
-            <span class="icon">💾</span>
-            Save
-          </button>
-        </div>
-        <div v-if="autoSaveStatus" class="auto-save-status" :class="autoSaveStatusClass">
-          {{ autoSaveStatus }}
-        </div>
+    <!-- 顶部工具栏 -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button @click="openFile" class="btn btn-primary">
+          <span class="icon">📁</span>
+          Open BPMN
+        </button>
+        <button @click="saveFile" class="btn btn-secondary" :disabled="!currentDiagram">
+          <span class="icon">💾</span>
+          Save BPMN
+        </button>
+        <button @click="newDiagram" class="btn btn-outline">
+          <span class="icon">🆕</span>
+          New
+        </button>
       </div>
-    </header>
+      
+      <div class="toolbar-right">
+        <button @click="togglePalette" class="btn btn-outline">
+          <span class="icon">🎨</span>
+          {{ showPalette ? 'Hide' : 'Show' }} Palette
+        </button>
+        <button @click="toggleProperties" class="btn btn-outline">
+          <span class="icon">⚙️</span>
+          {{ showProperties ? 'Hide' : 'Show' }} Properties
+        </button>
+      </div>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main">
-      <!-- Canvas Container -->
-      <div class="canvas-container">
-        <BpmnModeler 
-          ref="bpmnModeler"
+    <!-- 主内容区域 -->
+    <div class="main-content">
+      <!-- BPMN 编辑器 -->
+      <div class="editor-container" :class="{ 'with-properties': showProperties }">
+        <BpmnEditor
+          v-if="currentDiagram"
           :xml="currentDiagram"
-          @imported="onDiagramImported"
-          @changed="onDiagramChanged"
-          @error="onDiagramError"
-          @dragover="handleDragOver"
-          @drop="handleFileDrop"
+          :options="bpmnOptions"
+          @error="handleError"
+          @shown="handleShown"
+          @loading="handleLoading"
+          @changed="handleDiagramChanged"
         />
         
-        <div v-if="showWelcome" class="canvas-overlay">
-          <div class="welcome-message">
-            <h2>Open or create a BPMN diagram</h2>
-            <p>Use bpmn-js to view, create and edit BPMN 2.0 diagrams in your browser.</p>
-            <p class="drag-hint">💡 You can also drag and drop BPMN files directly onto the canvas</p>
+        <!-- 欢迎界面 -->
+        <div v-else class="welcome-screen">
+          <div class="welcome-content">
+            <h1>BPMN Explorer</h1>
+            <p>Create and edit BPMN diagrams with ease</p>
             <div class="welcome-actions">
-              <button @click="createNewDiagram" class="btn btn-primary">Create New Diagram</button>
-              <button @click="openFile" class="btn btn-secondary">Open from File</button>
+              <button @click="openFile" class="btn btn-primary btn-large">
+                <span class="icon">📁</span>
+                Open BPMN File
+              </button>
+              <button @click="newDiagram" class="btn btn-outline btn-large">
+                <span class="icon">🆕</span>
+                Create New Diagram
+              </button>
+            </div>
+            <div class="drag-hint">
+              <p>Or drag and drop a BPMN file here</p>
             </div>
           </div>
         </div>
       </div>
-    </main>
 
-    <!-- Hidden File Input -->
-    <input 
+      <!-- Properties Panel -->
+      <div v-if="showProperties" class="properties-panel">
+        <div class="properties-header">
+          <h3>Properties</h3>
+        </div>
+        <div id="properties-panel" class="properties-content"></div>
+      </div>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span v-if="isLoading" class="status-loading">Loading...</span>
+        <span v-else-if="hasError" class="status-error">Error: {{ errorMessage }}</span>
+        <span v-else-if="currentDiagram" class="status-success">Ready</span>
+        <span v-else class="status-info">No diagram loaded</span>
+      </div>
+      <div class="status-right">
+        <span v-if="lastSaved" class="status-saved">
+          Last saved: {{ formatTime(lastSaved) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 隐藏的文件输入 -->
+    <input
       ref="fileInput"
-      type="file" 
-      accept=".bpmn,.xml,application/xml,text/xml" 
-      style="display: none;"
+      type="file"
+      accept=".bpmn,.xml"
       @change="handleFileSelect"
-    >
+      style="display: none"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import BpmnModeler from './components/BpmnModeler.vue'
-import type { AutoSaveData } from './types'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import BpmnEditor from './components/BpmnEditor.vue'
+import type { BpmnOptions, FileOperationResult, FileValidationResult } from './types'
 
 // 响应式数据
-const currentDiagram = ref<string | null>(null)
-const showWelcome = ref<boolean>(true)
-const autoSaveEnabled = ref<boolean>(true)
-const autoSaveTimeout = ref<NodeJS.Timeout | null>(null)
-const autoSaveDelay = ref<number>(2000)
-const storageKey = ref<string>('bpmn-explorer-autosave')
-const autoSaveStatus = ref<string>('')
-const autoSaveStatusClass = ref<string>('')
+const currentDiagram = ref<string>('')
+const showPalette = ref<boolean>(true)
+const showProperties = ref<boolean>(true)
+const isLoading = ref<boolean>(false)
+const hasError = ref<boolean>(false)
+const errorMessage = ref<string>('')
+const lastSaved = ref<Date | null>(null)
+const fileInput = ref<HTMLInputElement>()
 
-// 模板引用
-const bpmnModeler = ref<InstanceType<typeof BpmnModeler> | null>(null)
-const fileInput = ref<HTMLInputElement | null>(null)
-// 事件处理函数
-const onDiagramImported = () => {
-  showWelcome.value = false
-  triggerAutoSave()
-}
-
-const onDiagramChanged = () => {
-  triggerAutoSave()
-}
-
-const onDiagramError = (error: Error) => {
-  console.error('BPMN Error:', error)
-  showError('Import Error', error.message)
-}
-
-// 文件操作函数
-const createNewDiagram = async (): Promise<void> => {
-  try {
-    if (bpmnModeler.value) {
-      await bpmnModeler.value.createNewDiagram()
-      showWelcome.value = false
-      clearAutoSave()
-    }
-  } catch (error) {
-    console.error('Error creating new diagram:', error)
-    showError('Error', 'Failed to create new diagram')
+// BPMN 配置
+const bpmnOptions = reactive<BpmnOptions>({
+  propertiesPanel: {
+    parent: '#properties-panel'
+  },
+  additionalModules: [],
+  moddleExtensions: [],
+  keyboard: {
+    bindTo: document
   }
-}
+})
 
+// 文件操作
 const openFile = (): void => {
-  if (fileInput.value) {
-    fileInput.value.click()
+  fileInput.value?.click()
+}
+
+const saveFile = async (): Promise<void> => {
+  if (!currentDiagram.value) return
+  
+  try {
+    const blob = new Blob([currentDiagram.value], { type: 'application/xml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'diagram.bpmn'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+    lastSaved.value = new Date()
+    showStatus('File saved successfully', 'success')
+  } catch (error) {
+    console.error('Save error:', error)
+    showStatus('Failed to save file', 'error')
   }
 }
 
+const newDiagram = (): void => {
+  const defaultXml = `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js" exporterVersion="9.4.0">
+  <bpmn:process id="Process_1" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_1" name="New Task">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_1" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="EndEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1_di" bpmnElement="Task_1">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="432" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="432" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>`
+  
+  currentDiagram.value = defaultXml
+  showStatus('New diagram created', 'success')
+}
+
+// 文件处理
 const handleFileSelect = (event: Event): void => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-
-  // 验证文件类型
-  if (!isValidBpmnFile(file)) {
-    showError('Invalid File', 'Please select a valid BPMN file (.bpmn or .xml)')
-    target.value = ''
-    return
-  }
-
-  // 验证文件大小 (限制为 10MB)
-  const maxSize = 10 * 1024 * 1024 // 10MB
-  if (file.size > maxSize) {
-    showError('File Too Large', 'File size must be less than 10MB')
-    target.value = ''
-    return
-  }
-
-  // 显示加载状态
-  updateAutoSaveStatus('Loading file...', 'info')
-
-  const reader = new FileReader()
   
+  processFile(file)
+}
+
+const processFile = (file: File): void => {
+  const validation = validateFile(file)
+  if (!validation.isValid) {
+    showStatus(validation.error || 'Invalid file', 'error')
+    return
+  }
+  
+  isLoading.value = true
+  hasError.value = false
+  
+  const reader = new FileReader()
   reader.onload = (e) => {
     try {
       const content = e.target?.result as string
-      
-      // 验证 XML 内容
-      if (!isValidBpmnXml(content)) {
-        showError('Invalid BPMN Content', 'The file does not contain valid BPMN 2.0 XML')
-        updateAutoSaveStatus('')
-        target.value = ''
-        return
+      if (isValidBpmnXml(content)) {
+        currentDiagram.value = content
+        showStatus(`File loaded: ${file.name}`, 'success')
+      } else {
+        showStatus('Invalid BPMN content', 'error')
       }
-
-      // 设置图表内容
-      currentDiagram.value = content
-      clearAutoSave()
-      updateAutoSaveStatus(`File loaded: ${file.name}`, 'success')
-      
-      // 3秒后清除状态消息
-      setTimeout(() => {
-        updateAutoSaveStatus('')
-      }, 3000)
-      
     } catch (error) {
-      console.error('Error processing file:', error)
-      showError('File Processing Error', 'Failed to process the selected file')
-      updateAutoSaveStatus('')
+      console.error('File processing error:', error)
+      showStatus('Failed to process file', 'error')
+    } finally {
+      isLoading.value = false
     }
-    
-    // Reset file input
-    target.value = ''
   }
-
+  
   reader.onerror = () => {
-    showError('File Read Error', 'Failed to read the selected file')
-    updateAutoSaveStatus('')
-    target.value = ''
+    showStatus('Failed to read file', 'error')
+    isLoading.value = false
   }
-
+  
   reader.readAsText(file, 'UTF-8')
 }
 
-const saveFile = async (): Promise<void> => {
-  try {
-    if (bpmnModeler.value) {
-      const xml = await bpmnModeler.value.getXML()
-      downloadFile(xml, 'diagram.bpmn', 'application/xml')
-    }
-  } catch (error) {
-    console.error('Error saving diagram:', error)
-    showError('Save Error', 'Failed to save diagram')
-  }
-}
-
-const downloadFile = (content: string, filename: string, mimeType: string): void => {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
-const showError = (title: string, message: string): void => {
-  alert(`${title}: ${message}`)
-}
-
-// 文件验证函数
-const isValidBpmnFile = (file: File): boolean => {
-  const validExtensions = ['.bpmn', '.xml']
+// 文件验证
+const validateFile = (file: File): FileValidationResult => {
+  const maxSize = 10 * 1024 * 1024 // 10MB
+  const allowedTypes = ['.bpmn', '.xml']
   const fileName = file.name.toLowerCase()
   
-  return validExtensions.some(ext => fileName.endsWith(ext))
+  if (file.size > maxSize) {
+    return { isValid: false, error: 'File size must be less than 10MB' }
+  }
+  
+  if (!allowedTypes.some(type => fileName.endsWith(type))) {
+    return { isValid: false, error: 'Please select a BPMN or XML file' }
+  }
+  
+  return { isValid: true, size: file.size, type: file.type }
 }
 
 const isValidBpmnXml = (content: string): boolean => {
   try {
-    // 检查是否包含 BPMN 命名空间
-    const bpmnNamespaceRegex = /xmlns:bpmn=["']http:\/\/www\.omg\.org\/spec\/BPMN\/20100524\/MODEL["']/
-    const bpmnDefinitionsRegex = /<bpmn:definitions/
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(content, 'application/xml')
+    const parseError = doc.querySelector('parsererror')
     
-    return bpmnNamespaceRegex.test(content) && bpmnDefinitionsRegex.test(content)
-  } catch (error) {
-    console.error('XML validation error:', error)
+    if (parseError) return false
+    
+    // 检查是否包含 BPMN 命名空间
+    return content.includes('http://www.omg.org/spec/BPMN/20100524/MODEL')
+  } catch {
     return false
   }
 }
 
-// Palette 控制
-const togglePalette = (): void => {
-  if (bpmnModeler.value) {
-    bpmnModeler.value.togglePalette()
-  }
-}
-
-// 拖拽文件处理
-const handleDragOver = (event: DragEvent): void => {
-  event.preventDefault()
-  event.dataTransfer!.dropEffect = 'copy'
-}
-
-const handleFileDrop = (event: DragEvent): void => {
-  event.preventDefault()
+// 状态管理
+const showStatus = (message: string, type: 'success' | 'error' | 'info'): void => {
+  errorMessage.value = message
+  hasError.value = type === 'error'
   
-  const files = event.dataTransfer?.files
-  if (!files || files.length === 0) return
-  
-  const file = files[0]
-  if (!file) return
-  
-  // 验证文件类型
-  if (!isValidBpmnFile(file)) {
-    showError('Invalid File', 'Please drop a valid BPMN file (.bpmn or .xml)')
-    return
-  }
-
-  // 验证文件大小
-  const maxSize = 10 * 1024 * 1024 // 10MB
-  if (file.size > maxSize) {
-    showError('File Too Large', 'File size must be less than 10MB')
-    return
-  }
-
-  // 显示加载状态
-  updateAutoSaveStatus('Loading dropped file...', 'info')
-
-  const reader = new FileReader()
-  
-  reader.onload = (e) => {
-    try {
-      const content = e.target?.result as string
-      
-      // 验证 XML 内容
-      if (!isValidBpmnXml(content)) {
-        showError('Invalid BPMN Content', 'The dropped file does not contain valid BPMN 2.0 XML')
-        updateAutoSaveStatus('')
-        return
-      }
-
-      // 设置图表内容
-      currentDiagram.value = content
-      clearAutoSave()
-      updateAutoSaveStatus(`File loaded: ${file.name}`, 'success')
-      
-      // 3秒后清除状态消息
-      setTimeout(() => {
-        updateAutoSaveStatus('')
-      }, 3000)
-      
-    } catch (error) {
-      console.error('Error processing dropped file:', error)
-      showError('File Processing Error', 'Failed to process the dropped file')
-      updateAutoSaveStatus('')
-    }
-  }
-
-  reader.onerror = () => {
-    showError('File Read Error', 'Failed to read the dropped file')
-    updateAutoSaveStatus('')
-  }
-
-  reader.readAsText(file, 'UTF-8')
-}
-
-// 键盘快捷键
-const setupKeyboardShortcuts = (): (() => void) => {
-  const handleKeyDown = (event: KeyboardEvent) => {
-    // Check if we're in an input field
-    const target = event.target as HTMLElement
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-      return
-    }
-
-    const isCtrl = event.ctrlKey || event.metaKey
-    
-    switch (event.key.toLowerCase()) {
-      case 'o':
-        if (isCtrl) {
-          event.preventDefault()
-          openFile()
-        }
-        break
-      case 's':
-        if (isCtrl) {
-          event.preventDefault()
-          saveFile()
-        }
-        break
-      case 'n':
-        if (isCtrl) {
-          event.preventDefault()
-          createNewDiagram()
-        }
-        break
-          case 'delete':
-          case 'backspace':
-            if (isCtrl && event.shiftKey) {
-              event.preventDefault()
-              clearAutoSave()
-            }
-            break
-          case 'p':
-            if (isCtrl) {
-              event.preventDefault()
-              togglePalette()
-            }
-            break
-    }
-  }
-
-  document.addEventListener('keydown', handleKeyDown)
-  
-  // 返回清理函数
-  return () => {
-    document.removeEventListener('keydown', handleKeyDown)
-  }
-}
-
-// 自动保存功能
-const initializeAutoSave = (): void => {
-  if (typeof Storage === "undefined") {
-    console.warn('localStorage is not available. Auto-save disabled.')
-    autoSaveEnabled.value = false
-    return
-  }
-  
-  updateAutoSaveStatus('Auto-save enabled', 'success')
-}
-
-const triggerAutoSave = (): void => {
-  if (!autoSaveEnabled.value || !bpmnModeler.value) {
-    return
-  }
-
-  if (autoSaveTimeout.value) {
-    clearTimeout(autoSaveTimeout.value)
-  }
-
-  autoSaveTimeout.value = setTimeout(() => {
-    performAutoSave()
-  }, autoSaveDelay.value)
-}
-
-const performAutoSave = async (): Promise<void> => {
-  try {
-    if (bpmnModeler.value) {
-      const xml = await bpmnModeler.value.getXML()
-      const autoSaveData: AutoSaveData = {
-        xml: xml,
-        timestamp: new Date().toISOString(),
-        version: '1.0'
-      }
-      
-      localStorage.setItem(storageKey.value, JSON.stringify(autoSaveData))
-      updateAutoSaveStatus('Auto-saved', 'success')
-      console.log('Diagram auto-saved to localStorage')
-    }
-  } catch (error) {
-    console.error('Auto-save failed:', error)
-    updateAutoSaveStatus('Auto-save failed', 'error')
-  }
-}
-
-const loadAutoSavedDiagram = (): void => {
-  if (!autoSaveEnabled.value) {
-    return
-  }
-
-  try {
-    const savedData = localStorage.getItem(storageKey.value)
-    if (savedData) {
-      const autoSaveData: AutoSaveData = JSON.parse(savedData)
-      const savedTime = new Date(autoSaveData.timestamp)
-      const now = new Date()
-      const timeDiff = now.getTime() - savedTime.getTime()
-      
-      // Only load if saved within last 24 hours
-      if (timeDiff < 24 * 60 * 60 * 1000) {
-        showAutoSaveDialog(autoSaveData)
-      } else {
-        localStorage.removeItem(storageKey.value)
-      }
-    }
-  } catch (error) {
-    console.error('Error loading auto-saved diagram:', error)
-    localStorage.removeItem(storageKey.value)
-  }
-}
-
-const showAutoSaveDialog = (autoSaveData: AutoSaveData): void => {
-  const savedTime = new Date(autoSaveData.timestamp).toLocaleString()
-  
-  // Automatically restore the saved diagram
-  currentDiagram.value = autoSaveData.xml
-  updateAutoSaveStatus(`自动恢复图表 (保存时间: ${savedTime})`, 'success')
-  
-  // Clear auto-save data after successful restoration
-  localStorage.removeItem(storageKey.value)
-}
-
-const updateAutoSaveStatus = (message: string, type: string = 'success'): void => {
-  autoSaveStatus.value = message
-  autoSaveStatusClass.value = type
-  
-  // Auto-hide success and info messages after 3 seconds
-  if ((type === 'success' || type === 'info') && 
-      (message.includes('saved') || message.includes('enabled') || message.includes('Restored') || message.includes('Loading'))) {
+  if (type === 'success' || type === 'info') {
     setTimeout(() => {
-      if (autoSaveStatus.value === message) {
-        autoSaveStatus.value = ''
-      }
+      errorMessage.value = ''
     }, 3000)
   }
 }
 
-const clearAutoSave = (): void => {
-  if (autoSaveTimeout.value) {
-    clearTimeout(autoSaveTimeout.value)
-  }
-  localStorage.removeItem(storageKey.value)
-  updateAutoSaveStatus('Auto-save cleared', 'success')
+// 工具函数
+const togglePalette = (): void => {
+  showPalette.value = !showPalette.value
 }
 
-// 生命周期钩子
-let cleanupKeyboardShortcuts: (() => void) | null = null
+const toggleProperties = (): void => {
+  showProperties.value = !showProperties.value
+}
 
+const formatTime = (date: Date): string => {
+  return date.toLocaleTimeString()
+}
+
+// 事件处理
+const handleError = (err: Error): void => {
+  console.error('BPMN error:', err)
+  hasError.value = true
+  errorMessage.value = err.message || 'Unknown error occurred'
+  isLoading.value = false
+}
+
+const handleShown = (): void => {
+  console.log('BPMN diagram shown')
+  isLoading.value = false
+  hasError.value = false
+  errorMessage.value = ''
+}
+
+const handleLoading = (): void => {
+  console.log('BPMN diagram loading')
+  isLoading.value = true
+  hasError.value = false
+  errorMessage.value = ''
+}
+
+const handleDiagramChanged = (xml: string): void => {
+  currentDiagram.value = xml
+  console.log('Diagram changed')
+}
+
+// 生命周期
 onMounted(() => {
-  cleanupKeyboardShortcuts = setupKeyboardShortcuts()
-  initializeAutoSave()
-  loadAutoSavedDiagram()
+  console.log('BPMN Explorer initialized')
 })
 
 onBeforeUnmount(() => {
-  if (autoSaveTimeout.value) {
-    clearTimeout(autoSaveTimeout.value)
-  }
-  if (cleanupKeyboardShortcuts) {
-    cleanupKeyboardShortcuts()
-  }
+  console.log('BPMN Explorer cleanup')
 })
 </script>
+
+<style scoped>
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f8f9fa;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.btn-secondary {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #059669;
+  border-color: #059669;
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: #d1d5db;
+}
+
+.btn-large {
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
+.icon {
+  font-size: 16px;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.editor-container {
+  flex: 1;
+  position: relative;
+  background: white;
+}
+
+.editor-container.with-properties {
+  flex: 0 0 70%;
+}
+
+.welcome-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.welcome-content {
+  text-align: center;
+  max-width: 500px;
+  padding: 40px;
+}
+
+.welcome-content h1 {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.welcome-content p {
+  font-size: 1.2rem;
+  margin-bottom: 32px;
+  opacity: 0.9;
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.drag-hint {
+  opacity: 0.8;
+  font-size: 14px;
+}
+
+.properties-panel {
+  flex: 0 0 30%;
+  background: white;
+  border-left: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.properties-header {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.properties-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.properties-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.status-success {
+  color: #10b981;
+}
+
+.status-error {
+  color: #ef4444;
+}
+
+.status-loading {
+  color: #3b82f6;
+}
+
+.status-info {
+  color: #6b7280;
+}
+
+.status-saved {
+  color: #10b981;
+}
+</style>

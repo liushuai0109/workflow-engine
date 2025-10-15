@@ -1,452 +1,433 @@
-/* Reset and base styles */
+/* 全局样式重置 */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-html, body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
-    height: 100vh;
-    overflow: hidden;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  color: #374151;
+  background: #f8f9fa;
 }
 
-#app {
-    height: 100vh;
-}
-
-/* App layout */
-.app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-/* Header */
-.header {
-    background: #fff;
-    border-bottom: 1px solid #e1e5e9;
-    padding: 0 20px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    z-index: 1000;
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    position: relative;
-}
-
-.logo {
-    font-size: 20px;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.header-actions {
-    display: flex;
-    gap: 10px;
-}
-
-/* Buttons */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background: #fff;
-    color: #374151;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.btn:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
-}
-
-.btn:active {
-    background: #f3f4f6;
-    transform: translateY(1px);
-}
-
-.btn-primary {
-    background: #3b82f6;
-    color: #fff;
-    border-color: #3b82f6;
-}
-
-.btn-primary:hover {
-    background: #2563eb;
-    border-color: #2563eb;
-}
-
-.btn-secondary {
-    background: #6b7280;
-    color: #fff;
-    border-color: #6b7280;
-}
-
-.btn-secondary:hover {
-    background: #4b5563;
-    border-color: #4b5563;
-}
-
-.btn-tool {
-    padding: 8px;
-    min-width: 40px;
-    justify-content: center;
-}
-
-.btn-tool.active {
-    background: #3b82f6;
-    color: #fff;
-    border-color: #3b82f6;
-}
-
-.btn-close {
-    background: none;
-    border: none;
-    font-size: 20px;
-    padding: 4px 8px;
-    color: #6b7280;
-}
-
-.btn-close:hover {
-    color: #374151;
-}
-
-.icon {
-    font-size: 16px;
-}
-
-/* Main content */
-.main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Toolbar */
-.toolbar {
-    background: #fff;
-    border-bottom: 1px solid #e1e5e9;
-    padding: 10px 20px;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.toolbar-group {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-}
-
-.toolbar-group::after {
-    content: '';
-    width: 1px;
-    height: 24px;
-    background: #e1e5e9;
-    margin-left: 15px;
-}
-
-.toolbar-group:last-child::after {
-    display: none;
-}
-
-/* Canvas container */
-.canvas-container {
-    flex: 1;
-    position: relative;
-    background: #f8f9fa;
-    overflow: hidden;
-}
-
-.canvas {
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-
-.canvas-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(248, 249, 250, 0.95);
-    z-index: 100;
-}
-
-.canvas-overlay.hidden {
-    display: none;
-}
-
-/* Welcome message */
-.welcome-message {
-    text-align: center;
-    max-width: 500px;
-    padding: 40px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.welcome-message h2 {
-    font-size: 28px;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 16px;
-}
-
-.welcome-message p {
-    font-size: 16px;
-    color: #6b7280;
-    margin-bottom: 32px;
-    line-height: 1.5;
-}
-
-.welcome-actions {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.drag-hint {
-    font-size: 14px;
-    color: #6b7280;
-    margin: 16px 0;
-    font-style: italic;
-}
-
-
-/* BPMN.js specific styles */
-.bjs-powered-by {
-    display: none !important;
-}
-
-.djs-palette {
-    background: #fff !important;
-    border: 1px solid #e1e5e9 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    top: 20px !important;
-    left: 20px !important;
-    width: 48px !important;
-}
-
-.djs-palette .entry {
-    width: 32px !important;
-    height: 32px !important;
-    margin: 2px !important;
-    border-radius: 4px !important;
-    transition: all 0.2s ease !important;
-}
-
-.djs-palette .entry:hover {
-    background: #f0f9ff !important;
-    border-color: #3b82f6 !important;
-}
-
-.djs-palette .entry.selected {
-    background: #3b82f6 !important;
-    color: #fff !important;
-}
-
-.djs-palette .group {
-    margin-bottom: 8px !important;
-}
-
-.djs-palette .group:last-child {
-    margin-bottom: 0 !important;
-}
-
-/* BPMN 工具栏样式 */
-.djs-palette .djs-palette-toggle {
-    background: #f8f9fa !important;
-    border: 1px solid #e1e5e9 !important;
-    border-radius: 4px !important;
-    color: #6b7280 !important;
-}
-
-.djs-palette .djs-palette-toggle:hover {
-    background: #e5e7eb !important;
-    color: #374151 !important;
-}
-
-/* BPMN 画布样式 */
+/* BPMN.js 容器样式 */
 .djs-container {
-    background: #f8f9fa !important;
+  height: 100% !important;
+  width: 100% !important;
 }
 
 .djs-container .djs-canvas {
-    background: #f8f9fa !important;
+  background: #f8f9fa !important;
 }
 
-/* BPMN 元素样式 */
+/* BPMN 元素样式 - 细线条 */
 .djs-element .djs-visual > :nth-child(1) {
-    stroke: #374151 !important;
-    stroke-width: 2px !important;
+  stroke: #374151 !important;
+  stroke-width: 1px !important;
 }
 
 .djs-element.selected .djs-visual > :nth-child(1) {
-    stroke: #3b82f6 !important;
-    stroke-width: 3px !important;
+  stroke: #3b82f6 !important;
+  stroke-width: 2px !important;
 }
 
 /* 连接线样式 */
 .djs-connection .djs-visual > :nth-child(1) {
-    stroke: #6b7280 !important;
-    stroke-width: 2px !important;
+  stroke: #6b7280 !important;
+  stroke-width: 1px !important;
 }
 
 .djs-connection.selected .djs-visual > :nth-child(1) {
-    stroke: #3b82f6 !important;
-    stroke-width: 3px !important;
+  stroke: #3b82f6 !important;
+  stroke-width: 2px !important;
+}
+
+/* 更具体的 BPMN 元素样式 */
+.djs-element .djs-visual path,
+.djs-element .djs-visual rect,
+.djs-element .djs-visual circle,
+.djs-element .djs-visual ellipse,
+.djs-element .djs-visual polygon {
+  stroke-width: 1px !important;
+}
+
+.djs-element.selected .djs-visual path,
+.djs-element.selected .djs-visual rect,
+.djs-element.selected .djs-visual circle,
+.djs-element.selected .djs-visual ellipse,
+.djs-element.selected .djs-visual polygon {
+  stroke-width: 2px !important;
+}
+
+/* 连接线路径样式 */
+.djs-connection .djs-visual path {
+  stroke-width: 1px !important;
+}
+
+.djs-connection.selected .djs-visual path {
+  stroke-width: 2px !important;
+}
+
+/* 箭头样式 */
+.djs-connection .djs-visual .djs-connection-end,
+.djs-connection .djs-visual .djs-connection-start {
+  stroke-width: 1px !important;
+}
+
+/* 全局 SVG 元素样式覆盖 */
+.djs-container svg * {
+  stroke-width: 1px !important;
+}
+
+.djs-container svg .djs-element * {
+  stroke-width: 1px !important;
+}
+
+.djs-container svg .djs-connection * {
+  stroke-width: 1px !important;
+}
+
+/* 选中状态的 SVG 元素 */
+.djs-container svg .djs-element.selected * {
+  stroke-width: 2px !important;
+}
+
+.djs-container svg .djs-connection.selected * {
+  stroke-width: 2px !important;
+}
+
+/* 特定 BPMN 元素类型 */
+.djs-container svg .bpmn-activity,
+.djs-container svg .bpmn-event,
+.djs-container svg .bpmn-gateway,
+.djs-container svg .bpmn-sequence-flow {
+  stroke-width: 1px !important;
+}
+
+.djs-container svg .bpmn-activity.selected,
+.djs-container svg .bpmn-event.selected,
+.djs-container svg .bpmn-gateway.selected,
+.djs-container svg .bpmn-sequence-flow.selected {
+  stroke-width: 2px !important;
+}
+
+/* 覆盖 bpmn-js 默认样式 */
+.djs-container svg path[stroke-width],
+.djs-container svg rect[stroke-width],
+.djs-container svg circle[stroke-width],
+.djs-container svg ellipse[stroke-width],
+.djs-container svg polygon[stroke-width],
+.djs-container svg line[stroke-width] {
+  stroke-width: 1px !important;
+}
+
+/* 覆盖可能的内联样式 */
+.djs-container svg *[style*="stroke-width"] {
+  stroke-width: 1px !important;
+}
+
+/* 确保所有可能的 SVG 元素都使用细线条 */
+.djs-container svg g *,
+.djs-container svg defs *,
+.djs-container svg marker * {
+  stroke-width: 1px !important;
+}
+
+/* 特殊处理可能的粗线条元素 */
+.djs-container svg .djs-outline,
+.djs-container svg .djs-hit {
+  stroke-width: 1px !important;
+}
+
+/* 覆盖可能的默认粗线条 */
+.djs-container svg .djs-element[style*="stroke-width: 17px"],
+.djs-container svg .djs-connection[style*="stroke-width: 17px"] {
+  stroke-width: 1px !important;
 }
 
 /* 文本样式 */
 .djs-label {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 12px !important;
-    fill: #374151 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  fill: #374151 !important;
 }
 
-/* 属性面板样式 */
-.djs-properties-panel {
-    background: #fff !important;
-    border-left: 1px solid #e1e5e9 !important;
-    width: 300px !important;
+/* 所有 BPMN 文本元素 */
+.djs-element text,
+.djs-connection text,
+.djs-label text {
+  font-weight: 400 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-.djs-properties-panel .bio-properties-panel {
-    background: #fff !important;
+/* 确保没有粗体文本 */
+.djs-element .djs-label,
+.djs-connection .djs-label {
+  font-weight: normal !important;
 }
 
-.djs-properties-panel .bio-properties-panel .bio-properties-panel-group {
-    border-bottom: 1px solid #e1e5e9 !important;
+/* Palette 样式 */
+.djs-palette {
+  position: absolute !important;
+  top: 20px !important;
+  left: 20px !important;
+  width: 50px !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  z-index: 100 !important;
 }
 
-.djs-properties-panel .bio-properties-panel .bio-properties-panel-group-title {
-    background: #f8f9fa !important;
-    color: #374151 !important;
-    font-weight: 600 !important;
-    padding: 12px 16px !important;
+.djs-palette .entry {
+  width: 46px !important;
+  height: 46px !important;
+  margin: 2px !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
 }
 
+.djs-palette .entry:hover {
+  background: #f3f4f6 !important;
+}
+
+.djs-palette .entry.selected {
+  background: #dbeafe !important;
+}
+
+/* Properties Panel 样式 */
+.bpp-properties-panel {
+  background: white !important;
+  border: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.bpp-properties-panel .bpp-properties-group {
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.bpp-properties-panel .bpp-properties-group .group-label {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.bpp-properties-panel .bpp-properties-group .group-body {
+  padding: 16px !important;
+}
+
+.bpp-properties-panel .bpp-field {
+  margin-bottom: 16px !important;
+}
+
+.bpp-properties-panel .bpp-field label {
+  display: block !important;
+  margin-bottom: 4px !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+  font-size: 14px !important;
+}
+
+.bpp-properties-panel .bpp-field input,
+.bpp-properties-panel .bpp-field textarea,
+.bpp-properties-panel .bpp-field select {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  color: #374151 !important;
+  background: white !important;
+}
+
+.bpp-properties-panel .bpp-field input:focus,
+.bpp-properties-panel .bpp-field textarea:focus,
+.bpp-properties-panel .bpp-field select:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Context Pad 样式 */
 .djs-context-pad {
-    background: #fff !important;
-    border: 1px solid #e1e5e9 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px !important;
 }
 
+.djs-context-pad .entry {
+  width: 32px !important;
+  height: 32px !important;
+  margin: 2px !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+
+.djs-context-pad .entry:hover {
+  background: #f3f4f6 !important;
+}
+
+.djs-context-pad .entry.selected {
+  background: #dbeafe !important;
+}
+
+/* 自定义 Context Pad 按钮 */
+.djs-context-pad .append-element {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+.djs-context-pad .append-element:hover {
+  background: #059669 !important;
+}
+
+/* Popup Menu 样式 */
 .djs-popup {
-    background: #fff !important;
-    border: 1px solid #e1e5e9 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px !important;
 }
 
-/* Responsive design */
+.djs-popup .entry {
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  transition: background-color 0.2s !important;
+  font-size: 14px !important;
+  color: #374151 !important;
+}
+
+.djs-popup .entry:hover {
+  background: #f3f4f6 !important;
+}
+
+/* 拖拽样式 */
+.djs-drag-preview {
+  opacity: 0.8 !important;
+}
+
+.djs-drag-preview .djs-visual {
+  stroke-width: 2px !important;
+  stroke: #3b82f6 !important;
+}
+
+/* 选择框样式 */
+.djs-selection-outline {
+  stroke: #3b82f6 !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 5,5 !important;
+  fill: none !important;
+}
+
+/* 网格样式 */
+.djs-grid {
+  stroke: #e5e7eb !important;
+  stroke-width: 0.5px !important;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
-    .header {
-        padding: 0 15px;
-    }
-    
-    .toolbar {
-        padding: 10px 15px;
-        gap: 15px;
-    }
-    
-    .welcome-message {
-        margin: 20px;
-        padding: 30px 20px;
-    }
-    
-    .welcome-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-    
+  .djs-palette {
+    width: 40px !important;
+  }
+  
+  .djs-palette .entry {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .djs-context-pad .entry {
+    width: 28px !important;
+    height: 28px !important;
+  }
 }
 
-/* Loading states */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
+/* 动画效果 */
+.djs-element,
+.djs-connection {
+  transition: stroke-width 0.2s ease !important;
 }
 
-/* Error states */
-.error {
-    color: #dc2626;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    padding: 12px;
-    border-radius: 6px;
-    margin: 10px 0;
+.djs-palette .entry,
+.djs-context-pad .entry {
+  transition: all 0.2s ease !important;
 }
 
-/* Success states */
-.success {
-    color: #059669;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    padding: 12px;
-    border-radius: 6px;
-    margin: 10px 0;
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .djs-element .djs-visual > :nth-child(1) {
+    stroke: #000000 !important;
+    stroke-width: 2px !important;
+  }
+  
+  .djs-connection .djs-visual > :nth-child(1) {
+    stroke: #000000 !important;
+    stroke-width: 2px !important;
+  }
 }
 
-/* Auto-save status indicator */
-.auto-save-status {
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    z-index: 1000;
-}
-
-.auto-save-status.success {
-    color: #059669;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-}
-
-.auto-save-status.error {
-    color: #dc2626;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-}
-
-.auto-save-status.info {
-    color: #2563eb;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-}
-
-.auto-save-status:empty {
-    display: none;
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .djs-container .djs-canvas {
+    background: #1f2937 !important;
+  }
+  
+  .djs-element .djs-visual > :nth-child(1) {
+    stroke: #d1d5db !important;
+  }
+  
+  .djs-connection .djs-visual > :nth-child(1) {
+    stroke: #9ca3af !important;
+  }
+  
+  .djs-label {
+    fill: #d1d5db !important;
+  }
+  
+  .djs-palette {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+  }
+  
+  .djs-context-pad {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+  }
 }

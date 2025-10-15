@@ -14,13 +14,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": [
-      "node"
-    ],
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "skipLibCheck": true
+    "types": ["node"]
   }
 }

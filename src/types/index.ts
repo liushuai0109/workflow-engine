@@ -1,54 +1,65 @@
 // BPMN 相关类型定义
-export interface BpmnElement {
-  id: string
-  type: string
-  businessObject: any
+export interface BpmnOptions {
+  propertiesPanel?: {
+    parent?: string
+    create?: any
+  }
+  additionalModules?: any[]
+  moddleExtensions?: any[]
+  keyboard?: {
+    bindTo?: Document | HTMLElement
+  }
+}
+
+export interface BpmnModelerInstance {
+  importXML: (xml: string) => Promise<any>
+  saveXML: (options?: any) => Promise<{ xml: string }>
+  saveSVG: (options?: any) => Promise<{ svg: string }>
+  get: (name: string) => any
+  on: (event: string, callback: Function) => void
+  off: (event: string, callback: Function) => void
+  destroy: () => void
 }
 
 export interface BpmnEvent {
-  element?: BpmnElement
-  error?: Error
-  [key: string]: any
+  element?: any
+  originalEvent?: Event
+  type?: string
+}
+
+export interface FileOperationResult {
+  success: boolean
+  message?: string
+  data?: any
 }
 
 export interface AutoSaveData {
   xml: string
-  timestamp: string
-  version: string
+  timestamp: number
+  filename?: string
 }
 
-export interface BpmnModelerInstance {
-  importXML: (xml: string) => Promise<void>
-  createDiagram: () => Promise<void>
-  saveXML: (options?: { format?: boolean }) => Promise<{ xml: string }>
-  destroy: () => void
-  on: (event: string, callback: (event: BpmnEvent) => void) => void
-  get: (service: string) => any
+// Context Pad 自定义按钮类型
+export interface ContextPadButton {
+  group: string
+  className: string
+  title: string
+  action: {
+    click: (event: any, element: any) => void
+  }
+  html?: string
 }
 
-// 组件 Props 类型
-export interface BpmnModelerProps {
-  xml?: string | null
+// Properties Panel 相关类型
+export interface PropertiesPanelConfig {
+  parent: string
+  create: any
 }
 
-// 组件 Emits 类型
-export interface BpmnModelerEmits {
-  imported: [event: BpmnEvent]
-  changed: [event: BpmnEvent]
-  error: [error: Error]
-}
-
-// 文件操作类型
-export interface FileOperation {
-  open: () => void
-  save: () => Promise<void>
-  createNew: () => Promise<void>
-}
-
-// 自动保存相关类型
-export interface AutoSaveConfig {
-  enabled: boolean
-  delay: number
-  storageKey: string
-  timeout?: NodeJS.Timeout
+// 文件验证结果
+export interface FileValidationResult {
+  isValid: boolean
+  error?: string
+  size?: number
+  type?: string
 }

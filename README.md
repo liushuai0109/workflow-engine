@@ -1,164 +1,179 @@
-# BPMN Explorer - Vue 3 + TypeScript 版本
+# BPMN Explorer
 
-基于 Vue 3、TypeScript 和 bpmn-js 构建的现代 BPMN 图表编辑器，从原生 JavaScript 版本改造而来。
+一个基于 Vue 3 + TypeScript + vue-bpmn 的现代化 BPMN 图表编辑器，提供完整的 BPMN 2.0 支持。
 
-## 改造内容
+## ✨ 功能特性
 
-### 从原生 JavaScript 到 Vue 3 的改造
+### 🎨 核心功能
+- **完整的 BPMN 2.0 支持** - 支持所有标准 BPMN 元素
+- **Vue 3 + TypeScript** - 现代化的开发体验
+- **响应式设计** - 适配各种屏幕尺寸
+- **实时编辑** - 所见即所得的编辑体验
 
-1. **项目结构改造**：
-   - 使用 Vite 作为构建工具
-   - 采用 Vue 3 Composition API
-   - 组件化架构设计
+### 📁 文件操作
+- **打开 BPMN 文件** - 支持 .bpmn 和 .xml 格式
+- **保存 BPMN 文件** - 导出为标准 BPMN 2.0 XML
+- **文件验证** - 自动验证文件格式和内容
+- **拖拽上传** - 支持拖拽文件到编辑器
 
-2. **核心组件**：
-   - `App.vue` - 主应用组件，包含文件操作和自动保存功能
-   - `BpmnModeler.vue` - BPMN 模型器组件，封装 bpmn-js 功能
+### 🎨 编辑功能
+- **画板 (Palette)** - 完整的元素选择面板
+- **属性面板 (Properties Panel)** - 详细的元素属性编辑
+- **自定义 Context Pad** - 包含 "Append Element" 按钮
+- **键盘快捷键** - 提高编辑效率
 
-3. **功能特性**：
-   - **创建和编辑 BPMN 图表**：功能完整的 BPMN 2.0 图表编辑器
-   - **文件操作**：从本地文件打开和保存 BPMN 图表
-   - **自动保存**：自动将编辑内容保存到本地存储，防止数据丢失
-   - **键盘快捷键**：完整的键盘快捷键支持，提高编辑效率
-   - **现代界面**：受 demo.bpmn.io 启发的简洁响应式界面
-   - **Vue 响应式**：利用 Vue 的响应式系统管理状态
+### 🎯 用户体验
+- **加载状态** - 友好的加载提示
+- **错误处理** - 完善的错误提示和重试机制
+- **状态栏** - 实时显示编辑状态
+- **欢迎界面** - 引导用户开始使用
 
-## 技术栈
+## 🚀 快速开始
 
-- **Vue 3** - 前端框架
-- **TypeScript** - 类型安全的 JavaScript
-- **Vite** - 构建工具
-- **bpmn-js** - BPMN 图表库
-- **原生 CSS** - 样式设计
-
-## 快速开始
-
-### 前置要求
-
-- Node.js（版本 16 或更高）
-- npm 或 yarn
-
-### 安装
-
-1. 克隆或下载此仓库
-2. 安装依赖：
-   ```bash
-   npm install
-   ```
-
-### 运行应用
-
-启动开发服务器：
+### 安装依赖
 ```bash
-npm run dev
+npm install
 ```
 
-这将在 `http://localhost:8008` 启动本地服务器。
-
-或者使用：
+### 启动开发服务器
 ```bash
 npm start
 ```
 
-### 构建生产版本
+应用将在 `http://localhost:8003` 启动
 
+### 构建生产版本
 ```bash
 npm run build
 ```
 
-### 类型检查
+## 📖 使用指南
 
-```bash
-npm run type-check
-```
+### 基本操作
 
-## 使用方法
+1. **创建新图表**
+   - 点击工具栏的 "New" 按钮
+   - 或使用欢迎界面的 "Create New Diagram" 按钮
 
-### 创建新图表
+2. **打开文件**
+   - 点击 "Open BPMN" 按钮选择文件
+   - 或直接拖拽 BPMN 文件到编辑器
 
-1. 在欢迎屏幕上点击"创建新图表"，或
-2. 使用键盘快捷键 `Ctrl+N`（Mac 上为 `Cmd+N`）
+3. **保存文件**
+   - 点击 "Save BPMN" 按钮
+   - 文件将自动下载为 .bpmn 格式
 
-### 打开图表
+### 编辑功能
 
-1. **通过按钮打开**：点击标题栏中的"打开"按钮
-2. **通过快捷键**：使用键盘快捷键 `Ctrl+O`（Mac 上为 `Cmd+O`）
-3. **拖拽打开**：直接将 `.bpmn` 或 `.xml` 文件拖拽到画布上
-4. **文件选择**：从本地系统选择一个有效的 BPMN 文件
+1. **添加元素**
+   - 使用左侧的 Palette 选择元素
+   - 拖拽到画布上创建
 
-#### 支持的文件格式
-- `.bpmn` - BPMN 2.0 文件
-- `.xml` - XML 格式的 BPMN 文件
+2. **编辑属性**
+   - 选择元素后，在右侧 Properties Panel 中编辑
+   - 支持名称、描述等属性修改
 
-#### 文件验证
-- 自动验证文件格式和内容
-- 支持最大 10MB 的文件
-- 检查 BPMN 2.0 XML 结构
-- 提供详细的错误提示
+3. **连接元素**
+   - 使用鼠标从源元素拖拽到目标元素
+   - 自动创建序列流连接
 
-### 保存图表
+4. **自定义 Context Pad**
+   - 右键点击元素查看上下文菜单
+   - 使用 "Append Element" 按钮快速添加后续元素
 
-1. 点击标题栏中的"保存"，或
-2. 使用键盘快捷键 `Ctrl+S`（Mac 上为 `Cmd+S`）
-3. 图表将作为 `.bpmn` 文件下载
+### 工具栏功能
 
-### 自动保存功能
+- **📁 Open BPMN** - 打开 BPMN 文件
+- **💾 Save BPMN** - 保存当前图表
+- **🆕 New** - 创建新图表
+- **🎨 Show/Hide Palette** - 切换画板显示
+- **⚙️ Show/Hide Properties** - 切换属性面板显示
 
-BPMN Explorer 具有智能的自动保存功能：
+## 🛠️ 技术栈
 
-- **自动触发**：当您编辑图表时，系统会在 2 秒后自动保存到浏览器本地存储
-- **状态指示**：页面右上角会显示自动保存状态（"Auto-saved"、"Auto-save enabled" 等）
-- **自动恢复**：重新打开应用时，如果有未保存的更改，会自动恢复图表
-- **数据清理**：自动保存的数据会在 24 小时后自动清理
-- **手动清除**：使用 `Ctrl+Shift+Delete` 快捷键可以手动清除自动保存数据
+- **Vue 3** - 渐进式 JavaScript 框架
+- **TypeScript** - 类型安全的 JavaScript
+- **Vite** - 快速的构建工具
+- **bpmn-js** - BPMN 2.0 渲染和编辑库
+- **vue-bpmn** - Vue 3 的 BPMN 组件
+- **bpmn-js-properties-panel** - 属性面板支持
 
-## 项目结构
+## 📁 项目结构
 
 ```
 bpmn-explorer/
-├── index.html              # 主 HTML 文件
-├── vite.config.ts          # Vite 配置
-├── tsconfig.json           # TypeScript 配置
-├── env.d.ts               # 环境类型定义
-├── package.json            # 项目依赖
+├── public/                 # 静态资源
+│   └── sample.bpmn        # 示例 BPMN 文件
 ├── src/
-│   ├── main.ts            # Vue 应用入口
-│   ├── App.vue            # 主应用组件
-│   ├── styles.css         # 全局样式
-│   ├── types/
-│   │   └── index.ts       # 类型定义
-│   └── components/
-│       └── BpmnModeler.vue # BPMN 模型器组件
-└── README.md              # 项目说明
+│   ├── components/        # Vue 组件
+│   │   └── BpmnEditor.vue # 自定义 BPMN 编辑器
+│   ├── types/            # TypeScript 类型定义
+│   │   └── index.ts      # 类型声明
+│   ├── App.vue           # 主应用组件
+│   ├── main.ts           # 应用入口
+│   └── styles.css        # 全局样式
+├── index.html            # HTML 模板
+├── package.json          # 项目配置
+├── tsconfig.json         # TypeScript 配置
+├── vite.config.ts        # Vite 配置
+└── README.md            # 项目文档
 ```
 
-## 改造优势
+## 🎨 自定义功能
 
-1. **组件化**：代码更加模块化，易于维护和扩展
-2. **类型安全**：TypeScript 提供编译时类型检查，减少运行时错误
-3. **响应式**：利用 Vue 的响应式系统，状态管理更加清晰
-4. **现代化**：使用最新的前端技术栈
-5. **可扩展性**：更容易添加新功能和组件
-6. **开发体验**：更好的开发工具支持、智能提示和热重载
-7. **代码质量**：严格的类型检查提高代码质量和可维护性
+### Context Pad 自定义按钮
 
-## 键盘快捷键
+项目包含一个自定义的 "Append Element" 按钮，位于 Context Pad 中：
 
-- `Ctrl+O` - 打开文件
-- `Ctrl+S` - 保存文件
-- `Ctrl+N` - 创建新图表
-- `Ctrl+P` - 切换元素选择面板
-- `Ctrl+Shift+Delete` - 清除自动保存数据
+```typescript
+// 在 BpmnEditor.vue 中定义
+const CustomContextPadModule = {
+  __init__: ['contextPad'],
+  contextPad: ['type', CustomContextPad]
+}
+```
 
-## 功能特性
+### 样式自定义
 
-### BPMN 元素选择面板 (Palette)
-- **可视化元素选择**：左侧显示 BPMN 元素选择面板
-- **拖拽创建**：从面板拖拽元素到画布创建新元素
-- **元素分类**：按功能分组显示不同类型的 BPMN 元素
-- **快捷键控制**：使用 `Ctrl+P` 快速切换面板显示/隐藏
-- **工具栏按钮**：点击 "Palette" 按钮控制面板显示
+所有 BPMN 元素的样式都可以通过 `src/styles.css` 进行自定义：
 
-## 许可证
+- 线条粗细
+- 颜色主题
+- 字体样式
+- 响应式布局
+
+## 🔧 开发指南
+
+### 添加新的 BPMN 元素
+
+1. 在 `BpmnEditor.vue` 中扩展 `CustomContextPadModule`
+2. 添加新的元素类型到 Palette
+3. 更新类型定义
+
+### 自定义属性面板
+
+1. 创建自定义属性提供者
+2. 在 `additionalModules` 中注册
+3. 配置属性面板选项
+
+### 扩展功能
+
+- 添加新的文件格式支持
+- 集成云存储服务
+- 添加协作功能
+- 实现版本控制
+
+## 📝 许可证
 
 MIT License
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📞 支持
+
+如有问题，请查看：
+- [bpmn-js 文档](https://github.com/bpmn-io/bpmn-js)
+- [Vue 3 文档](https://vuejs.org/)
+- [TypeScript 文档](https://www.typescriptlang.org/)
