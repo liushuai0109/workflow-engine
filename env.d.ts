@@ -39,3 +39,17 @@ declare module 'vue-bpmn' {
   const VueBpmn: DefineComponent<VueBpmnProps>
   export default VueBpmn
 }
+
+declare module 'bpmn-js/lib/util/ModelUtil' {
+  export function getBusinessObject(element: any): any
+  export function is(element: any, type: string): boolean
+}
+
+declare module 'diagram-js/lib/draw/BaseRenderer' {
+  class BaseRenderer {
+    constructor(eventBus: any, priority: number)
+    canRender(element: any): boolean
+    drawShape(parentNode: SVGElement, element: any): SVGElement
+  }
+  export default BaseRenderer
+}

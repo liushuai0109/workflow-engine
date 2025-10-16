@@ -431,3 +431,117 @@ body {
     border-color: #4b5563 !important;
   }
 }
+
+/* UserTask 扩展样式 */
+.custom-user-task-elements {
+  pointer-events: none;
+}
+
+.custom-user-task-elements text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 8px;
+  fill: #374151;
+}
+
+.custom-user-task-elements circle {
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.custom-user-task-elements rect {
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* 优先级指示器样式 */
+.priority-high {
+  fill: #ef4444 !important;
+}
+
+.priority-medium {
+  fill: #f59e0b !important;
+}
+
+.priority-low {
+  fill: #10b981 !important;
+}
+
+/* 审批级别指示器样式 */
+.approval-level-indicator {
+  fill: #3b82f6;
+  opacity: 0.8;
+}
+
+/* 自定义字段样式 */
+.custom-field-item {
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #f9fafb;
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+.field-name-input,
+.field-value-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.field-type-select {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+}
+
+.add-field-btn,
+.remove-field-btn {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.add-field-btn:hover {
+  background: #f3f4f6;
+}
+
+.remove-field-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.remove-field-btn:hover {
+  background: #fecaca;
+}
+
+.custom-fields-container {
+  margin-top: 8px;
+}
+
+.custom-fields-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.custom-fields-header label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+}

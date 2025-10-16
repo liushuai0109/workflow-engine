@@ -9,7 +9,10 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 import {
   BpmnPropertiesPanelModule,
+  BpmnPropertiesProviderModule
 } from 'bpmn-js-properties-panel';
+import UserTaskExtensionModule from '../extensions/usertask/UserTaskExtensionModule'
+import userTaskExtension from '../extensions/usertask/userTaskExtension.json'
 import type { BpmnModelerInstance, BpmnEvent } from '../types'
 
 // Props
@@ -35,13 +38,46 @@ const emit = defineEmits<{
 const container = ref<HTMLElement>()
 const modeler = ref<BpmnModelerInstance>()
 
-// 自定义 Context Pad 模块
-const CustomContextPadModule = {
-  __init__: ['contextPad'],
-  contextPad: ['type', CustomContextPad]
+// 防抖函数
+let saveTimeout: NodeJS.Timeout | null = null
+const debouncedSave = () => {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+  }
+  saveTimeout = setTimeout(() => {
+    if (modeler.value) {
+      modeler.value.saveXML({ format: true }).then((result: any) => {
+        emit('changed', result.xml)
+        // 保存完成后恢复视口位置
+        setTimeout(() => {
+          restoreViewbox()
+        }, 50)
+      }).catch((error: Error) => {
+        console.error('Failed to save XML:', error)
+        emit('error', error)
+      })
+    }
+  }, 300) // 300ms 防抖
 }
 
-function CustomContextPad(contextPad: any, eventBus: any, elementFactory: any, injector: any) {
+// 视口位置管理
+let savedViewbox: any = null
+const saveViewbox = () => {
+  if (modeler.value) {
+    const canvas = modeler.value.get('canvas')
+    savedViewbox = canvas.viewbox()
+  }
+}
+
+const restoreViewbox = () => {
+  if (modeler.value && savedViewbox) {
+    const canvas = modeler.value.get('canvas')
+    canvas.viewbox(savedViewbox)
+  }
+}
+
+// 自定义 Context Pad 函数
+const CustomContextPad = function(this: any, contextPad: any, eventBus: any, elementFactory: any, injector: any) {
   this.getContextPadEntries = function(element: any) {
     const entries = contextPad.getContextPadEntries(element)
     
@@ -75,8 +111,7 @@ function CustomContextPad(contextPad: any, eventBus: any, elementFactory: any, i
             type: 'bpmn:SequenceFlow'
           })
           
-          // 触发变更事件
-          eventBus.fire('commandStack.changed')
+          // 不需要手动触发 commandStack.changed，modeling.connect 会自动触发
         }
       },
       html: '<div class="entry-icon">➕</div>'
@@ -84,6 +119,12 @@ function CustomContextPad(contextPad: any, eventBus: any, elementFactory: any, i
     
     return entries
   }
+}
+
+// 自定义 Context Pad 模块
+const CustomContextPadModule = {
+  __init__: ['contextPad'],
+  contextPad: ['type', CustomContextPad]
 }
 
 // 初始化 BPMN 编辑器
@@ -95,8 +136,13 @@ const initModeler = (): void => {
       container: container.value,
       additionalModules: [
         BpmnPropertiesPanelModule,
-        CustomContextPadModule
+        BpmnPropertiesProviderModule,
+        CustomContextPadModule,
+        UserTaskExtensionModule
       ],
+      moddleExtensions: {
+        usertaskext: userTaskExtension
+      },
       propertiesPanel: {
         parent: '#properties-panel'
       },
@@ -130,15 +176,10 @@ const setupEventListeners = (): void => {
     emit('shown')
   })
 
+  // 使用防抖函数避免频繁的 XML 保存
   modeler.value.on('commandStack.changed', () => {
-    if (modeler.value) {
-      modeler.value.saveXML({ format: true }).then((result: any) => {
-        emit('changed', result.xml)
-      }).catch((error: Error) => {
-        console.error('Failed to save XML:', error)
-        emit('error', error)
-      })
-    }
+    saveViewbox() // 保存当前视口位置
+    debouncedSave()
   })
 
   modeler.value.on('error', (event: BpmnEvent) => {
@@ -153,7 +194,16 @@ const loadXml = async (xml: string): Promise<void> => {
 
   try {
     emit('loading')
+    // 保存当前视口位置
+    saveViewbox()
+    
     await modeler.value.importXML(xml)
+    
+    // 恢复视口位置
+    setTimeout(() => {
+      restoreViewbox()
+    }, 100)
+    
     emit('shown')
   } catch (error) {
     console.error('Failed to import XML:', error)
@@ -206,8 +256,10 @@ const createDefaultDiagram = async (): Promise<void> => {
 }
 
 // 监听 XML 变化
+let lastXml = ''
 watch(() => props.xml, (newXml) => {
-  if (newXml && modeler.value) {
+  if (newXml && modeler.value && newXml !== lastXml) {
+    lastXml = newXml
     loadXml(newXml)
   }
 })
@@ -250,6 +302,12 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  // 清理定时器
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+  }
+  
+  // 销毁模型器
   if (modeler.value) {
     modeler.value.destroy()
   }

@@ -1,0 +1,59 @@
+{
+  "name": "UserTaskExtension",
+  "uri": "http://example.com/schema/bpmn/userTaskExtension",
+  "prefix": "usertaskext",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "types": [
+    {
+      "name": "UserTaskExtension",
+      "extends": [
+        "bpmn:UserTask"
+      ],
+      "properties": [
+        {
+          "name": "customFields",
+          "type": "CustomField",
+          "isMany": true
+        },
+        {
+          "name": "approvalLevel",
+          "type": "Integer"
+        },
+        {
+          "name": "priority",
+          "type": "String"
+        },
+        {
+          "name": "assignee",
+          "type": "String"
+        },
+        {
+          "name": "dueDate",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "CustomField",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "value",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "type",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    }
+  ]
+}

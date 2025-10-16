@@ -11,6 +11,7 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@bpmn-io/properties-panel": "^3.33.0",
     "bpmn-js": "^11.5.0",
     "bpmn-js-properties-panel": "^1.26.0",
     "vue": "^3.3.4",
