@@ -13,6 +13,7 @@ import {
 } from 'bpmn-js-properties-panel';
 import UserTaskExtensionModule from '../extensions/usertask/UserTaskExtensionModule'
 import userTaskExtension from '../extensions/usertask/userTaskExtension.json'
+import { LocalStorageService } from '../services/localStorageService'
 import type { BpmnModelerInstance, BpmnEvent } from '../types'
 
 // Props
@@ -48,6 +49,12 @@ const debouncedSave = () => {
     if (modeler.value) {
       modeler.value.saveXML({ format: true }).then((result: any) => {
         emit('changed', result.xml)
+        
+        // 自动保存到 localStorage
+        if (LocalStorageService.isAvailable()) {
+          LocalStorageService.saveDiagram(result.xml, 'Auto-saved Diagram')
+        }
+        
         // 保存完成后恢复视口位置
         setTimeout(() => {
           restoreViewbox()

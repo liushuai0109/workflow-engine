@@ -103,6 +103,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import BpmnEditor from './components/BpmnEditor.vue'
+import { LocalStorageService } from './services/localStorageService'
 import type { BpmnOptions, FileOperationResult, FileValidationResult } from './types'
 
 // 响应式数据
@@ -195,6 +196,12 @@ const newDiagram = (): void => {
 </bpmn:definitions>`
   
   currentDiagram.value = defaultXml
+  
+  // 保存到 localStorage
+  if (LocalStorageService.isAvailable()) {
+    LocalStorageService.saveDiagram(defaultXml, 'New Diagram')
+  }
+  
   showStatus('New diagram created', 'success')
 }
 
@@ -223,6 +230,12 @@ const processFile = (file: File): void => {
       const content = e.target?.result as string
       if (isValidBpmnXml(content)) {
         currentDiagram.value = content
+        
+        // 保存到 localStorage
+        if (LocalStorageService.isAvailable()) {
+          LocalStorageService.saveDiagram(content, file.name)
+        }
+        
         showStatus(`File loaded: ${file.name}`, 'success')
       } else {
         showStatus('Invalid BPMN content', 'error')
@@ -330,6 +343,15 @@ const handleDiagramChanged = (xml: string): void => {
 // 生命周期
 onMounted(() => {
   console.log('BPMN Explorer initialized')
+  
+  // 尝试从 localStorage 加载保存的图表
+  if (LocalStorageService.isAvailable() && LocalStorageService.hasSavedDiagram()) {
+    const savedDiagram = LocalStorageService.loadDiagram()
+    if (savedDiagram && !currentDiagram.value) {
+      console.log('Loading saved diagram from localStorage:', savedDiagram.name)
+      currentDiagram.value = savedDiagram.xml
+    }
+  }
 })
 
 onBeforeUnmount(() => {
