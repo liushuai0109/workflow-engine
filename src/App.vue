@@ -16,33 +16,15 @@
           New
         </button>
       </div>
-      
-      <div class="toolbar-right">
-        <button @click="togglePalette" class="btn btn-outline">
-          <span class="icon">🎨</span>
-          {{ showPalette ? 'Hide' : 'Show' }} Palette
-        </button>
-        <button @click="toggleProperties" class="btn btn-outline">
-          <span class="icon">⚙️</span>
-          {{ showProperties ? 'Hide' : 'Show' }} Properties
-        </button>
-      </div>
     </div>
 
     <!-- 主内容区域 -->
     <div class="main-content">
       <!-- BPMN 编辑器 -->
-      <div class="editor-container" :class="{ 'with-properties': showProperties }">
-        <BpmnEditor
-          v-if="currentDiagram"
-          :xml="currentDiagram"
-          :options="bpmnOptions"
-          @error="handleError"
-          @shown="handleShown"
-          @loading="handleLoading"
-          @changed="handleDiagramChanged"
-        />
-        
+      <div class="editor-container">
+        <BpmnEditor v-if="currentDiagram" :xml="currentDiagram" @error="handleError"
+          @shown="handleShown" @loading="handleLoading" @changed="handleDiagramChanged" />
+
         <!-- 欢迎界面 -->
         <div v-else class="welcome-screen">
           <div class="welcome-content">
@@ -66,12 +48,7 @@
       </div>
 
       <!-- Properties Panel -->
-      <div v-if="showProperties" class="properties-panel">
-        <div class="properties-header">
-          <h3>Properties</h3>
-        </div>
-        <div id="properties-panel" class="properties-content"></div>
-      </div>
+      <div class="properties-panel" id="properties-panel"></div>
     </div>
 
     <!-- 状态栏 -->
@@ -90,13 +67,7 @@
     </div>
 
     <!-- 隐藏的文件输入 -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept=".bpmn,.xml"
-      @change="handleFileSelect"
-      style="display: none"
-    />
+    <input ref="fileInput" type="file" accept=".bpmn,.xml" @change="handleFileSelect" style="display: none" />
   </div>
 </template>
 
@@ -108,25 +79,11 @@ import type { BpmnOptions, FileOperationResult, FileValidationResult } from './t
 
 // 响应式数据
 const currentDiagram = ref<string>('')
-const showPalette = ref<boolean>(true)
-const showProperties = ref<boolean>(true)
 const isLoading = ref<boolean>(false)
 const hasError = ref<boolean>(false)
 const errorMessage = ref<string>('')
 const lastSaved = ref<Date | null>(null)
 const fileInput = ref<HTMLInputElement>()
-
-// BPMN 配置
-const bpmnOptions = reactive<BpmnOptions>({
-  propertiesPanel: {
-    parent: '#properties-panel'
-  },
-  additionalModules: [],
-  moddleExtensions: [],
-  keyboard: {
-    bindTo: document
-  }
-})
 
 // 文件操作
 const openFile = (): void => {
@@ -135,7 +92,7 @@ const openFile = (): void => {
 
 const saveFile = async (): Promise<void> => {
   if (!currentDiagram.value) return
-  
+
   try {
     const blob = new Blob([currentDiagram.value], { type: 'application/xml' })
     const url = URL.createObjectURL(blob)
@@ -146,7 +103,7 @@ const saveFile = async (): Promise<void> => {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    
+
     lastSaved.value = new Date()
     showStatus('File saved successfully', 'success')
   } catch (error) {
@@ -194,14 +151,14 @@ const newDiagram = (): void => {
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`
-  
+
   currentDiagram.value = defaultXml
-  
+
   // 保存到 localStorage
   if (LocalStorageService.isAvailable()) {
     LocalStorageService.saveDiagram(defaultXml, 'New Diagram')
   }
-  
+
   showStatus('New diagram created', 'success')
 }
 
@@ -210,7 +167,7 @@ const handleFileSelect = (event: Event): void => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  
+
   processFile(file)
 }
 
@@ -220,22 +177,22 @@ const processFile = (file: File): void => {
     showStatus(validation.error || 'Invalid file', 'error')
     return
   }
-  
+
   isLoading.value = true
   hasError.value = false
-  
+
   const reader = new FileReader()
   reader.onload = (e) => {
     try {
       const content = e.target?.result as string
       if (isValidBpmnXml(content)) {
         currentDiagram.value = content
-        
+
         // 保存到 localStorage
         if (LocalStorageService.isAvailable()) {
           LocalStorageService.saveDiagram(content, file.name)
         }
-        
+
         showStatus(`File loaded: ${file.name}`, 'success')
       } else {
         showStatus('Invalid BPMN content', 'error')
@@ -247,12 +204,12 @@ const processFile = (file: File): void => {
       isLoading.value = false
     }
   }
-  
+
   reader.onerror = () => {
     showStatus('Failed to read file', 'error')
     isLoading.value = false
   }
-  
+
   reader.readAsText(file, 'UTF-8')
 }
 
@@ -261,15 +218,15 @@ const validateFile = (file: File): FileValidationResult => {
   const maxSize = 10 * 1024 * 1024 // 10MB
   const allowedTypes = ['.bpmn', '.xml']
   const fileName = file.name.toLowerCase()
-  
+
   if (file.size > maxSize) {
     return { isValid: false, error: 'File size must be less than 10MB' }
   }
-  
+
   if (!allowedTypes.some(type => fileName.endsWith(type))) {
     return { isValid: false, error: 'Please select a BPMN or XML file' }
   }
-  
+
   return { isValid: true, size: file.size, type: file.type }
 }
 
@@ -278,9 +235,9 @@ const isValidBpmnXml = (content: string): boolean => {
     const parser = new DOMParser()
     const doc = parser.parseFromString(content, 'application/xml')
     const parseError = doc.querySelector('parsererror')
-    
+
     if (parseError) return false
-    
+
     // 检查是否包含 BPMN 命名空间
     return content.includes('http://www.omg.org/spec/BPMN/20100524/MODEL')
   } catch {
@@ -292,21 +249,12 @@ const isValidBpmnXml = (content: string): boolean => {
 const showStatus = (message: string, type: 'success' | 'error' | 'info'): void => {
   errorMessage.value = message
   hasError.value = type === 'error'
-  
+
   if (type === 'success' || type === 'info') {
     setTimeout(() => {
       errorMessage.value = ''
     }, 3000)
   }
-}
-
-// 工具函数
-const togglePalette = (): void => {
-  showPalette.value = !showPalette.value
-}
-
-const toggleProperties = (): void => {
-  showProperties.value = !showProperties.value
 }
 
 const formatTime = (date: Date): string => {
@@ -343,7 +291,7 @@ const handleDiagramChanged = (xml: string): void => {
 // 生命周期
 onMounted(() => {
   console.log('BPMN Explorer initialized')
-  
+
   // 尝试从 localStorage 加载保存的图表
   if (LocalStorageService.isAvailable() && LocalStorageService.hasSavedDiagram()) {
     const savedDiagram = LocalStorageService.loadDiagram()
@@ -455,10 +403,6 @@ onBeforeUnmount(() => {
   background: white;
 }
 
-.editor-container.with-properties {
-  flex: 0 0 70%;
-}
-
 .welcome-screen {
   display: flex;
   align-items: center;
@@ -499,7 +443,7 @@ onBeforeUnmount(() => {
 }
 
 .properties-panel {
-  flex: 0 0 30%;
+  width: 400px;
   background: white;
   border-left: 1px solid #e5e7eb;
   display: flex;
@@ -516,11 +460,6 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 16px;
   color: #374151;
-}
-
-.properties-content {
-  flex: 1;
-  overflow-y: auto;
 }
 
 .status-bar {

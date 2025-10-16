@@ -9,10 +9,10 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 import {
   BpmnPropertiesPanelModule,
-  BpmnPropertiesProviderModule
+  BpmnPropertiesProviderModule,
 } from 'bpmn-js-properties-panel';
-import UserTaskExtensionModule from '../extensions/usertask/UserTaskExtensionModule'
-import userTaskExtension from '../extensions/usertask/userTaskExtension.json'
+import XFlowExtensionModule from '../extensions/xflow/XFlowExtensionModule'
+import xflowExtension from '../extensions/xflow/xflowExtension.json'
 import { LocalStorageService } from '../services/localStorageService'
 import type { BpmnModelerInstance, BpmnEvent } from '../types'
 
@@ -144,11 +144,11 @@ const initModeler = (): void => {
       additionalModules: [
         BpmnPropertiesPanelModule,
         BpmnPropertiesProviderModule,
-        CustomContextPadModule,
-        UserTaskExtensionModule
+        // CustomContextPadModule,
+        XFlowExtensionModule
       ],
       moddleExtensions: {
-        usertaskext: userTaskExtension
+        xflow: xflowExtension
       },
       propertiesPanel: {
         parent: '#properties-panel'

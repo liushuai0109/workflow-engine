@@ -1,7 +1,22 @@
 // BPMN 扩展模块的主入口文件
 
-// UserTask 扩展
-export * from './usertask'
+// XFlow 统一扩展（推荐使用）
+export * from './xflow'
+
+// 旧版扩展（保持兼容性，但排除重复的类型）
+export { 
+  UserTaskRenderer,
+  UserTaskPropertiesProvider,
+  UserTaskExtensionModule,
+  userTaskExtension
+} from './usertask'
+
+export { 
+  ServiceTaskRenderer,
+  ServiceTaskPropertiesProvider,
+  ServiceTaskExtensionModule,
+  serviceTaskExtension
+} from './servicetask'
 
 // 共享类型（排除与 usertask 重复的类型）
 export type { 

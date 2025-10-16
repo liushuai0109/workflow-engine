@@ -1,0 +1,268 @@
+{
+  "name": "XFlowExtension",
+  "uri": "http://example.com/bpmn/xflow-extension",
+  "prefix": "xflow",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "associations": [],
+  "types": [
+    {
+      "name": "UserTaskExtension",
+      "extends": [
+        "bpmn:UserTask"
+      ],
+      "properties": [
+        {
+          "name": "priority",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "approvalLevel",
+          "type": "Integer",
+          "isAttr": true
+        },
+        {
+          "name": "assignee",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "dueDate",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "customFields",
+          "type": "CustomField",
+          "isMany": true
+        }
+      ]
+    },
+    {
+      "name": "ServiceTaskExtension",
+      "extends": [
+        "bpmn:ServiceTask"
+      ],
+      "properties": [
+        {
+          "name": "module",
+          "type": "XFlowModule",
+          "isMany": false
+        },
+        {
+          "name": "method",
+          "type": "XFlowMethod",
+          "isMany": false
+        }
+      ]
+    },
+    {
+      "name": "ScriptTaskExtension",
+      "extends": [
+        "bpmn:ScriptTask"
+      ],
+      "properties": [
+        {
+          "name": "scriptType",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "scriptEngine",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "timeout",
+          "type": "Integer",
+          "isAttr": true
+        },
+        {
+          "name": "retryCount",
+          "type": "Integer",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "BusinessRuleTaskExtension",
+      "extends": [
+        "bpmn:BusinessRuleTask"
+      ],
+      "properties": [
+        {
+          "name": "ruleSet",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "ruleEngine",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "decisionTable",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "ManualTaskExtension",
+      "extends": [
+        "bpmn:ManualTask"
+      ],
+      "properties": [
+        {
+          "name": "instructions",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "estimatedDuration",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "requiredSkills",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "ReceiveTaskExtension",
+      "extends": [
+        "bpmn:ReceiveTask"
+      ],
+      "properties": [
+        {
+          "name": "messageType",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "correlationKey",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "timeout",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "SendTaskExtension",
+      "extends": [
+        "bpmn:SendTask"
+      ],
+      "properties": [
+        {
+          "name": "messageType",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "targetEndpoint",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "retryPolicy",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "XFlowModule",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "version",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "author",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "license",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "XFlowMethod",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "parameters",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "returnType",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "async",
+          "type": "Boolean",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "CustomField",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "value",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "type",
+          "type": "String",
+          "isAttr": true,
+          "default": "text"
+        },
+        {
+          "name": "required",
+          "type": "Boolean",
+          "isAttr": true
+        }
+      ]
+    }
+  ]
+}

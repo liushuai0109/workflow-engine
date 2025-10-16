@@ -545,3 +545,204 @@ body {
   font-size: 14px;
   color: #374151;
 }
+
+/* ServiceTask 扩展样式 */
+.custom-service-task-elements {
+  pointer-events: none;
+}
+
+.custom-service-task-elements text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 8px;
+  fill: #374151;
+}
+
+.custom-service-task-elements .module-info text {
+  fill: #2563eb;
+  font-weight: bold;
+}
+
+.custom-service-task-elements .method-info text {
+  fill: #dc2626;
+  font-weight: bold;
+}
+
+/* 模块信息样式 */
+.module-info {
+  pointer-events: none;
+}
+
+.module-info text {
+  font-size: 9px;
+  fill: #2563eb;
+  font-weight: bold;
+}
+
+/* 方法信息样式 */
+.method-info {
+  pointer-events: none;
+}
+
+.method-info text {
+  font-size: 9px;
+  fill: #dc2626;
+  font-weight: bold;
+}
+
+/* XFlow 统一扩展样式 */
+.xflow-extension-elements {
+  pointer-events: none;
+}
+
+.xflow-extension-elements text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 8px;
+  fill: #374151;
+}
+
+/* 优先级指示器样式 */
+.priority-high {
+  fill: #ef4444 !important;
+}
+
+.priority-medium {
+  fill: #f59e0b !important;
+}
+
+.priority-low {
+  fill: #10b981 !important;
+}
+
+/* 审批级别指示器样式 */
+.approval-level-indicator {
+  fill: #3b82f6;
+  opacity: 0.8;
+}
+
+/* 脚本类型指示器样式 */
+.script-type-indicator {
+  fill: #7c3aed;
+  font-weight: bold;
+}
+
+/* 规则集指示器样式 */
+.rule-set-indicator {
+  fill: #059669;
+  font-weight: bold;
+}
+
+/* 时长指示器样式 */
+.duration-indicator {
+  fill: #0891b2;
+  font-weight: bold;
+}
+
+/* 消息类型指示器样式 */
+.message-type-indicator {
+  fill: #be185d;
+  font-weight: bold;
+}
+
+/* 自定义 Palette 样式 */
+.djs-palette .entry.xflow-task {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid #4c51bf;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.djs-palette .entry.xflow-task:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.djs-palette .entry.xflow-task .icon {
+  color: white;
+  font-size: 16px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* XFlow 任务组标题 */
+.djs-palette .group .group-label[data-group="xflow-tasks"] {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 4px 0;
+}
+
+/* 自定义 Context Pad 样式 */
+.djs-context-pad .entry.append-user-task,
+.djs-context-pad .entry.append-service-task {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid #4c51bf;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.djs-context-pad .entry.append-user-task:hover,
+.djs-context-pad .entry.append-service-task:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.djs-context-pad .entry.add-xflow-extension {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border: 2px solid #e53e3e;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.djs-context-pad .entry.add-xflow-extension:hover {
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Context Pad 图标样式 */
+.djs-context-pad .entry .icon {
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 工具提示样式 */
+.djs-context-pad .entry[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Palette 工具提示样式 */
+.djs-palette .entry[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  margin-right: 8px;
+}
