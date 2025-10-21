@@ -102,17 +102,16 @@ declare global {
 
 export interface PropertiesPanelEntry {
   id: string
-  label: string
-  type: string
-  get: (element: BpmnElement) => any
-  set: (element: BpmnElement, value: any) => void
-  selectOptions?: Array<{ name: string; value: string }>
+  element: BpmnElement
+  component: any
+  isEdited: (element: BpmnElement) => boolean
 }
 
 export interface PropertiesPanelGroup {
   id: string
   label: string
-  entries: PropertiesPanelEntry[]
+  component?: any
+  entries?: PropertiesPanelEntry[]
 }
 
 export interface BpmnRenderer {

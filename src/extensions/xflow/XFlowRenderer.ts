@@ -127,13 +127,13 @@ export default class XFlowRenderer extends BaseRenderer {
   // ServiceTask 扩展渲染
   private drawServiceTaskExtensions(parentNode: SVGElement, extension: ServiceTaskExtension, element: any): void {
     // 模块信息
-    if (extension.module) {
-      this.drawModuleInfo(parentNode, extension.module, element)
+    if (extension.extensionElements?.module) {
+      this.drawModuleInfo(parentNode, extension.extensionElements.module, element)
     }
 
     // 方法信息
-    if (extension.method) {
-      this.drawMethodInfo(parentNode, extension.method, element)
+    if (extension.extensionElements?.method) {
+      this.drawMethodInfo(parentNode, extension.extensionElements.method, element)
     }
   }
 
@@ -259,7 +259,7 @@ export default class XFlowRenderer extends BaseRenderer {
   }
 
   private drawModuleInfo(parentNode: SVGElement, module: any, element: any): void {
-    if (module.name) {
+    if (module.value) {
       const nameText = this.createElement('text', {
         x: '5',
         y: '15',
@@ -267,19 +267,8 @@ export default class XFlowRenderer extends BaseRenderer {
         fill: '#2563eb',
         'font-weight': 'bold'
       })
-      nameText.textContent = `Module: ${module.name}`
+      nameText.textContent = `Module: ${module.value}`
       parentNode.appendChild(nameText)
-    }
-
-    if (module.version) {
-      const versionText = this.createElement('text', {
-        x: '5',
-        y: '28',
-        'font-size': '8px',
-        fill: '#6b7280'
-      })
-      versionText.textContent = `v${module.version}`
-      parentNode.appendChild(versionText)
     }
   }
 
@@ -287,7 +276,7 @@ export default class XFlowRenderer extends BaseRenderer {
     const width = element.width || 100
     const height = element.height || 80
     
-    if (method.name) {
+    if (method.value) {
       const methodText = this.createElement('text', {
         x: (width - 5).toString(),
         y: (height - 15).toString(),
@@ -296,20 +285,8 @@ export default class XFlowRenderer extends BaseRenderer {
         fill: '#dc2626',
         'font-weight': 'bold'
       })
-      methodText.textContent = `Method: ${method.name}`
+      methodText.textContent = `Method: ${method.value}`
       parentNode.appendChild(methodText)
-    }
-
-    if (method.returnType) {
-      const returnText = this.createElement('text', {
-        x: (width - 5).toString(),
-        y: (height - 2).toString(),
-        'text-anchor': 'end',
-        'font-size': '8px',
-        fill: '#6b7280'
-      })
-      returnText.textContent = `→ ${method.returnType}`
-      parentNode.appendChild(returnText)
     }
   }
 

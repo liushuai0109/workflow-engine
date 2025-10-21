@@ -48,6 +48,8 @@ const debouncedSave = () => {
   saveTimeout = setTimeout(() => {
     if (modeler.value) {
       modeler.value.saveXML({ format: true }).then((result: any) => {
+        // 设置内部更新标记，避免触发 watch 重新加载
+        isInternalUpdate = true
         emit('changed', result.xml)
         
         // 自动保存到 localStorage
@@ -83,57 +85,6 @@ const restoreViewbox = () => {
   }
 }
 
-// 自定义 Context Pad 函数
-const CustomContextPad = function(this: any, contextPad: any, eventBus: any, elementFactory: any, injector: any) {
-  this.getContextPadEntries = function(element: any) {
-    const entries = contextPad.getContextPadEntries(element)
-    
-    // 添加自定义的 Append Element 按钮
-    entries['append-element'] = {
-      group: 'edit',
-      className: 'append-element',
-      title: 'Append Element',
-      action: {
-        click: function(event: any, element: any) {
-          // 创建新元素
-          const newElement = elementFactory.createShape({
-            type: 'bpmn:Task',
-            businessObject: {
-              name: 'New Task'
-            }
-          })
-          
-          // 添加到画布
-          const canvas = injector.get('canvas')
-          const elementRegistry = injector.get('elementRegistry')
-          const modeling = injector.get('modeling')
-          
-          const newShape = canvas.addShape(newElement, {
-            x: element.x + 100,
-            y: element.y
-          })
-          
-          // 创建连接
-          modeling.connect(element, newShape, {
-            type: 'bpmn:SequenceFlow'
-          })
-          
-          // 不需要手动触发 commandStack.changed，modeling.connect 会自动触发
-        }
-      },
-      html: '<div class="entry-icon">➕</div>'
-    }
-    
-    return entries
-  }
-}
-
-// 自定义 Context Pad 模块
-const CustomContextPadModule = {
-  __init__: ['contextPad'],
-  contextPad: ['type', CustomContextPad]
-}
-
 // 初始化 BPMN 编辑器
 const initModeler = (): void => {
   if (!container.value) return
@@ -144,11 +95,10 @@ const initModeler = (): void => {
       additionalModules: [
         BpmnPropertiesPanelModule,
         BpmnPropertiesProviderModule,
-        // CustomContextPadModule,
-        XFlowExtensionModule
+        XFlowExtensionModule,
       ],
       moddleExtensions: {
-        xflow: xflowExtension
+        xflow: xflowExtension,
       },
       propertiesPanel: {
         parent: '#properties-panel'
@@ -264,7 +214,15 @@ const createDefaultDiagram = async (): Promise<void> => {
 
 // 监听 XML 变化
 let lastXml = ''
+let isInternalUpdate = false // 标记是否为内部更新
+
 watch(() => props.xml, (newXml) => {
+  // 如果是内部更新触发的 XML 变化，不重新加载
+  if (isInternalUpdate) {
+    isInternalUpdate = false
+    return
+  }
+  
   if (newXml && modeler.value && newXml !== lastXml) {
     lastXml = newXml
     loadXml(newXml)

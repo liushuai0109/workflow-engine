@@ -9,19 +9,11 @@ export interface CustomField {
 }
 
 export interface XFlowModule {
-  name?: string
-  version?: string
-  description?: string
-  author?: string
-  license?: string
+  value?: string
 }
 
 export interface XFlowMethod {
-  name?: string
-  parameters?: string
-  returnType?: string
-  description?: string
-  async?: boolean
+  value?: string
 }
 
 // UserTask 扩展
@@ -35,8 +27,10 @@ export interface UserTaskExtension extends Injectable {
 
 // ServiceTask 扩展
 export interface ServiceTaskExtension extends Injectable {
-  module?: XFlowModule
-  method?: XFlowMethod
+  extensionElements?: {
+    module?: XFlowModule
+    method?: XFlowMethod
+  }
 }
 
 // ScriptTask 扩展
