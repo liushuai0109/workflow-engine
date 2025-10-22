@@ -38,6 +38,22 @@ export type EntryFactory =
   | typeof ListEntry
   | typeof SimpleEntry;
 
+// 属性条目属性接口
+export interface EntryProps {
+  element: BpmnElement;
+  id: string;
+  label: string;
+  getValue: () => string;
+  setValue: (value: string) => void;
+  debounce?: any;
+  placeholder?: string;
+  description?: string;
+  tooltip?: string;
+  validate?: (value: string) => string | null;
+  disabled?: boolean;
+  [key: string]: any; // 允许其他属性
+}
+
 // 属性配置接口
 export interface PropertyConfig {
   propertyPath: string;
@@ -386,7 +402,7 @@ export function createPropertyComponent(
       }
     };
 
-    return entry({
+    const entryProps: EntryProps = {
       id,
       element,
       description: translate(config.description || ""),
@@ -396,7 +412,9 @@ export function createPropertyComponent(
       debounce,
       tooltip: translate(config.tooltip || ""),
       placeholder: config.placeholder,
-    });
+    };
+
+    return entry(entryProps);
   };
   
   // 缓存组件并返回
