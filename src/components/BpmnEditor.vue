@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 import {
   BpmnPropertiesPanelModule,
@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 // Refs
 const container = ref<HTMLElement>()
-const modeler = ref<BpmnModelerInstance>()
+let modeler: BpmnModelerInstance;
 
 // 防抖函数
 let saveTimeout: NodeJS.Timeout | null = null
@@ -46,8 +46,8 @@ const debouncedSave = () => {
     clearTimeout(saveTimeout)
   }
   saveTimeout = setTimeout(() => {
-    if (modeler.value) {
-      modeler.value.saveXML({ format: true }).then((result: any) => {
+    if (modeler) {
+      modeler.saveXML({ format: true }).then((result: any) => {
         // 自动保存到 localStorage
         if (LocalStorageService.isAvailable()) {
           LocalStorageService.saveDiagram(result.xml, 'Auto-saved Diagram')
@@ -68,15 +68,15 @@ const debouncedSave = () => {
 // 视口位置管理
 let savedViewbox: any = null
 const saveViewbox = () => {
-  if (modeler.value) {
-    const canvas = modeler.value.get('canvas')
+  if (modeler) {
+    const canvas = modeler.get('canvas')
     savedViewbox = canvas.viewbox()
   }
 }
 
 const restoreViewbox = () => {
-  if (modeler.value && savedViewbox) {
-    const canvas = modeler.value.get('canvas')
+  if (modeler && savedViewbox) {
+    const canvas = modeler.get('canvas')
     canvas.viewbox(savedViewbox)
   }
 }
@@ -86,7 +86,7 @@ const initModeler = (): void => {
   if (!container.value) return
 
   try {
-    modeler.value = new BpmnModeler({
+    modeler = new BpmnModeler({
       container: container.value,
       additionalModules: [
         BpmnPropertiesPanelModule,
@@ -122,20 +122,20 @@ const initModeler = (): void => {
 
 // 设置事件监听器
 const setupEventListeners = (): void => {
-  if (!modeler.value) return
+  if (!modeler) return
 
-  modeler.value.on('import.done', (event: BpmnEvent) => {
+  modeler.on('import.done', (event: BpmnEvent) => {
     console.log('BPMN diagram imported successfully')
     emit('shown')
   })
 
   // 使用防抖函数避免频繁的 XML 保存
-  modeler.value.on('commandStack.changed', () => {
+  modeler.on('commandStack.changed', () => {
     saveViewbox() // 保存当前视口位置
     debouncedSave()
   })
 
-  modeler.value.on('error', (event: BpmnEvent) => {
+  modeler.on('error', (event: BpmnEvent) => {
     console.error('BPMN modeler error:', event)
     emit('error', new Error('BPMN modeler error'))
   })
@@ -143,14 +143,14 @@ const setupEventListeners = (): void => {
 
 // 加载 XML
 const loadXml = async (xml: string): Promise<void> => {
-  if (!modeler.value) return
+  if (!modeler) return
 
   try {
     emit('loading')
     // 保存当前视口位置
     saveViewbox()
     
-    await modeler.value.importXML(xml)
+    await modeler.importXML(xml)
     
     // 恢复视口位置
     setTimeout(() => {
@@ -208,29 +208,12 @@ const createDefaultDiagram = async (): Promise<void> => {
   await loadXml(defaultXml)
 }
 
-// 监听 XML 变化
-let lastXml = ''
-let isInternalUpdate = false // 标记是否为内部更新
-
-// watch(() => props.xml, (newXml) => {
-//   // 如果是内部更新触发的 XML 变化，不重新加载
-//   if (isInternalUpdate) {
-//     isInternalUpdate = false
-//     return
-//   }
-  
-//   if (newXml && modeler.value && newXml !== lastXml) {
-//     lastXml = newXml
-//     loadXml(newXml)
-//   }
-// })
-
 // 暴露方法给父组件
 const getXml = async (): Promise<string> => {
-  if (!modeler.value) return ''
+  if (!modeler) return ''
   
   try {
-    const result = await modeler.value.saveXML({ format: true })
+    const result = await modeler.saveXML({ format: true })
     return result.xml
   } catch (error) {
     console.error('Failed to get XML:', error)
@@ -239,10 +222,10 @@ const getXml = async (): Promise<string> => {
 }
 
 const getSvg = async (): Promise<string> => {
-  if (!modeler.value) return ''
+  if (!modeler) return ''
   
   try {
-    const result = await modeler.value.saveSVG()
+    const result = await modeler.saveSVG()
     return result.svg
   } catch (error) {
     console.error('Failed to get SVG:', error)
@@ -250,11 +233,15 @@ const getSvg = async (): Promise<string> => {
   }
 }
 
+const getModeler = (): BpmnModelerInstance => {
+  return modeler
+}
+
 // 暴露方法
 defineExpose({
   getXml,
   getSvg,
-  modeler: modeler.value
+  getModeler
 })
 
 // 生命周期
@@ -269,8 +256,8 @@ onBeforeUnmount(() => {
   }
   
   // 销毁模型器
-  if (modeler.value) {
-    modeler.value.destroy()
+  if (modeler) {
+    modeler.destroy()
   }
 })
 </script>
