@@ -65,16 +65,29 @@ function findExtensionElementByType(
   );
 }
 
+// 组件缓存，避免重复创建
+const componentCache = new Map<string, any>();
+
 // 工厂方法：创建属性组件
 export function createPropertyComponent(
   entry: EntryFactory,
   config: PropertyConfig
 ) {
-  return (props: { element: BpmnElement; id: string }) => {
+  // 创建缓存键
+  const cacheKey = `${entry.name}-${config.propertyPath}-${config.elementType || 'default'}`;
+  
+  // 如果缓存中存在，直接返回
+  if (componentCache.has(cacheKey)) {
+    return componentCache.get(cacheKey);
+  }
+  
+  // 创建新组件并缓存
+  const component = (props: { element: BpmnElement; id: string }) => {
     const { element, id } = props;
     const modeling = useService("modeling");
     const translate = useService("translate");
     const debounce = useService("debounceInput");
+    const commandStack = useService("commandStack");
 
     const getValue = (): string => {
       const businessObject = getBusinessObject(props.element);
@@ -198,9 +211,13 @@ export function createPropertyComponent(
           extensionElement[propertyName] = value;
         }
 
-        // 使用 updateModdleProperties 避免元素失焦
-        modeling.updateModdleProperties(props.element, businessObject, {
-          extensionElements: businessObject.extensionElements,
+        // 使用 commandStack 支持撤销/重做
+        commandStack.execute('element.updateModdleProperties', {
+          element: props.element,
+          moddleElement: businessObject,
+          properties: {
+            extensionElements: businessObject.extensionElements,
+          }
         });
         return;
       }
@@ -209,8 +226,12 @@ export function createPropertyComponent(
       const pathParts = config.propertyPath.split(".");
       if (pathParts.length === 1) {
         // 简单属性
-        modeling.updateModdleProperties(props.element, businessObject, {
-          [config.propertyPath]: value,
+        commandStack.execute('element.updateModdleProperties', {
+          element: props.element,
+          moddleElement: businessObject,
+          properties: {
+            [config.propertyPath]: value,
+          }
         });
       } else {
         // 处理扩展元素
@@ -270,8 +291,12 @@ export function createPropertyComponent(
           }
 
           // 触发更新
-          modeling.updateModdleProperties(props.element, businessObject, {
-            extensionElements: businessObject.extensionElements,
+          commandStack.execute('element.updateModdleProperties', {
+            element: props.element,
+            moddleElement: businessObject,
+            properties: {
+              extensionElements: businessObject.extensionElements,
+            }
           });
           return;
         }
@@ -353,7 +378,11 @@ export function createPropertyComponent(
           }
         }
 
-        modeling.updateModdleProperties(props.element, businessObject, updateObj);
+        commandStack.execute('element.updateModdleProperties', {
+          element: props.element,
+          moddleElement: businessObject,
+          properties: updateObj
+        });
       }
     };
 
@@ -369,6 +398,10 @@ export function createPropertyComponent(
       placeholder: config.placeholder,
     });
   };
+  
+  // 缓存组件并返回
+  componentCache.set(cacheKey, component);
+  return component;
 }
 
 // 简化的工厂方法：直接创建属性配置对象

@@ -48,10 +48,6 @@ const debouncedSave = () => {
   saveTimeout = setTimeout(() => {
     if (modeler.value) {
       modeler.value.saveXML({ format: true }).then((result: any) => {
-        // 设置内部更新标记，避免触发 watch 重新加载
-        isInternalUpdate = true
-        emit('changed', result.xml)
-        
         // 自动保存到 localStorage
         if (LocalStorageService.isAvailable()) {
           LocalStorageService.saveDiagram(result.xml, 'Auto-saved Diagram')
@@ -59,7 +55,7 @@ const debouncedSave = () => {
         
         // 保存完成后恢复视口位置
         setTimeout(() => {
-          restoreViewbox()
+          // restoreViewbox()
         }, 50)
       }).catch((error: Error) => {
         console.error('Failed to save XML:', error)
@@ -216,18 +212,18 @@ const createDefaultDiagram = async (): Promise<void> => {
 let lastXml = ''
 let isInternalUpdate = false // 标记是否为内部更新
 
-watch(() => props.xml, (newXml) => {
-  // 如果是内部更新触发的 XML 变化，不重新加载
-  if (isInternalUpdate) {
-    isInternalUpdate = false
-    return
-  }
+// watch(() => props.xml, (newXml) => {
+//   // 如果是内部更新触发的 XML 变化，不重新加载
+//   if (isInternalUpdate) {
+//     isInternalUpdate = false
+//     return
+//   }
   
-  if (newXml && modeler.value && newXml !== lastXml) {
-    lastXml = newXml
-    loadXml(newXml)
-  }
-})
+//   if (newXml && modeler.value && newXml !== lastXml) {
+//     lastXml = newXml
+//     loadXml(newXml)
+//   }
+// })
 
 // 暴露方法给父组件
 const getXml = async (): Promise<string> => {

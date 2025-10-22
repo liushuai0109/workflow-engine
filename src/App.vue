@@ -284,7 +284,7 @@ const handleLoading = (): void => {
 }
 
 const handleDiagramChanged = (xml: string): void => {
-  currentDiagram.value = xml
+  // currentDiagram.value = xml
   console.log('Diagram changed')
 }
 
