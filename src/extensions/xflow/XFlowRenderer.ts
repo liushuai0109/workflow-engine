@@ -4,24 +4,11 @@ import type {
   BpmnElement, 
   BpmnRenderer, 
   TextRenderer, 
-  EventBus, 
-  ElementFactory, 
-  Injector,
-  Canvas,
-  Modeling,
-  ElementRegistry,
   Injectable
 } from '../shared/types'
 import type { 
   UserTaskExtension, 
-  ServiceTaskExtension, 
-  ScriptTaskExtension,
-  BusinessRuleTaskExtension,
-  ManualTaskExtension,
-  ReceiveTaskExtension,
-  SendTaskExtension,
-  TaskType,
-  EXTENSION_TYPE_MAP
+  ServiceTaskExtension,
 } from './types'
 
 const HIGH_PRIORITY = 1500
@@ -86,16 +73,6 @@ export default class XFlowRenderer extends BaseRenderer {
       this.drawUserTaskExtensions(xflowContainer, businessObject as UserTaskExtension, element)
     } else if (is(element, 'bpmn:ServiceTask') && businessObject.$instanceOf('xflow:ServiceTaskExtension')) {
       this.drawServiceTaskExtensions(xflowContainer, businessObject as ServiceTaskExtension, element)
-    } else if (is(element, 'bpmn:ScriptTask') && businessObject.$instanceOf('xflow:ScriptTaskExtension')) {
-      this.drawScriptTaskExtensions(xflowContainer, businessObject as ScriptTaskExtension, element)
-    } else if (is(element, 'bpmn:BusinessRuleTask') && businessObject.$instanceOf('xflow:BusinessRuleTaskExtension')) {
-      this.drawBusinessRuleTaskExtensions(xflowContainer, businessObject as BusinessRuleTaskExtension, element)
-    } else if (is(element, 'bpmn:ManualTask') && businessObject.$instanceOf('xflow:ManualTaskExtension')) {
-      this.drawManualTaskExtensions(xflowContainer, businessObject as ManualTaskExtension, element)
-    } else if (is(element, 'bpmn:ReceiveTask') && businessObject.$instanceOf('xflow:ReceiveTaskExtension')) {
-      this.drawReceiveTaskExtensions(xflowContainer, businessObject as ReceiveTaskExtension, element)
-    } else if (is(element, 'bpmn:SendTask') && businessObject.$instanceOf('xflow:SendTaskExtension')) {
-      this.drawSendTaskExtensions(xflowContainer, businessObject as SendTaskExtension, element)
     }
     
     parentNode.appendChild(xflowContainer)
@@ -134,51 +111,6 @@ export default class XFlowRenderer extends BaseRenderer {
     // 方法信息
     if (extension.extensionElements?.method) {
       this.drawMethodInfo(parentNode, extension.extensionElements.method, element)
-    }
-  }
-
-  // ScriptTask 扩展渲染
-  private drawScriptTaskExtensions(parentNode: SVGElement, extension: ScriptTaskExtension, element: any): void {
-    // 脚本类型
-    if (extension.scriptType) {
-      this.drawScriptTypeIndicator(parentNode, extension.scriptType, element)
-    }
-
-    // 超时时间
-    if (extension.timeout) {
-      this.drawTimeoutIndicator(parentNode, extension.timeout, element)
-    }
-  }
-
-  // BusinessRuleTask 扩展渲染
-  private drawBusinessRuleTaskExtensions(parentNode: SVGElement, extension: BusinessRuleTaskExtension, element: any): void {
-    // 规则集
-    if (extension.ruleSet) {
-      this.drawRuleSetIndicator(parentNode, extension.ruleSet, element)
-    }
-  }
-
-  // ManualTask 扩展渲染
-  private drawManualTaskExtensions(parentNode: SVGElement, extension: ManualTaskExtension, element: any): void {
-    // 预估时长
-    if (extension.estimatedDuration) {
-      this.drawDurationIndicator(parentNode, extension.estimatedDuration, element)
-    }
-  }
-
-  // ReceiveTask 扩展渲染
-  private drawReceiveTaskExtensions(parentNode: SVGElement, extension: ReceiveTaskExtension, element: any): void {
-    // 消息类型
-    if (extension.messageType) {
-      this.drawMessageTypeIndicator(parentNode, extension.messageType, element)
-    }
-  }
-
-  // SendTask 扩展渲染
-  private drawSendTaskExtensions(parentNode: SVGElement, extension: SendTaskExtension, element: any): void {
-    // 目标端点
-    if (extension.targetEndpoint) {
-      this.drawTargetEndpointIndicator(parentNode, extension.targetEndpoint, element)
     }
   }
 
@@ -288,85 +220,6 @@ export default class XFlowRenderer extends BaseRenderer {
       methodText.textContent = `Method: ${method.value}`
       parentNode.appendChild(methodText)
     }
-  }
-
-  private drawScriptTypeIndicator(parentNode: SVGElement, scriptType: string, element: any): void {
-    const text = this.createElement('text', {
-      x: 5,
-      y: 15,
-      'font-size': '8px',
-      fill: '#7c3aed',
-      'font-weight': 'bold'
-    })
-    
-    text.textContent = `Script: ${scriptType}`
-    parentNode.appendChild(text)
-  }
-
-  private drawTimeoutIndicator(parentNode: SVGElement, timeout: number, element: any): void {
-    const width = element.width || 100
-    const text = this.createElement('text', {
-      x: (width - 5).toString(),
-      y: 15,
-      'text-anchor': 'end',
-      'font-size': '8px',
-      fill: '#f59e0b'
-    })
-    
-    text.textContent = `Timeout: ${timeout}s`
-    parentNode.appendChild(text)
-  }
-
-  private drawRuleSetIndicator(parentNode: SVGElement, ruleSet: string, element: any): void {
-    const text = this.createElement('text', {
-      x: 5,
-      y: 15,
-      'font-size': '8px',
-      fill: '#059669',
-      'font-weight': 'bold'
-    })
-    
-    text.textContent = `Rules: ${ruleSet}`
-    parentNode.appendChild(text)
-  }
-
-  private drawDurationIndicator(parentNode: SVGElement, duration: string, element: any): void {
-    const text = this.createElement('text', {
-      x: 5,
-      y: 15,
-      'font-size': '8px',
-      fill: '#0891b2',
-      'font-weight': 'bold'
-    })
-    
-    text.textContent = `Duration: ${duration}`
-    parentNode.appendChild(text)
-  }
-
-  private drawMessageTypeIndicator(parentNode: SVGElement, messageType: string, element: any): void {
-    const text = this.createElement('text', {
-      x: 5,
-      y: 15,
-      'font-size': '8px',
-      fill: '#be185d',
-      'font-weight': 'bold'
-    })
-    
-    text.textContent = `Msg: ${messageType}`
-    parentNode.appendChild(text)
-  }
-
-  private drawTargetEndpointIndicator(parentNode: SVGElement, endpoint: string, element: any): void {
-    const text = this.createElement('text', {
-      x: 5,
-      y: 15,
-      'font-size': '8px',
-      fill: '#be185d',
-      'font-weight': 'bold'
-    })
-    
-    text.textContent = `To: ${endpoint}`
-    parentNode.appendChild(text)
   }
 
   private createElement(tag: string, attrs: Record<string, string | number> = {}): SVGElement {

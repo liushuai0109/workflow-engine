@@ -2,8 +2,6 @@
 
 export { default as XFlowRenderer } from './XFlowRenderer'
 export { default as XFlowPropertiesProvider } from './XFlowPropertiesProvider'
-export { default as CustomContextPad } from './CustomContextPad'
-export { default as CustomPalette } from './CustomPalette'
 export { default as XFlowExtensionModule } from './XFlowExtensionModule'
 export { default as xflowExtension } from './xflowExtension.json'
 

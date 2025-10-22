@@ -2,14 +2,8 @@ import { getBusinessObject } from "bpmn-js/lib/util/ModelUtil";
 import { is } from "bpmn-js/lib/util/ModelUtil";
 import {
   TextFieldEntry,
-  isTextFieldEntryEdited,
-  SelectEntry,
-  isSelectEntryEdited,
-  NumberFieldEntry,
-  isNumberFieldEntryEdited,
   ListGroup,
 } from "@bpmn-io/properties-panel";
-import userTaskProps from "./provider/user-task/userTaskProps";
 import type {
   BpmnElement,
   PropertiesPanel,
@@ -17,20 +11,8 @@ import type {
   Injector,
   Modeling,
   PropertiesPanelGroup,
-  PropertiesPanelEntry,
   Injectable,
 } from "../shared/types";
-import type {
-  UserTaskExtension,
-  ServiceTaskExtension,
-  ScriptTaskExtension,
-  BusinessRuleTaskExtension,
-  ManualTaskExtension,
-  ReceiveTaskExtension,
-  SendTaskExtension,
-  TaskType,
-  EXTENSION_TYPE_MAP,
-} from "./types";
 import { createPropertyEntry } from "./PropertyEntryFactory";
 
 console.log("XFlowPropertiesProvider module loaded");
@@ -95,18 +77,12 @@ export default class XFlowPropertiesProvider {
       return this.createUserTaskExtensionGroup(element, businessObject);
     } else if (is(element, "bpmn:ServiceTask")) {
       return this.createServiceTaskExtensionGroup(element, businessObject);
+    } else if (is(element, "bpmn:ExclusiveGateway") || 
+               is(element, "bpmn:InclusiveGateway") || 
+               is(element, "bpmn:ParallelGateway") ||
+               is(element, "bpmn:ComplexGateway")) {
+      return this.createGatewayConditionGroup(element, businessObject);
     }
-    // else if (is(element, 'bpmn:ScriptTask') && businessObject.$instanceOf('xflow:ScriptTaskExtension')) {
-    //   return this.createScriptTaskExtensionGroup(element, businessObject as ScriptTaskExtension)
-    // } else if (is(element, 'bpmn:BusinessRuleTask') && businessObject.$instanceOf('xflow:BusinessRuleTaskExtension')) {
-    //   return this.createBusinessRuleTaskExtensionGroup(element, businessObject as BusinessRuleTaskExtension)
-    // } else if (is(element, 'bpmn:ManualTask') && businessObject.$instanceOf('xflow:ManualTaskExtension')) {
-    //   return this.createManualTaskExtensionGroup(element, businessObject as ManualTaskExtension)
-    // } else if (is(element, 'bpmn:ReceiveTask') && businessObject.$instanceOf('xflow:ReceiveTaskExtension')) {
-    //   return this.createReceiveTaskExtensionGroup(element, businessObject as ReceiveTaskExtension)
-    // } else if (is(element, 'bpmn:SendTask') && businessObject.$instanceOf('xflow:SendTaskExtension')) {
-    //   return this.createSendTaskExtensionGroup(element, businessObject as SendTaskExtension)
-    // }
 
     return null;
   }
@@ -149,6 +125,109 @@ export default class XFlowPropertiesProvider {
     };
   }
 
+  // Gateway 条件编辑组
+  private createGatewayConditionGroup(
+    element: BpmnElement,
+    businessObject: any
+  ): PropertiesPanelGroup {
+    const entries = this.createGatewayConditionEntries(element, businessObject);
+
+    return {
+      id: "gatewayConditions",
+      label: this.translate("Gateway Conditions"),
+      entries
+    };
+  }
+
+  // 创建 Gateway 条件条目
+  private createGatewayConditionEntries(
+    element: BpmnElement,
+    businessObject: any
+  ): any[] {
+    const entries: any[] = [];
+    
+    // 获取所有从该 gateway 出发的 sequence flows
+    const outgoingFlows = businessObject.outgoing || [];
+    
+    outgoingFlows.forEach((flow: any, index: number) => {
+      entries.push({
+        id: `gateway-conditions-condition-${index}`,
+        component: this.createConditionExpressionComponent.bind(this),
+        idPrefix: `gateway-conditions-condition-${index}`,
+        element,
+        flow,
+        flowIndex: index
+      });
+    });
+
+    return entries;
+  }
+
+  // 创建条件表达式组件
+  private createConditionExpressionComponent(props: { idPrefix: string, element: BpmnElement, flow: any, flowIndex: number }): any {
+    const {
+      idPrefix,
+      element,
+      flow,
+      flowIndex
+    } = props;
+    const commandStack = this.injector.get('commandStack');
+    const translate = this.injector.get('translate');
+    const debounce = this.injector.get('debounceInput');
+    const moddle = this.injector.get('moddle');
+
+    const setValue = (value: string) => {
+      if (!value || value.trim() === '') {
+        // 删除 condition expression
+        commandStack.execute('element.updateModdleProperties', {
+          element,
+          moddleElement: flow,
+          properties: {
+            conditionExpression: undefined
+          }
+        });
+      } else {
+        // 创建或更新 condition expression
+        let conditionExpression = flow.conditionExpression;
+        
+        if (!conditionExpression) {
+          conditionExpression = moddle.create('bpmn:FormalExpression', {
+            body: value
+          });
+        } else {
+          conditionExpression.body = value;
+        }
+
+        commandStack.execute('element.updateModdleProperties', {
+          element,
+          moddleElement: flow,
+          properties: {
+            conditionExpression: conditionExpression
+          }
+        });
+      }
+    };
+
+    const getValue = () => {
+      return flow.conditionExpression ? flow.conditionExpression.body : '';
+    };
+
+    const getLabel = () => {
+      const target = flow.targetRef;
+      const targetName = target ? (target.name || target.id) : 'Unknown';
+      return `Condition to ${targetName}`;
+    };
+
+    return TextFieldEntry({
+      element: flow,
+      id: `gateway-conditions-condition-${flowIndex}`,
+      label: getLabel(),
+      getValue,
+      setValue,
+      debounce
+    });
+  }
+
   // ServiceTask 扩展属性组
   private createServiceTaskExtensionGroup(
     element: BpmnElement,
@@ -175,299 +254,6 @@ export default class XFlowPropertiesProvider {
           placeholder: "Enter the name of the method",
         }),
       ],
-    };
-  }
-
-  // ScriptTask 扩展属性组
-  // private createScriptTaskExtensionGroup(element: BpmnElement, extension: ScriptTaskExtension): PropertiesPanelGroup {
-  //   return {
-  //     id: 'scriptTaskExtension',
-  //     label: 'Script Task Extension',
-  //     entries: [
-  //       {
-  //         id: 'scriptType',
-  //         element,
-  //         component: SelectEntry,
-  //         isEdited: isSelectEntryEdited
-  //       },
-  //       {
-  //         id: 'scriptEngine',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'timeout',
-  //         element,
-  //         component: NumberFieldEntry,
-  //         isEdited: isNumberFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'retryCount',
-  //         element,
-  //         component: NumberFieldEntry,
-  //         isEdited: isNumberFieldEntryEdited
-  //       }
-  //     ]
-  //   }
-  // }
-
-  // BusinessRuleTask 扩展属性组
-  // private createBusinessRuleTaskExtensionGroup(element: BpmnElement, extension: BusinessRuleTaskExtension): PropertiesPanelGroup {
-  //   return {
-  //     id: 'businessRuleTaskExtension',
-  //     label: 'Business Rule Task Extension',
-  //     entries: [
-  //       {
-  //         id: 'ruleSet',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'ruleEngine',
-  //         element,
-  //         component: SelectEntry,
-  //         isEdited: isSelectEntryEdited
-  //       },
-  //       {
-  //         id: 'decisionTable',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       }
-  //     ]
-  //   }
-  // }
-
-  // ManualTask 扩展属性组
-  // private createManualTaskExtensionGroup(element: BpmnElement, extension: ManualTaskExtension): PropertiesPanelGroup {
-  //   return {
-  //     id: 'manualTaskExtension',
-  //     label: 'Manual Task Extension',
-  //     entries: [
-  //       {
-  //         id: 'instructions',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'estimatedDuration',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'requiredSkills',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       }
-  //     ]
-  //   }
-  // }
-
-  // ReceiveTask 扩展属性组
-  // private createReceiveTaskExtensionGroup(element: BpmnElement, extension: ReceiveTaskExtension): PropertiesPanelGroup {
-  //   return {
-  //     id: 'receiveTaskExtension',
-  //     label: 'Receive Task Extension',
-  //     entries: [
-  //       {
-  //         id: 'messageType',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'correlationKey',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'timeout',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       }
-  //     ]
-  //   }
-  // }
-
-  // SendTask 扩展属性组
-  // private createSendTaskExtensionGroup(element: BpmnElement, extension: SendTaskExtension): PropertiesPanelGroup {
-  //   return {
-  //     id: 'sendTaskExtension',
-  //     label: 'Send Task Extension',
-  //     entries: [
-  //       {
-  //         id: 'messageType',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'targetEndpoint',
-  //         element,
-  //         component: TextFieldEntry,
-  //         isEdited: isTextFieldEntryEdited
-  //       },
-  //       {
-  //         id: 'retryPolicy',
-  //         element,
-  //         component: SelectEntry,
-  //         isEdited: isSelectEntryEdited
-  //       }
-  //     ]
-  //   }
-  // }
-
-  private createElementInfoGroup(element: BpmnElement): PropertiesPanelGroup {
-    const businessObject = getBusinessObject(element);
-
-    return {
-      id: "elementInfo",
-      label: "Element Information",
-      entries: [
-        {
-          id: "elementType",
-          element,
-          component: TextFieldEntry,
-          isEdited: isTextFieldEntryEdited,
-        },
-        {
-          id: "elementId",
-          element,
-          component: TextFieldEntry,
-          isEdited: isTextFieldEntryEdited,
-        },
-        {
-          id: "elementName",
-          element,
-          component: TextFieldEntry,
-          isEdited: isTextFieldEntryEdited,
-        },
-        {
-          id: "elementDocumentation",
-          element,
-          component: TextFieldEntry,
-          isEdited: isTextFieldEntryEdited,
-        },
-      ],
-    };
-  }
-
-  private updateModuleProperty(
-    element: BpmnElement,
-    property: string,
-    value: string
-  ): void {
-    const businessObject = getBusinessObject(element) as ServiceTaskExtension;
-
-    // 确保 extensionElements 和 module 对象存在
-    if (!businessObject.extensionElements) {
-      businessObject.extensionElements = {};
-    }
-    if (!businessObject.extensionElements.module) {
-      businessObject.extensionElements.module = {};
-    }
-
-    // 更新属性
-    (businessObject.extensionElements.module as any)[property] = value;
-
-    // 触发更新
-    this.modeling.updateProperties(element, {
-      extensionElements: businessObject.extensionElements,
-    });
-  }
-
-  private updateMethodProperty(
-    element: BpmnElement,
-    property: string,
-    value: string
-  ): void {
-    const businessObject = getBusinessObject(element) as ServiceTaskExtension;
-
-    // 确保 extensionElements 和 method 对象存在
-    if (!businessObject.extensionElements) {
-      businessObject.extensionElements = {};
-    }
-    if (!businessObject.extensionElements.method) {
-      businessObject.extensionElements.method = {};
-    }
-
-    // 更新属性
-    (businessObject.extensionElements.method as any)[property] = value;
-
-    // 触发更新
-    this.modeling.updateProperties(element, {
-      extensionElements: businessObject.extensionElements,
-    });
-  }
-
-  // ServiceTask 属性配置方法
-  private getModuleNameConfig(element: BpmnElement) {
-    return {
-      id: "moduleName",
-      element,
-      component: TextFieldEntry,
-      isEdited: isTextFieldEntryEdited,
-    };
-  }
-
-  private getModuleVersionConfig(element: BpmnElement) {
-    return {
-      id: "moduleVersion",
-      element,
-      component: TextFieldEntry,
-      isEdited: isTextFieldEntryEdited,
-    };
-  }
-
-  private getModuleDescriptionConfig(element: BpmnElement) {
-    return {
-      id: "moduleDescription",
-      element,
-      component: TextFieldEntry,
-      isEdited: isTextFieldEntryEdited,
-    };
-  }
-
-  private getMethodNameConfig(element: BpmnElement) {
-    return {
-      id: "methodName",
-      element,
-      component: TextFieldEntry,
-      isEdited: isTextFieldEntryEdited,
-    };
-  }
-
-  private getMethodParametersConfig(element: BpmnElement) {
-    return {
-      id: "methodParameters",
-      element,
-      component: TextFieldEntry,
-      isEdited: isTextFieldEntryEdited,
-    };
-  }
-
-  private getMethodReturnTypeConfig(element: BpmnElement) {
-    return {
-      id: "methodReturnType",
-      element,
-      component: TextFieldEntry,
-      isEdited: isTextFieldEntryEdited,
-    };
-  }
-
-  private getMethodDescriptionConfig(element: BpmnElement) {
-    return {
-      id: "methodDescription",
-      element,
-      component: TextFieldEntry,
-      isEdited: isTextFieldEntryEdited,
     };
   }
 
