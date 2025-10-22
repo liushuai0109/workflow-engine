@@ -572,11 +572,17 @@ export default class XFlowPropertiesProvider {
         extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
           values: [],
         });
+        businessObject.extensionElements = extensionElements;
         commandStack.execute("element.updateModdleProperties", {
           element,
           moddleElement: businessObject,
           properties: { extensionElements },
         });
+      }
+      
+      // 确保 values 数组存在
+      if (!extensionElements.values) {
+        extensionElements.values = [];
       }
 
       let extension = this.getInputOutputExtension(businessObject);
@@ -625,11 +631,17 @@ export default class XFlowPropertiesProvider {
         extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
           values: [],
         });
+        businessObject.extensionElements = extensionElements;
         commandStack.execute("element.updateModdleProperties", {
           element,
           moddleElement: businessObject,
           properties: { extensionElements },
         });
+      }
+      
+      // 确保 values 数组存在
+      if (!extensionElements.values) {
+        extensionElements.values = [];
       }
 
       let extension = this.getInputOutputExtension(businessObject);
