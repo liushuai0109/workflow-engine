@@ -206,6 +206,22 @@ export default class XFlowPropertiesProvider {
           tooltip: "The name of the method",
           placeholder: "Enter the name of the method",
         }),
+
+        // 结构化属性 - Inputs
+        {
+          id: "inputs",
+          label: "Input Parameters",
+          component: ListGroup,
+          ...this.createInputListGroup(element),
+        } as any,
+
+        // 结构化属性 - Outputs
+        {
+          id: "outputs",
+          label: "Output Parameters",
+          component: ListGroup,
+          ...this.createOutputListGroup(element),
+        } as any,
       ],
     };
   }
