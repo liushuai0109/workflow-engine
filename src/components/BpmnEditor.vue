@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 import {
   BpmnPropertiesPanelModule,
@@ -236,6 +236,15 @@ const getSvg = async (): Promise<string> => {
 const getModeler = (): BpmnModelerInstance => {
   return modeler
 }
+
+// 监听 XML 属性变化
+watch(() => props.xml, (newXml, oldXml) => {
+  // 只有当 XML 真正发生变化且 modeler 已初始化时才重新加载
+  if (newXml !== oldXml && newXml && modeler) {
+    console.log('XML changed, reloading diagram...')
+    loadXml(newXml)
+  }
+}, { immediate: false })
 
 // 暴露方法
 defineExpose({
