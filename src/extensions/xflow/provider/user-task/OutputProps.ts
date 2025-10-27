@@ -83,7 +83,7 @@ function Variable(props: {
     const bpmnFactory = useService('bpmnFactory');
     
     if (!output.variable) {
-      output.variable = bpmnFactory.create('xflow:XFlowVariable', { name: '' });
+      output.variable = bpmnFactory.create('xflow:variable', { name: '' });
     }
     
     // 直接更新 variable 的 name 属性，而不是创建新对象
@@ -127,7 +127,7 @@ function Source(props: {
     const bpmnFactory = useService('bpmnFactory');
     
     if (!output.source) {
-      output.source = bpmnFactory.create('xflow:XFlowSource', { value: '' });
+      output.source = bpmnFactory.create('xflow:source', { value: '' });
     }
     
     // 直接更新 source 的 value 属性，而不是创建新对象

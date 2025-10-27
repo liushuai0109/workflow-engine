@@ -53,6 +53,9 @@ const debouncedSave = () => {
           LocalStorageService.saveDiagram(result.xml, 'Auto-saved Diagram')
         }
         
+        // 注意：不在这里触发 changed 事件，避免在属性编辑时重新渲染
+        // 只在用户主动保存时才更新父组件的 currentDiagram
+        
         // 保存完成后恢复视口位置
         setTimeout(() => {
           // restoreViewbox()
@@ -221,6 +224,19 @@ const getXml = async (): Promise<string> => {
   }
 }
 
+// 手动触发 changed 事件（用于用户主动保存时）
+const triggerChanged = async (): Promise<void> => {
+  if (!modeler) return
+  
+  try {
+    const result = await modeler.saveXML({ format: true })
+    emit('changed', result.xml)
+  } catch (error) {
+    console.error('Failed to trigger changed event:', error)
+    throw error
+  }
+}
+
 const getSvg = async (): Promise<string> => {
   if (!modeler) return ''
   
@@ -250,7 +266,8 @@ watch(() => props.xml, (newXml, oldXml) => {
 defineExpose({
   getXml,
   getSvg,
-  getModeler
+  getModeler,
+  triggerChanged
 })
 
 // 生命周期

@@ -77,7 +77,7 @@ function Variable(props: {
     const bpmnFactory = useService('bpmnFactory');
     
     if (!input.variable) {
-      input.variable = bpmnFactory.create('xflow:XFlowVariable', { name: '' });
+      input.variable = bpmnFactory.create('xflow:variable', { name: '' });
     }
     
     // 直接更新 variable 的 name 属性，而不是创建新对象

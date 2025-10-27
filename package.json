@@ -16,6 +16,7 @@
     "bpmn-js-properties-panel": "^1.26.0",
     "vue": "^3.3.4",
     "vue-bpmn": "^0.3.0",
+    "xml2js": "^0.6.2",
     "zeebe-bpmn-moddle": "^1.11.0"
   },
   "devDependencies": {

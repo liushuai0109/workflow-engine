@@ -8,9 +8,9 @@
   "associations": [],
   "types": [
     {
-      "name": "XFlowModule",
+      "name": "module",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {
@@ -21,9 +21,9 @@
       ]
     },
     {
-      "name": "XFlowMethod",
+      "name": "method",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {
@@ -34,9 +34,9 @@
       ]
     },
     {
-      "name": "XFlowUrl",
+      "name": "url",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {
@@ -47,16 +47,16 @@
       ]
     },
     {
-      "name": "XFlowInputOutput",
+      "name": "inputOutput",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {
           "name": "input",
           "type": "XFlowInput",
           "isMany": true
-        },
+        },  
         {
           "name": "output",
           "type": "XFlowOutput",
@@ -65,9 +65,9 @@
       ]
     },
     {
-      "name": "XFlowInput",
+      "name": "input",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {
@@ -82,9 +82,9 @@
       ]
     },
     {
-      "name": "XFlowOutput",
+      "name": "output",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {
@@ -103,9 +103,9 @@
       ]
     },
     {
-      "name": "XFlowVariable",
+      "name": "variable",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {
@@ -116,9 +116,9 @@
       ]
     },
     {
-      "name": "XFlowSource",
+      "name": "source",
       "superClass": [
-        "bpmn:ExtensionElements"
+        "Element"
       ],
       "properties": [
         {

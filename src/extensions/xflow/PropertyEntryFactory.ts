@@ -77,7 +77,33 @@ function findExtensionElementByType(
   }
 
   return businessObject.extensionElements.values.find(
-    (el: any) => el.$type === elementType
+    (el: any) => {
+      // 处理命名空间别名问题
+      // 如果 elementType 是 xflow:url，也检查 ns0:url 等别名
+      if (elementType === 'xflow:url') {
+        return el.$type === 'xflow:url' || 
+               el.$type === 'ns0:url' || 
+               el.$type === 'url' ||
+               el.$type.endsWith(':url');
+      }
+      
+      // 处理其他扩展元素类型
+      if (elementType === 'xflow:module') {
+        return el.$type === 'xflow:module' || 
+               el.$type === 'ns0:module' || 
+               el.$type === 'module' ||
+               el.$type.endsWith(':module');
+      }
+      
+      if (elementType === 'xflow:method') {
+        return el.$type === 'xflow:method' || 
+               el.$type === 'ns0:method' || 
+               el.$type === 'method' ||
+               el.$type.endsWith(':method');
+      }
+      
+      return el.$type === elementType;
+    }
   );
 }
 
@@ -114,10 +140,17 @@ export function createPropertyComponent(
           businessObject,
           config.elementType
         );
+        
         if (extensionElement) {
           // 从 propertyPath 中提取属性名（去掉 extensionElements.values[0]. 部分）
           const pathParts = config.propertyPath.split(".");
           const propertyName = pathParts[pathParts.length - 1]; // 取最后一部分作为属性名
+          
+          // 如果属性名是 'value' 且扩展元素有 $body，说明值是作为元素体存储的
+          if (propertyName === 'value' && extensionElement.$body !== undefined) {
+            return extensionElement.$body || "";
+          }
+          
           return propertyName ? extensionElement[propertyName] || "" : "";
         }
         return "";
@@ -191,26 +224,48 @@ export function createPropertyComponent(
 
         // 查找或创建对应的扩展元素
         let extensionElement = businessObject.extensionElements.values.find(
-          (el: any) => el.$type === config.elementType
+          (el: any) => {
+            // 使用相同的匹配逻辑
+            if (config.elementType === 'xflow:url') {
+              return el.$type === 'xflow:url' || 
+                     el.$type === 'ns0:url' || 
+                     el.$type === 'url' ||
+                     el.$type.endsWith(':url');
+            }
+            if (config.elementType === 'xflow:module') {
+              return el.$type === 'xflow:module' || 
+                     el.$type === 'ns0:module' || 
+                     el.$type === 'module' ||
+                     el.$type.endsWith(':module');
+            }
+            if (config.elementType === 'xflow:method') {
+              return el.$type === 'xflow:method' || 
+                     el.$type === 'ns0:method' || 
+                     el.$type === 'method' ||
+                     el.$type.endsWith(':method');
+            }
+            return el.$type === config.elementType;
+          }
         );
+        
         if (!extensionElement) {
           // 使用 moddle 创建扩展元素，确保具有正确的 $descriptor
           // 根据元素类型设置不同的初始属性
           let initialProperties: any = {};
-          if (config.elementType === 'xflow:XFlowInput') {
+          if (config.elementType === 'xflow:input') {
             initialProperties = { 
               name: '', 
-              variable: moddle.create('xflow:XFlowVariable', { name: '' })
+              variable: moddle.create('xflow:variable', { name: '' })
             };
-          } else if (config.elementType === 'xflow:XFlowOutput') {
+          } else if (config.elementType === 'xflow:output') {
             initialProperties = { 
               name: '', 
-              variable: moddle.create('xflow:XFlowVariable', { name: '' }), 
-              source: moddle.create('xflow:XFlowSource', { value: '' })
+              variable: moddle.create('xflow:variable', { name: '' }), 
+              source: moddle.create('xflow:source', { value: '' })
             };
-          } else if (config.elementType === 'xflow:XFlowVariable') {
+          } else if (config.elementType === 'xflow:variable') {
             initialProperties = { name: '' };
-          } else if (config.elementType === 'xflow:XFlowSource') {
+          } else if (config.elementType === 'xflow:source') {
             initialProperties = { value: '' };
           } else {
             // 默认使用 value 属性
@@ -223,8 +278,15 @@ export function createPropertyComponent(
 
         // 从 propertyPath 中提取属性名
         const propertyName = config.propertyPath;
+        
         if (propertyName) {
-          extensionElement[propertyName] = value;
+          // 如果属性名是 'value'，检查是否应该使用 $body
+          // 这通常适用于定义中 isBody: true 的属性
+          if (propertyName === 'value') {
+            extensionElement.$body = value;
+          } else {
+            extensionElement[propertyName] = value;
+          }
         }
 
         // 使用 commandStack 支持撤销/重做
@@ -235,6 +297,7 @@ export function createPropertyComponent(
             extensionElements: businessObject.extensionElements,
           }
         });
+        console.log("setValue - command executed");
         return;
       }
 
@@ -277,20 +340,20 @@ export function createPropertyComponent(
             // 使用 moddle 创建扩展元素，确保具有正确的 $descriptor
             // 根据元素类型设置不同的初始属性
             let initialProperties: any = {};
-            if (elementType === 'xflow:XFlowInput') {
+            if (elementType === 'xflow:input') {
               initialProperties = { 
                 name: '', 
-                variable: moddle.create('xflow:XFlowVariable', { name: '' })
+                variable: moddle.create('xflow:variable', { name: '' })
               };
-            } else if (elementType === 'xflow:XFlowOutput') {
+            } else if (elementType === 'xflow:output') {
               initialProperties = { 
                 name: '', 
-                variable: moddle.create('xflow:XFlowVariable', { name: '' }), 
-                source: moddle.create('xflow:XFlowSource', { value: '' })
+                variable: moddle.create('xflow:variable', { name: '' }), 
+                source: moddle.create('xflow:source', { value: '' })
               };
-            } else if (elementType === 'xflow:XFlowVariable') {
+            } else if (elementType === 'xflow:variable') {
               initialProperties = { name: '' };
-            } else if (elementType === 'xflow:XFlowSource') {
+            } else if (elementType === 'xflow:source') {
               initialProperties = { value: '' };
             } else {
               // 默认使用 value 属性

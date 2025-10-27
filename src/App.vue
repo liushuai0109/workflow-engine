@@ -22,7 +22,7 @@
     <div class="main-content">
       <!-- BPMN 编辑器 -->
       <div class="editor-container">
-        <BpmnEditor v-if="currentDiagram" :xml="currentDiagram" @error="handleError"
+        <BpmnEditor v-if="currentDiagram" ref="bpmnEditor" :xml="currentDiagram" @error="handleError"
           @shown="handleShown" @loading="handleLoading" @changed="handleDiagramChanged" />
 
         <!-- 欢迎界面 -->
@@ -84,6 +84,7 @@ const hasError = ref<boolean>(false)
 const errorMessage = ref<string>('')
 const lastSaved = ref<Date | null>(null)
 const fileInput = ref<HTMLInputElement>()
+const bpmnEditor = ref<any>()
 
 // 文件操作
 const openFile = (): void => {
@@ -91,10 +92,13 @@ const openFile = (): void => {
 }
 
 const saveFile = async (): Promise<void> => {
-  if (!currentDiagram.value) return
+  if (!bpmnEditor.value) return
 
   try {
-    const blob = new Blob([currentDiagram.value], { type: 'application/xml' })
+    // 从 BpmnEditor 获取最新的 XML 内容
+    const latestXml = await bpmnEditor.value.getXml()
+    
+    const blob = new Blob([latestXml], { type: 'application/xml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -104,6 +108,9 @@ const saveFile = async (): Promise<void> => {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
 
+    // 手动触发 changed 事件来更新 currentDiagram
+    await bpmnEditor.value.triggerChanged()
+    
     lastSaved.value = new Date()
     showStatus('File saved successfully', 'success')
   } catch (error) {
@@ -284,7 +291,7 @@ const handleLoading = (): void => {
 }
 
 const handleDiagramChanged = (xml: string): void => {
-  // currentDiagram.value = xml
+  currentDiagram.value = xml
   console.log('Diagram changed')
 }
 

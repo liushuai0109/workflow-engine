@@ -2,11 +2,11 @@ import { getBusinessObject } from "bpmn-js/lib/util/ModelUtil";
 import { is } from "bpmn-js/lib/util/ModelUtil";
 import { TextFieldEntry, ListGroup } from "@bpmn-io/properties-panel";
 import { useService } from "bpmn-js-properties-panel";
-import type {
-  BpmnElement,
-  PropertiesPanel,
-  Translate,
-  Injector,
+import type { 
+  BpmnElement, 
+  PropertiesPanel, 
+  Translate, 
+  Injector, 
   Modeling,
   PropertiesPanelGroup,
   Injectable,
@@ -65,12 +65,12 @@ export default class XFlowPropertiesProvider {
         "XFlowPropertiesProvider.getGroups called for element:",
         element
       );
-
+      
       // 对所有元素显示基本信息组
       // const elementInfoGroup = this.createElementInfoGroup(element)
       // console.log('Created element info group:', elementInfoGroup)
       // groups.push(elementInfoGroup)
-
+      
       // 根据任务类型显示对应的 XFlow 扩展属性组
       const xflowGroup = this.createXFlowExtensionGroup(element);
       if (xflowGroup) {
@@ -116,7 +116,7 @@ export default class XFlowPropertiesProvider {
         // 普通属性 - URL
         createPropertyEntry("url", element, TextFieldEntry, {
           propertyPath: "value",
-          elementType: "xflow:XFlowUrl",
+          elementType: "xflow:url",
           label: "URL",
           description: "Task related URL",
           tooltip: "Set the URL for this task",
@@ -192,7 +192,7 @@ export default class XFlowPropertiesProvider {
       entries: [
         createPropertyEntry("moduleName", element, TextFieldEntry, {
           propertyPath: "value",
-          elementType: "xflow:XFlowModule",
+          elementType: "xflow:module",
           label: "Module Name",
           description: "The name of the module",
           tooltip: "The name of the module",
@@ -200,7 +200,7 @@ export default class XFlowPropertiesProvider {
         }),
         createPropertyEntry("methodName", element, TextFieldEntry, {
           propertyPath: "value",
-          elementType: "xflow:XFlowMethod",
+          elementType: "xflow:method",
           label: "Method Name",
           description: "The name of the method",
           tooltip: "The name of the method",
@@ -296,7 +296,7 @@ export default class XFlowPropertiesProvider {
     }
 
     return businessObject.extensionElements.values.find(
-      (el: any) => el.$type === "xflow:XFlowInputOutput"
+      (el: any) => el.$type === "xflow:inputOutput"
     );
   }
 
@@ -358,7 +358,7 @@ export default class XFlowPropertiesProvider {
               const bpmnFactory = this.injector.get("bpmnFactory");
 
               if (!input.variable) {
-                input.variable = bpmnFactory.create("xflow:XFlowVariable", {
+                input.variable = bpmnFactory.create("xflow:variable", {
                   name: "",
                 });
               }
@@ -447,7 +447,7 @@ export default class XFlowPropertiesProvider {
               const bpmnFactory = this.injector.get("bpmnFactory");
 
               if (!output.variable) {
-                output.variable = bpmnFactory.create("xflow:XFlowVariable", {
+                output.variable = bpmnFactory.create("xflow:variable", {
                   name: "",
                 });
               }
@@ -492,7 +492,7 @@ export default class XFlowPropertiesProvider {
               const bpmnFactory = this.injector.get("bpmnFactory");
 
               if (!output.source) {
-                output.source = bpmnFactory.create("xflow:XFlowSource", {
+                output.source = bpmnFactory.create("xflow:source", {
                   value: "",
                 });
               }
@@ -566,7 +566,7 @@ export default class XFlowPropertiesProvider {
       );
 
       commandStack.execute("element.updateModdleProperties", {
-        element,
+      element,
         moddleElement: extension,
         properties: {
           output: outputs,
@@ -590,7 +590,7 @@ export default class XFlowPropertiesProvider {
         });
         businessObject.extensionElements = extensionElements;
         commandStack.execute("element.updateModdleProperties", {
-          element,
+      element,
           moddleElement: businessObject,
           properties: { extensionElements },
         });
@@ -603,13 +603,13 @@ export default class XFlowPropertiesProvider {
 
       let extension = this.getInputOutputExtension(businessObject);
       if (!extension) {
-        extension = bpmnFactory.create("xflow:XFlowInputOutput", {
+        extension = bpmnFactory.create("xflow:inputOutput", {
           input: [],
           output: [],
         });
         extensionElements.values.push(extension);
         commandStack.execute("element.updateModdleProperties", {
-          element,
+      element,
           moddleElement: extensionElements,
           properties: {
             values: extensionElements.values,
@@ -617,9 +617,9 @@ export default class XFlowPropertiesProvider {
         });
       }
 
-      const newInput = bpmnFactory.create("xflow:XFlowInput", {
+      const newInput = bpmnFactory.create("xflow:input", {
         name: this.nextId("Input_"),
-        variable: bpmnFactory.create("xflow:XFlowVariable", { name: "" }),
+        variable: bpmnFactory.create("xflow:variable", { name: "" }),
       });
 
       extension.input = [...(extension.input || []), newInput];
@@ -649,7 +649,7 @@ export default class XFlowPropertiesProvider {
         });
         businessObject.extensionElements = extensionElements;
         commandStack.execute("element.updateModdleProperties", {
-          element,
+      element,
           moddleElement: businessObject,
           properties: { extensionElements },
         });
@@ -662,13 +662,13 @@ export default class XFlowPropertiesProvider {
 
       let extension = this.getInputOutputExtension(businessObject);
       if (!extension) {
-        extension = bpmnFactory.create("xflow:XFlowInputOutput", {
+        extension = bpmnFactory.create("xflow:inputOutput", {
           input: [],
           output: [],
         });
         extensionElements.values.push(extension);
         commandStack.execute("element.updateModdleProperties", {
-          element,
+      element,
           moddleElement: extensionElements,
           properties: {
             values: extensionElements.values,
@@ -676,10 +676,10 @@ export default class XFlowPropertiesProvider {
         });
       }
 
-      const newOutput = bpmnFactory.create("xflow:XFlowOutput", {
+      const newOutput = bpmnFactory.create("xflow:output", {
         name: this.nextId("Output_"),
-        variable: bpmnFactory.create("xflow:XFlowVariable", { name: "" }),
-        source: bpmnFactory.create("xflow:XFlowSource", { value: "" }),
+        variable: bpmnFactory.create("xflow:variable", { name: "" }),
+        source: bpmnFactory.create("xflow:source", { value: "" }),
       });
 
       extension.output = [...(extension.output || []), newOutput];
@@ -744,7 +744,7 @@ function ConditionExpression(props: {
       }
 
       commandStack.execute("element.updateModdleProperties", {
-        element,
+      element,
         moddleElement: flow,
         properties: {
           conditionExpression: conditionExpression,
