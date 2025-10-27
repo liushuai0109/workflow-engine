@@ -79,24 +79,26 @@ function findExtensionElementByType(
   return businessObject.extensionElements.values.find(
     (el: any) => {
       // 处理命名空间别名问题
-      // 如果 elementType 是 xflow:url，也检查 ns0:url 等别名
-      if (elementType === 'xflow:url') {
-        return el.$type === 'xflow:url' || 
+      // XML 解析器或序列化器可能会为自定义扩展生成不同的命名空间前缀（如 ns0, ns1 等）
+      // 同时，扩展定义中使用了 tagAlias: "lowerCase"，所以元素名会是小写的
+      // 例如：xflow:Url 可能被解析为 ns0:url，xflow:Module 可能被解析为 ns0:module
+      if (elementType === 'xflow:Url') {
+        return el.$type === 'xflow:Url' || 
                el.$type === 'ns0:url' || 
                el.$type === 'url' ||
                el.$type.endsWith(':url');
       }
       
       // 处理其他扩展元素类型
-      if (elementType === 'xflow:module') {
-        return el.$type === 'xflow:module' || 
+      if (elementType === 'xflow:Module') {
+        return el.$type === 'xflow:Module' || 
                el.$type === 'ns0:module' || 
                el.$type === 'module' ||
                el.$type.endsWith(':module');
       }
       
-      if (elementType === 'xflow:method') {
-        return el.$type === 'xflow:method' || 
+      if (elementType === 'xflow:Method') {
+        return el.$type === 'xflow:Method' || 
                el.$type === 'ns0:method' || 
                el.$type === 'method' ||
                el.$type.endsWith(':method');
@@ -130,6 +132,7 @@ export function createPropertyComponent(
     const translate = useService("translate");
     const debounce = useService("debounceInput");
     const commandStack = useService("commandStack");
+    const bpmnFactory = useService("bpmnFactory");
 
     const getValue = (): string => {
       const businessObject = getBusinessObject(props.element);
@@ -156,7 +159,7 @@ export function createPropertyComponent(
         return "";
       }
 
-      // 支持嵌套属性路径，如 'extensionElements.xflow:module.value'
+      // 支持嵌套属性路径，如 'extensionElements.xflow:Module.value'
       const pathParts = config.propertyPath.split(".");
       let value: any = businessObject;
 
@@ -180,7 +183,7 @@ export function createPropertyComponent(
               return "";
             }
           }
-          // 处理带命名空间的属性，如 'xflow:module'
+          // 处理带命名空间的属性，如 'xflow:Module'
           else if (part.includes(":")) {
             const [namespace, property] = part.split(":");
             if (namespace && property) {
@@ -209,12 +212,9 @@ export function createPropertyComponent(
 
       // 如果指定了元素类型，使用类型查找而不是路径解析
       if (config.elementType) {
-        // 通过 businessObject 获取 moddle 实例
-        const moddle = businessObject.$model;
-
         // 确保 extensionElements 存在
         if (!businessObject.extensionElements) {
-          businessObject.extensionElements = moddle.create(
+          businessObject.extensionElements = bpmnFactory.create(
             "bpmn:ExtensionElements"
           );
         }
@@ -225,21 +225,22 @@ export function createPropertyComponent(
         // 查找或创建对应的扩展元素
         let extensionElement = businessObject.extensionElements.values.find(
           (el: any) => {
-            // 使用相同的匹配逻辑
-            if (config.elementType === 'xflow:url') {
-              return el.$type === 'xflow:url' || 
+            // 使用相同的匹配逻辑来处理命名空间别名问题
+            // 支持多种可能的 $type 值以适应不同的 XML 序列化结果
+            if (config.elementType === 'xflow:Url') {
+              return el.$type === 'xflow:Url' || 
                      el.$type === 'ns0:url' || 
                      el.$type === 'url' ||
                      el.$type.endsWith(':url');
             }
-            if (config.elementType === 'xflow:module') {
-              return el.$type === 'xflow:module' || 
+            if (config.elementType === 'xflow:Module') {
+              return el.$type === 'xflow:Module' || 
                      el.$type === 'ns0:module' || 
                      el.$type === 'module' ||
                      el.$type.endsWith(':module');
             }
-            if (config.elementType === 'xflow:method') {
-              return el.$type === 'xflow:method' || 
+            if (config.elementType === 'xflow:Method') {
+              return el.$type === 'xflow:Method' || 
                      el.$type === 'ns0:method' || 
                      el.$type === 'method' ||
                      el.$type.endsWith(':method');
@@ -249,30 +250,38 @@ export function createPropertyComponent(
         );
         
         if (!extensionElement) {
-          // 使用 moddle 创建扩展元素，确保具有正确的 $descriptor
-          // 根据元素类型设置不同的初始属性
-          let initialProperties: any = {};
-          if (config.elementType === 'xflow:input') {
-            initialProperties = { 
-              name: '', 
-              variable: moddle.create('xflow:variable', { name: '' })
-            };
-          } else if (config.elementType === 'xflow:output') {
-            initialProperties = { 
-              name: '', 
-              variable: moddle.create('xflow:variable', { name: '' }), 
-              source: moddle.create('xflow:source', { value: '' })
-            };
-          } else if (config.elementType === 'xflow:variable') {
-            initialProperties = { name: '' };
-          } else if (config.elementType === 'xflow:source') {
-            initialProperties = { value: '' };
+          // 创建扩展元素，根据元素类型设置不同的初始属性
+          if (config.elementType === 'xflow:Input') {
+            extensionElement = bpmnFactory.create('xflow:Input', { name: '' });
+            
+            // Create variable separately to set parent
+            const variable = bpmnFactory.create('xflow:Variable', { name: '' });
+            variable.$parent = extensionElement;
+            extensionElement.variable = variable;
+          } else if (config.elementType === 'xflow:Output') {
+            extensionElement = bpmnFactory.create('xflow:Output', { name: '' });
+            
+            // Create nested elements separately to set parent
+            const variable = bpmnFactory.create('xflow:Variable', { name: '' });
+            const source = bpmnFactory.create('xflow:Source', { value: '' });
+            variable.$parent = extensionElement;
+            source.$parent = extensionElement;
+            extensionElement.variable = variable;
+            extensionElement.source = source;
+          } else if (config.elementType === 'xflow:Variable') {
+            extensionElement = bpmnFactory.create('xflow:Variable', { name: '' });
+          } else if (config.elementType === 'xflow:Source') {
+            extensionElement = bpmnFactory.create('xflow:Source', { value: '' });
           } else {
             // 默认使用 value 属性
-            initialProperties = { value: "" };
+            extensionElement = bpmnFactory.create(config.elementType, { value: "" });
           }
           
-          extensionElement = moddle.create(config.elementType, initialProperties);
+          // Set parent for namespace handling
+          extensionElement.$parent = businessObject.extensionElements;
+          
+          // Also set parent for nested elements (already set above)
+          
           businessObject.extensionElements.values.push(extensionElement);
         }
 
@@ -280,13 +289,8 @@ export function createPropertyComponent(
         const propertyName = config.propertyPath;
         
         if (propertyName) {
-          // 如果属性名是 'value'，检查是否应该使用 $body
-          // 这通常适用于定义中 isBody: true 的属性
-          if (propertyName === 'value') {
-            extensionElement.$body = value;
-          } else {
-            extensionElement[propertyName] = value;
-          }
+          extensionElement[propertyName] = value;
+          console.log(`Set ${propertyName} for ${extensionElement.$type}: ${value}`);
         }
 
         // 使用 commandStack 支持撤销/重做
@@ -297,7 +301,7 @@ export function createPropertyComponent(
             extensionElements: businessObject.extensionElements,
           }
         });
-        console.log("setValue - command executed");
+        console.log("setValue - command executed, extensionElement:", extensionElement);
         return;
       }
 
@@ -313,17 +317,14 @@ export function createPropertyComponent(
           }
         });
       } else {
-        // 处理扩展元素
-        if (pathParts[0] === "extensionElements" && config.elementType) {
-          // 通过 businessObject 获取 moddle 实例
-          const moddle = businessObject.$model;
-
-          // 确保 extensionElements 存在
-          if (!businessObject.extensionElements) {
-            businessObject.extensionElements = moddle.create(
-              "bpmn:ExtensionElements"
-            );
-          }
+      // 处理扩展元素
+      if (pathParts[0] === "extensionElements" && config.elementType) {
+        // 确保 extensionElements 存在
+        if (!businessObject.extensionElements) {
+          businessObject.extensionElements = bpmnFactory.create(
+            "bpmn:ExtensionElements"
+          );
+        }
           if (!businessObject.extensionElements.values) {
             businessObject.extensionElements.values = [];
           }
@@ -337,30 +338,38 @@ export function createPropertyComponent(
             (el: any) => el.$type === elementType
           );
           if (!extensionElement) {
-            // 使用 moddle 创建扩展元素，确保具有正确的 $descriptor
-            // 根据元素类型设置不同的初始属性
-            let initialProperties: any = {};
-            if (elementType === 'xflow:input') {
-              initialProperties = { 
-                name: '', 
-                variable: moddle.create('xflow:variable', { name: '' })
-              };
-            } else if (elementType === 'xflow:output') {
-              initialProperties = { 
-                name: '', 
-                variable: moddle.create('xflow:variable', { name: '' }), 
-                source: moddle.create('xflow:source', { value: '' })
-              };
-            } else if (elementType === 'xflow:variable') {
-              initialProperties = { name: '' };
-            } else if (elementType === 'xflow:source') {
-              initialProperties = { value: '' };
+            // 创建扩展元素，根据元素类型设置不同的初始属性
+            if (elementType === 'xflow:Input') {
+              extensionElement = bpmnFactory.create('xflow:Input', { name: '' });
+              
+              // Create variable separately to set parent
+              const variable = bpmnFactory.create('xflow:Variable', { name: '' });
+              variable.$parent = extensionElement;
+              extensionElement.variable = variable;
+            } else if (elementType === 'xflow:Output') {
+              extensionElement = bpmnFactory.create('xflow:Output', { name: '' });
+              
+              // Create nested elements separately to set parent
+              const variable = bpmnFactory.create('xflow:Variable', { name: '' });
+              const source = bpmnFactory.create('xflow:Source', { value: '' });
+              variable.$parent = extensionElement;
+              source.$parent = extensionElement;
+              extensionElement.variable = variable;
+              extensionElement.source = source;
+            } else if (elementType === 'xflow:Variable') {
+              extensionElement = bpmnFactory.create('xflow:Variable', { name: '' });
+            } else if (elementType === 'xflow:Source') {
+              extensionElement = bpmnFactory.create('xflow:Source', { value: '' });
             } else {
               // 默认使用 value 属性
-              initialProperties = { value: "" };
+              extensionElement = bpmnFactory.create(elementType, { value: "" });
             }
             
-            extensionElement = moddle.create(elementType, initialProperties);
+            // Set parent for namespace handling
+            extensionElement.$parent = businessObject.extensionElements;
+            
+            // Also set parent for nested elements (already set above)
+            
             businessObject.extensionElements.values.push(extensionElement);
           }
 

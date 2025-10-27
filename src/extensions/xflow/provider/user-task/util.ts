@@ -41,7 +41,7 @@ export function getExtension(element: any, type: string): any {
 // 获取 InputOutput 扩展
 export function getInputOutputExtension(element: BpmnElement): any {
   const businessObject = getBusinessObject(element);
-  return getExtension(businessObject, 'xflow:inputOutput');
+  return getExtension(businessObject, 'xflow:InputOutput');
 }
 
 // 获取 Inputs
@@ -62,5 +62,5 @@ export function createInputOutput(
   parent: any,
   bpmnFactory: any
 ): any {
-  return createElement('xflow:inputOutput', properties, parent, bpmnFactory);
+  return createElement('xflow:InputOutput', properties, parent, bpmnFactory);
 }

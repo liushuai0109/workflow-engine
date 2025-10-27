@@ -2,11 +2,11 @@ import { getBusinessObject } from "bpmn-js/lib/util/ModelUtil";
 import { is } from "bpmn-js/lib/util/ModelUtil";
 import { TextFieldEntry, ListGroup } from "@bpmn-io/properties-panel";
 import { useService } from "bpmn-js-properties-panel";
-import type { 
-  BpmnElement, 
-  PropertiesPanel, 
-  Translate, 
-  Injector, 
+import type {
+  BpmnElement,
+  PropertiesPanel,
+  Translate,
+  Injector,
   Modeling,
   PropertiesPanelGroup,
   Injectable,
@@ -20,7 +20,7 @@ export default class XFlowPropertiesProvider {
   private injector: Injector;
   private translate: Translate;
   private modeling: Modeling;
-  
+
   // 组件缓存，避免重复创建
   private componentCache = new Map<string, any>();
 
@@ -32,7 +32,7 @@ export default class XFlowPropertiesProvider {
     if (this.componentCache.has(cacheKey)) {
       return this.componentCache.get(cacheKey);
     }
-    
+
     const component = componentFactory();
     this.componentCache.set(cacheKey, component);
     return component;
@@ -65,17 +65,32 @@ export default class XFlowPropertiesProvider {
         "XFlowPropertiesProvider.getGroups called for element:",
         element
       );
-      
+
       // 对所有元素显示基本信息组
       // const elementInfoGroup = this.createElementInfoGroup(element)
       // console.log('Created element info group:', elementInfoGroup)
       // groups.push(elementInfoGroup)
-      
+
       // 根据任务类型显示对应的 XFlow 扩展属性组
-      const xflowGroup = this.createXFlowExtensionGroup(element);
-      if (xflowGroup) {
-        console.log("Created XFlow extension group:", xflowGroup);
-        groups.push(xflowGroup);
+      const businessObject = getBusinessObject(element);
+      
+      if (is(element, "bpmn:UserTask")) {
+        const userTaskGroup = this.createUserTaskExtensionGroup(element, businessObject);
+        console.log("Created UserTask extension group:", userTaskGroup);
+        groups.push(userTaskGroup);
+      } else if (is(element, "bpmn:ServiceTask")) {
+        const serviceTaskGroup = this.createServiceTaskExtensionGroup(element, businessObject);
+        console.log("Created ServiceTask extension group:", serviceTaskGroup);
+        groups.push(serviceTaskGroup);
+      } else if (
+        is(element, "bpmn:ExclusiveGateway") ||
+        is(element, "bpmn:InclusiveGateway") ||
+        is(element, "bpmn:ParallelGateway") ||
+        is(element, "bpmn:ComplexGateway")
+      ) {
+        const gatewayGroup = this.createGatewayConditionGroup(element, businessObject);
+        console.log("Created Gateway condition group:", gatewayGroup);
+        groups.push(gatewayGroup);
       }
 
       console.log("Final groups:", groups);
@@ -83,26 +98,6 @@ export default class XFlowPropertiesProvider {
     };
   }
 
-  private createXFlowExtensionGroup(
-    element: BpmnElement
-  ): PropertiesPanelGroup | null {
-    const businessObject = getBusinessObject(element);
-
-    if (is(element, "bpmn:UserTask")) {
-      return this.createUserTaskExtensionGroup(element, businessObject);
-    } else if (is(element, "bpmn:ServiceTask")) {
-      return this.createServiceTaskExtensionGroup(element, businessObject);
-    } else if (
-      is(element, "bpmn:ExclusiveGateway") ||
-      is(element, "bpmn:InclusiveGateway") ||
-      is(element, "bpmn:ParallelGateway") ||
-      is(element, "bpmn:ComplexGateway")
-    ) {
-      return this.createGatewayConditionGroup(element, businessObject);
-    }
-
-    return null;
-  }
 
   // UserTask 扩展属性组
   private createUserTaskExtensionGroup(
@@ -116,7 +111,7 @@ export default class XFlowPropertiesProvider {
         // 普通属性 - URL
         createPropertyEntry("url", element, TextFieldEntry, {
           propertyPath: "value",
-          elementType: "xflow:url",
+          elementType: "xflow:Url",
           label: "URL",
           description: "Task related URL",
           tooltip: "Set the URL for this task",
@@ -180,7 +175,6 @@ export default class XFlowPropertiesProvider {
     return entries;
   }
 
-
   // ServiceTask 扩展属性组
   private createServiceTaskExtensionGroup(
     element: BpmnElement,
@@ -192,7 +186,7 @@ export default class XFlowPropertiesProvider {
       entries: [
         createPropertyEntry("moduleName", element, TextFieldEntry, {
           propertyPath: "value",
-          elementType: "xflow:module",
+          elementType: "xflow:Module",
           label: "Module Name",
           description: "The name of the module",
           tooltip: "The name of the module",
@@ -200,7 +194,7 @@ export default class XFlowPropertiesProvider {
         }),
         createPropertyEntry("methodName", element, TextFieldEntry, {
           propertyPath: "value",
-          elementType: "xflow:method",
+          elementType: "xflow:Method",
           label: "Method Name",
           description: "The name of the method",
           tooltip: "The name of the method",
@@ -275,19 +269,19 @@ export default class XFlowPropertiesProvider {
   // 获取 Inputs
   private getInputs(element: BpmnElement): any[] {
     const businessObject = getBusinessObject(element);
-    const inputOutput = this.getInputOutputExtension(businessObject);
+    const inputOutput = this.getInputOutputElement(businessObject);
     return inputOutput ? inputOutput.input || [] : [];
   }
 
   // 获取 Outputs
   private getOutputs(element: BpmnElement): any[] {
     const businessObject = getBusinessObject(element);
-    const inputOutput = this.getInputOutputExtension(businessObject);
+    const inputOutput = this.getInputOutputElement(businessObject);
     return inputOutput ? inputOutput.output || [] : [];
   }
 
   // 获取 InputOutput 扩展
-  private getInputOutputExtension(businessObject: any): any {
+  private getInputOutputElement(businessObject: any): any {
     if (
       !businessObject.extensionElements ||
       !businessObject.extensionElements.values
@@ -296,7 +290,7 @@ export default class XFlowPropertiesProvider {
     }
 
     return businessObject.extensionElements.values.find(
-      (el: any) => el.$type === "xflow:inputOutput"
+      (el: any) => el.$type === "xflow:InputOutput"
     );
   }
 
@@ -358,9 +352,10 @@ export default class XFlowPropertiesProvider {
               const bpmnFactory = this.injector.get("bpmnFactory");
 
               if (!input.variable) {
-                input.variable = bpmnFactory.create("xflow:variable", {
+                input.variable = bpmnFactory.create("xflow:Variable", {
                   name: "",
                 });
+                input.variable.$parent = input; // Set parent for namespace context
               }
 
               // 直接更新 variable 的 name 属性，而不是创建新对象
@@ -447,9 +442,10 @@ export default class XFlowPropertiesProvider {
               const bpmnFactory = this.injector.get("bpmnFactory");
 
               if (!output.variable) {
-                output.variable = bpmnFactory.create("xflow:variable", {
+                output.variable = bpmnFactory.create("xflow:Variable", {
                   name: "",
                 });
+                output.variable.$parent = output; // Set parent for namespace context
               }
 
               // 直接更新 variable 的 name 属性，而不是创建新对象
@@ -492,9 +488,10 @@ export default class XFlowPropertiesProvider {
               const bpmnFactory = this.injector.get("bpmnFactory");
 
               if (!output.source) {
-                output.source = bpmnFactory.create("xflow:source", {
+                output.source = bpmnFactory.create("xflow:Source", {
                   value: "",
                 });
+                output.source.$parent = output; // Set parent for namespace context
               }
 
               // 直接更新 source 的 value 属性，而不是创建新对象
@@ -529,19 +526,19 @@ export default class XFlowPropertiesProvider {
       event.stopPropagation();
       const commandStack = this.injector.get("commandStack");
       const businessObject = getBusinessObject(element);
-      const extension = this.getInputOutputExtension(businessObject);
+      const inputOutput = this.getInputOutputElement(businessObject);
 
-      if (!extension) {
+      if (!inputOutput) {
         return;
       }
 
-      const inputs = (extension.input || []).filter(
+      const inputs = (inputOutput.input || []).filter(
         (item: any) => item !== input
       );
 
       commandStack.execute("element.updateModdleProperties", {
         element,
-        moddleElement: extension,
+        moddleElement: inputOutput,
         properties: {
           input: inputs,
         },
@@ -555,19 +552,19 @@ export default class XFlowPropertiesProvider {
       event.stopPropagation();
       const commandStack = this.injector.get("commandStack");
       const businessObject = getBusinessObject(element);
-      const extension = this.getInputOutputExtension(businessObject);
+      const inputOutput = this.getInputOutputElement(businessObject);
 
-      if (!extension) {
+      if (!inputOutput) {
         return;
       }
 
-      const outputs = (extension.output || []).filter(
+      const outputs = (inputOutput.output || []).filter(
         (item: any) => item !== output
       );
 
       commandStack.execute("element.updateModdleProperties", {
-      element,
-        moddleElement: extension,
+        element,
+        moddleElement: inputOutput,
         properties: {
           output: outputs,
         },
@@ -590,26 +587,27 @@ export default class XFlowPropertiesProvider {
         });
         businessObject.extensionElements = extensionElements;
         commandStack.execute("element.updateModdleProperties", {
-      element,
+          element,
           moddleElement: businessObject,
           properties: { extensionElements },
         });
       }
-      
+
       // 确保 values 数组存在
       if (!extensionElements.values) {
         extensionElements.values = [];
       }
 
-      let extension = this.getInputOutputExtension(businessObject);
-      if (!extension) {
-        extension = bpmnFactory.create("xflow:inputOutput", {
+      let inputOutput = this.getInputOutputElement(businessObject);
+      if (!inputOutput) {
+        inputOutput = bpmnFactory.create("xflow:InputOutput", {
           input: [],
           output: [],
         });
-        extensionElements.values.push(extension);
+        inputOutput.$parent = extensionElements;
+        extensionElements.values.push(inputOutput);
         commandStack.execute("element.updateModdleProperties", {
-      element,
+          element,
           moddleElement: extensionElements,
           properties: {
             values: extensionElements.values,
@@ -617,18 +615,28 @@ export default class XFlowPropertiesProvider {
         });
       }
 
-      const newInput = bpmnFactory.create("xflow:input", {
+      const newInput = bpmnFactory.create("xflow:Input", {
         name: this.nextId("Input_"),
-        variable: bpmnFactory.create("xflow:variable", { name: "" }),
       });
+      
+      // Create variable separately to set parent properly
+      const variable = bpmnFactory.create("xflow:Variable", { name: "" });
+      variable.$parent = newInput;
+      newInput.variable = variable;
 
-      extension.input = [...(extension.input || []), newInput];
+      // Set parent for proper namespace handling
+      newInput.$parent = inputOutput;
+      if (newInput.variable) {
+        newInput.variable.$parent = newInput;
+      }
+
+      inputOutput.input = [...(inputOutput.input || []), newInput];
 
       commandStack.execute("element.updateModdleProperties", {
         element,
-        moddleElement: extension,
+        moddleElement: inputOutput,
         properties: {
-          input: extension.input,
+          input: inputOutput.input,
         },
       });
     };
@@ -649,26 +657,27 @@ export default class XFlowPropertiesProvider {
         });
         businessObject.extensionElements = extensionElements;
         commandStack.execute("element.updateModdleProperties", {
-      element,
+          element,
           moddleElement: businessObject,
           properties: { extensionElements },
         });
       }
-      
+
       // 确保 values 数组存在
       if (!extensionElements.values) {
         extensionElements.values = [];
       }
 
-      let extension = this.getInputOutputExtension(businessObject);
-      if (!extension) {
-        extension = bpmnFactory.create("xflow:inputOutput", {
+      let inputOutput = this.getInputOutputElement(businessObject);
+      if (!inputOutput) {
+        inputOutput = bpmnFactory.create("xflow:InputOutput", {
           input: [],
           output: [],
         });
-        extensionElements.values.push(extension);
+        inputOutput.$parent = extensionElements;
+        extensionElements.values.push(inputOutput);
         commandStack.execute("element.updateModdleProperties", {
-      element,
+          element,
           moddleElement: extensionElements,
           properties: {
             values: extensionElements.values,
@@ -676,19 +685,36 @@ export default class XFlowPropertiesProvider {
         });
       }
 
-      const newOutput = bpmnFactory.create("xflow:output", {
+      const newOutput = bpmnFactory.create("xflow:Output", {
         name: this.nextId("Output_"),
-        variable: bpmnFactory.create("xflow:variable", { name: "" }),
-        source: bpmnFactory.create("xflow:source", { value: "" }),
       });
+      
+      // Create nested elements separately to set parent properly
+      const variable = bpmnFactory.create("xflow:Variable", { name: "" });
+      const source = bpmnFactory.create("xflow:Source", { value: "" });
+      
+      variable.$parent = newOutput;
+      source.$parent = newOutput;
+      
+      newOutput.variable = variable;
+      newOutput.source = source;
 
-      extension.output = [...(extension.output || []), newOutput];
+      // Set parent for proper namespace handling
+      newOutput.$parent = inputOutput;
+      if (newOutput.variable) {
+        newOutput.variable.$parent = newOutput;
+      }
+      if (newOutput.source) {
+        newOutput.source.$parent = newOutput;
+      }
+
+      inputOutput.output = [...(inputOutput.output || []), newOutput];
 
       commandStack.execute("element.updateModdleProperties", {
         element,
-        moddleElement: extension,
+        moddleElement: inputOutput,
         properties: {
-          output: extension.output,
+          output: inputOutput.output,
         },
       });
     };
@@ -719,7 +745,7 @@ function ConditionExpression(props: {
   const commandStack = useService("commandStack");
   const translate = useService("translate");
   const debounce = useService("debounceInput");
-  const moddle = useService("moddle");
+  const bpmnFactory = useService("bpmnFactory");
 
   const setValue = (value: string) => {
     if (!value || value.trim() === "") {
@@ -736,7 +762,7 @@ function ConditionExpression(props: {
       let conditionExpression = flow.conditionExpression;
 
       if (!conditionExpression) {
-        conditionExpression = moddle.create("bpmn:FormalExpression", {
+        conditionExpression = bpmnFactory.create("bpmn:FormalExpression", {
           body: value,
         });
       } else {
@@ -744,7 +770,7 @@ function ConditionExpression(props: {
       }
 
       commandStack.execute("element.updateModdleProperties", {
-      element,
+        element,
         moddleElement: flow,
         properties: {
           conditionExpression: conditionExpression,

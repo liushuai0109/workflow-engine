@@ -8,7 +8,7 @@
   "associations": [],
   "types": [
     {
-      "name": "module",
+      "name": "Module",
       "superClass": [
         "Element"
       ],
@@ -16,12 +16,12 @@
         {
           "name": "value",
           "type": "String",
-          "isBody": true
+          "isAttr": true
         }
       ]
     },
     {
-      "name": "method",
+      "name": "Method",
       "superClass": [
         "Element"
       ],
@@ -29,12 +29,12 @@
         {
           "name": "value",
           "type": "String",
-          "isBody": true
+          "isAttr": true
         }
       ]
     },
     {
-      "name": "url",
+      "name": "Url",
       "superClass": [
         "Element"
       ],
@@ -42,30 +42,30 @@
         {
           "name": "value",
           "type": "String",
-          "isBody": true
+          "isAttr": true
         }
       ]
     },
     {
-      "name": "inputOutput",
+      "name": "InputOutput",
       "superClass": [
         "Element"
       ],
       "properties": [
         {
           "name": "input",
-          "type": "XFlowInput",
+          "type": "Input",
           "isMany": true
         },  
         {
           "name": "output",
-          "type": "XFlowOutput",
+          "type": "Output",
           "isMany": true
         }
       ]
     },
     {
-      "name": "input",
+      "name": "Input",
       "superClass": [
         "Element"
       ],
@@ -77,12 +77,12 @@
         },
         {
           "name": "variable",
-          "type": "XFlowVariable"
+          "type": "Variable"
         }
       ]
     },
     {
-      "name": "output",
+      "name": "Output",
       "superClass": [
         "Element"
       ],
@@ -94,16 +94,16 @@
         },
         {
           "name": "source",
-          "type": "XFlowSource"
+          "type": "Source"
         },
         {
           "name": "variable",
-          "type": "XFlowVariable"
+          "type": "Variable"
         }
       ]
     },
     {
-      "name": "variable",
+      "name": "Variable",
       "superClass": [
         "Element"
       ],
@@ -116,7 +116,7 @@
       ]
     },
     {
-      "name": "source",
+      "name": "Source",
       "superClass": [
         "Element"
       ],

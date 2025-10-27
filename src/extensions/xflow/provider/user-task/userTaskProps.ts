@@ -173,9 +173,9 @@ function createAddHandler({ element, bpmnFactory, commandStack }: {
     }
 
     // (3) 创建新的 Input
-    const newInput = createElement('xflow:input', {
+    const newInput = createElement('xflow:Input', {
       name: nextId('Input_'),
-      variable: createElement('xflow:variable', { name: '' }, null, bpmnFactory)
+      variable: createElement('xflow:Variable', { name: '' }, null, bpmnFactory)
     }, extension, bpmnFactory);
 
     // (4) 添加 Input 到列表
