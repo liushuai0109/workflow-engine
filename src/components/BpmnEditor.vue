@@ -1,6 +1,38 @@
 <template>
   <div class="bpmn-editor">
     <div ref="container" class="bpmn-container"></div>
+    
+    <!-- 缩放控制 -->
+    <div class="io-zoom-controls">
+      <button 
+        class="io-zoom-control" 
+        @click="zoomIn" 
+        title="放大"
+      >
+        <span class="entry-icon">+</span>
+      </button>
+      <button 
+        class="io-zoom-control" 
+        @click="zoomOut" 
+        title="缩小"
+      >
+        <span class="entry-icon">−</span>
+      </button>
+      <button 
+        class="io-zoom-control" 
+        @click="zoomToFit" 
+        title="适应画布"
+      >
+        <span class="entry-icon">⌂</span>
+      </button>
+      <button 
+        class="io-zoom-control" 
+        @click="zoomReset" 
+        title="重置缩放"
+      >
+        <span class="entry-icon">1:1</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -82,6 +114,31 @@ const restoreViewbox = () => {
     const canvas = modeler.get('canvas')
     canvas.viewbox(savedViewbox)
   }
+}
+
+// 缩放控制方法
+const zoomIn = () => {
+  if (!modeler) return
+  const zoomScroll = modeler.get('zoomScroll')
+  zoomScroll.stepZoom(1)
+}
+
+const zoomOut = () => {
+  if (!modeler) return
+  const zoomScroll = modeler.get('zoomScroll')
+  zoomScroll.stepZoom(-1)
+}
+
+const zoomToFit = () => {
+  if (!modeler) return
+  const canvas = modeler.get('canvas')
+  canvas.zoom('fit-viewport')
+}
+
+const zoomReset = () => {
+  if (!modeler) return
+  const canvas = modeler.get('canvas')
+  canvas.zoom(1)
 }
 
 // 初始化 BPMN 编辑器
@@ -298,6 +355,49 @@ onBeforeUnmount(() => {
 .bpmn-container {
   width: 100%;
   height: 100%;
+}
+
+/* 缩放控制样式 */
+.io-zoom-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1000;
+}
+
+.io-zoom-control {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.io-zoom-control:hover {
+  background: #f5f5f5;
+  border-color: #999;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.io-zoom-control:active {
+  background: #e5e5e5;
+  transform: translateY(1px);
+}
+
+.entry-icon {
+  font-size: 16px !important;
+  font-weight: bold !important;
 }
 
 /* 自定义 Context Pad 按钮样式 */
