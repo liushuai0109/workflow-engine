@@ -6,6 +6,25 @@
     "tagAlias": "lowerCase"
   },
   "associations": [],
+  "enumerations": [
+    {
+      "name": "DeclarationType",
+      "literalValues": [
+        {
+          "name": "String",
+          "value": "String"
+        },
+        {
+          "name": "Integer",
+          "value": "Integer"
+        },
+        {
+          "name": "Boolean",
+          "value": "Boolean"
+        }
+      ]
+    }
+  ],
   "types": [
     {
       "name": "Module",
@@ -47,6 +66,91 @@
       ]
     },
     {
+      "name": "RequestParameterAssignments",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "assignment",
+          "type": "Assignment",
+          "isMany": true
+        }
+      ]
+    },
+    {
+      "name": "FlowVariableAssignments",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "assignment",
+          "type": "Assignment",
+          "isMany": true
+        }
+      ]
+    },
+    {
+      "name": "Assignment",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "target",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "source",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "Declarations",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "declaration",
+          "type": "Declaration",
+          "isMany": true
+        }
+      ]
+    },
+    {
+      "name": "Declaration",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "field",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "type",
+          "type": "DeclarationType",
+          "isAttr": true
+        }
+      ]
+    },
+    {
       "name": "InputOutput",
       "superClass": [
         "Element"
@@ -56,7 +160,7 @@
           "name": "input",
           "type": "Input",
           "isMany": true
-        },  
+        },
         {
           "name": "output",
           "type": "Output",
@@ -125,6 +229,19 @@
           "name": "value",
           "type": "String",
           "isBody": true
+        }
+      ]
+    },
+    {
+      "name": "SequenceFlow",
+      "superClass": [
+        "bpmn:SequenceFlow"
+      ],
+      "properties": [
+        {
+          "name": "priority",
+          "type": "Integer",
+          "isAttr": true
         }
       ]
     }

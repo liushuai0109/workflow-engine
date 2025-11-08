@@ -104,6 +104,26 @@ function findExtensionElementByType(
                el.$type.endsWith(':method');
       }
       
+      if (elementType === 'xflow:RequestParameterAssignments') {
+        return el.$type === 'xflow:RequestParameterAssignments' || 
+               el.$type === 'ns0:requestParameterAssignments' || 
+               el.$type === 'ns0:requestparameterassignments' ||
+               el.$type === 'requestParameterAssignments' ||
+               el.$type === 'requestparameterassignments' ||
+               el.$type.endsWith(':requestParameterAssignments') ||
+               el.$type.endsWith(':requestparameterassignments');
+      }
+      
+      if (elementType === 'xflow:FlowVariableAssignments') {
+        return el.$type === 'xflow:FlowVariableAssignments' || 
+               el.$type === 'ns0:flowVariableAssignments' || 
+               el.$type === 'ns0:flowvariableassignments' ||
+               el.$type === 'flowVariableAssignments' ||
+               el.$type === 'flowvariableassignments' ||
+               el.$type.endsWith(':flowVariableAssignments') ||
+               el.$type.endsWith(':flowvariableassignments');
+      }
+      
       return el.$type === elementType;
     }
   );
