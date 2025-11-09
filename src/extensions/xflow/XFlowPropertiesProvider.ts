@@ -1,6 +1,6 @@
 import { getBusinessObject } from "bpmn-js/lib/util/ModelUtil";
 import { is } from "bpmn-js/lib/util/ModelUtil";
-import { TextFieldEntry, NumberFieldEntry, ListGroup, SelectEntry } from "@bpmn-io/properties-panel";
+import { TextFieldEntry, NumberFieldEntry, ListGroup, SelectEntry, CheckboxEntry } from "@bpmn-io/properties-panel";
 import { useService } from "bpmn-js-properties-panel";
 import type {
   BpmnElement,
@@ -133,6 +133,40 @@ export default class XFlowPropertiesProvider {
       id: "userTaskExtension",
       label: this.translate("User Task Extension"),
       entries: [
+        // Assignee 属性
+        {
+          id: "assignee",
+          component: this.createCachedComponent(
+            "userTask-assignee",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const debounce = this.injector.get("debounceInput");
+              const modeling = this.injector.get("modeling");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                return bo.assignee || "";
+              };
+
+              const setValue = (value: string) => {
+                modeling.updateProperties(props.element, {
+                  assignee: value || undefined,
+                });
+              };
+
+              return TextFieldEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("Assignee"),
+                getValue,
+                setValue,
+                debounce,
+                description: translate("The user assigned to this task"),
+                placeholder: translate("Enter assignee"),
+              });
+            }
+          ),
+        },
         // 普通属性 - URL
         createPropertyEntry("url", element, TextFieldEntry, {
           propertyPath: "value",
@@ -142,24 +176,256 @@ export default class XFlowPropertiesProvider {
           tooltip: "Set the URL for this task",
           placeholder: "Enter URL",
         }),
-
-        // 结构化属性 - Inputs
+        // Visible Flow Variables 列表组
         {
-          id: "inputs",
-          label: "Input Parameters",
+          id: "visibleFlowVariables",
+          label: this.translate("Visible Flow Variables"),
           component: ListGroup,
-          ...this.createInputListGroup(element),
-        } as any,
-
-        // 结构化属性 - Outputs
-        {
-          id: "outputs",
-          label: "Output Parameters",
-          component: ListGroup,
-          ...this.createOutputListGroup(element),
+          ...this.createVisibleFlowVariablesListGroup(element),
         } as any,
       ],
     };
+  }
+
+  // 创建 Visible Flow Variables 列表组
+  private createVisibleFlowVariablesListGroup(element: BpmnElement) {
+    const elementRegistry = this.injector.get("elementRegistry");
+    
+    // 获取 Process 的 Declarations
+    const processElement = this.findProcessElement(elementRegistry);
+    const processDeclarations = processElement 
+      ? this.getDeclarations(processElement) 
+      : [];
+
+    // 获取 UserTask 的 VisibleFlowVariables
+    const businessObject = getBusinessObject(element);
+    const visibleFlowVariables = this.getVisibleFlowVariablesElement(businessObject);
+    const selectedDeclarations = visibleFlowVariables 
+      ? (visibleFlowVariables.variable || []) 
+      : [];
+
+    // 创建选中集合（使用 name::field 作为唯一标识）
+    const selectedKeys = new Set(
+      selectedDeclarations.map((decl: any) => 
+        `${decl.name || ''}::${decl.field || ''}`
+      )
+    );
+
+    // 为每个 Declaration 创建一个列表项
+    const items = processDeclarations.map((decl: any, index: number) => {
+      const key = `${decl.name || ''}::${decl.field || ''}`;
+      const id = element.id + "-visible-var-" + index;
+      
+      return {
+        id,
+        label: decl.name || decl.field || `Variable ${index + 1}`,
+        entries: this.createVisibleVariableEntries(id, element, decl, key),
+      };
+    });
+
+    return {
+      items: items.length > 0 ? items : [],
+      add: undefined, // 不显示添加按钮，因为选项来自 Process Declarations
+    };
+  }
+
+  // 创建单个 Visible Variable 的条目
+  private createVisibleVariableEntries(
+    idPrefix: string,
+    element: BpmnElement,
+    declaration: any,
+    key: string
+  ): any[] {
+    return [
+      {
+        id: idPrefix + "-checkbox",
+        component: this.createCachedComponent(
+          `visible-var-checkbox-${idPrefix}`,
+          () => (props: { element: BpmnElement; id: string }) => {
+            return this.createVisibleVariableCheckbox(
+              props.element,
+              props.id,
+              declaration,
+              key
+            );
+          }
+        ),
+      },
+      {
+        id: idPrefix + "-name",
+        component: this.createCachedComponent(
+          `visible-var-name-${idPrefix}`,
+          () => (props: { element: BpmnElement; id: string }) => {
+            const translate = this.injector.get("translate");
+            const debounce = this.injector.get("debounceInput");
+            return TextFieldEntry({
+              id: props.id,
+              element: props.element,
+              label: translate("Name"),
+              getValue: () => declaration.name || "",
+              setValue: () => {}, // 只读
+              debounce,
+              disabled: true,
+            });
+          }
+        ),
+      },
+      {
+        id: idPrefix + "-field",
+        component: this.createCachedComponent(
+          `visible-var-field-${idPrefix}`,
+          () => (props: { element: BpmnElement; id: string }) => {
+            const translate = this.injector.get("translate");
+            const debounce = this.injector.get("debounceInput");
+            return TextFieldEntry({
+              id: props.id,
+              element: props.element,
+              label: translate("Field"),
+              getValue: () => declaration.field || "",
+              setValue: () => {}, // 只读
+              debounce,
+              disabled: true,
+            });
+          }
+        ),
+      },
+      {
+        id: idPrefix + "-type",
+        component: this.createCachedComponent(
+          `visible-var-type-${idPrefix}`,
+          () => (props: { element: BpmnElement; id: string }) => {
+            const translate = this.injector.get("translate");
+            const debounce = this.injector.get("debounceInput");
+            return TextFieldEntry({
+              id: props.id,
+              element: props.element,
+              label: translate("Type"),
+              getValue: () => {
+                const type = declaration.$attrs?.type || declaration.type;
+                return type || "";
+              },
+              setValue: () => {}, // 只读
+              debounce,
+              disabled: true,
+            });
+          }
+        ),
+      },
+    ];
+  }
+
+  // 创建单个 Visible Variable 复选框
+  private createVisibleVariableCheckbox(
+    element: BpmnElement,
+    id: string,
+    declaration: any,
+    key: string
+  ): any {
+    const commandStack = this.injector.get("commandStack");
+    const translate = this.injector.get("translate");
+    const bpmnFactory = this.injector.get("bpmnFactory");
+    const businessObject = getBusinessObject(element);
+
+    const getValue = () => {
+      const visibleFlowVariables = this.getVisibleFlowVariablesElement(businessObject);
+      if (!visibleFlowVariables || !visibleFlowVariables.variable) {
+        return false;
+      }
+      return visibleFlowVariables.variable.some((decl: any) => 
+        `${decl.name || ''}::${decl.field || ''}` === key
+      );
+    };
+
+    const setValue = (checked: boolean) => {
+      // 确保 extensionElements 存在
+      let extensionElements = businessObject.extensionElements;
+      if (!extensionElements) {
+        extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
+          values: [],
+        });
+        businessObject.extensionElements = extensionElements;
+        commandStack.execute("element.updateModdleProperties", {
+          element,
+          moddleElement: businessObject,
+          properties: { extensionElements },
+        });
+      }
+
+      // 确保 values 数组存在
+      if (!extensionElements.values) {
+        extensionElements.values = [];
+      }
+
+      // 获取或创建 VisibleFlowVariables
+      let visibleFlowVars = this.getVisibleFlowVariablesElement(businessObject);
+      if (!visibleFlowVars) {
+        visibleFlowVars = bpmnFactory.create("xflow:VisibleFlowVariables", {
+          variable: [],
+        });
+        visibleFlowVars.$parent = extensionElements;
+        extensionElements.values.push(visibleFlowVars);
+        commandStack.execute("element.updateModdleProperties", {
+          element,
+          moddleElement: extensionElements,
+          properties: {
+            values: extensionElements.values,
+          },
+        });
+      }
+
+      // 更新 variable 数组
+      const currentVariables = visibleFlowVars.variable || [];
+      if (checked) {
+        // 添加：如果不存在则添加
+        const exists = currentVariables.some((decl: any) => 
+          `${decl.name || ''}::${decl.field || ''}` === key
+        );
+        if (!exists) {
+          // 创建 Declaration 的副本
+          const declarationCopy = bpmnFactory.create("xflow:Declaration", {
+            name: declaration.name,
+            field: declaration.field,
+            type: declaration.type || declaration.$attrs?.type,
+          });
+          declarationCopy.$parent = visibleFlowVars;
+          visibleFlowVars.variable = [...currentVariables, declarationCopy];
+        }
+      } else {
+        // 移除：过滤掉匹配的声明
+        visibleFlowVars.variable = currentVariables.filter((decl: any) => 
+          `${decl.name || ''}::${decl.field || ''}` !== key
+        );
+      }
+
+      commandStack.execute("element.updateModdleProperties", {
+        element,
+        moddleElement: visibleFlowVars,
+        properties: {
+          variable: visibleFlowVars.variable,
+        },
+      });
+    };
+
+    return CheckboxEntry({
+      id,
+      element,
+      label: translate("Visible"),
+      getValue,
+      setValue,
+    });
+  }
+
+  // 获取 VisibleFlowVariables 扩展元素
+  private getVisibleFlowVariablesElement(businessObject: any): any {
+    if (
+      !businessObject.extensionElements ||
+      !businessObject.extensionElements.values
+    ) {
+      return null;
+    }
+    return businessObject.extensionElements.values.find(
+      (el: any) => el.$type === "xflow:VisibleFlowVariables"
+    );
   }
 
   // Gateway 条件编辑组
@@ -460,6 +726,42 @@ export default class XFlowPropertiesProvider {
           placeholder: "Enter the name of the method",
         }),
 
+        // Allowed Sources 输入框
+        {
+          id: "allowedSources",
+          component: this.createCachedComponent(
+            "serviceTask-allowedSources",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const debounce = this.injector.get("debounceInput");
+              const modeling = this.injector.get("modeling");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                return bo.$attrs?.allowedSources || bo.allowedSources || "";
+              };
+
+              const setValue = (value: string) => {
+                modeling.updateProperties(props.element, {
+                  allowedSources: value || undefined,
+                });
+              };
+
+              return TextFieldEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("Allowed Sources"),
+                getValue,
+                setValue,
+                debounce,
+                description: translate("Multiple sources separated by commas"),
+                tooltip: translate("Specify the allowed sources for this service task. Multiple sources should be separated by commas (e.g., source1, source2, source3)"),
+                placeholder: translate("Enter sources separated by commas"),
+              });
+            }
+          ),
+        },
+
         // Request Parameter Assignments 列表组
         {
           id: "requestParameterAssignments",
@@ -498,6 +800,41 @@ export default class XFlowPropertiesProvider {
       id: "messageEventDefinitionExtension",
       label: this.translate("Message Event Definition Extension"),
       entries: [
+        // Allowed Sources 输入框
+        {
+          id: "messageEventAllowedSources",
+          component: this.createCachedComponent(
+            "messageEvent-allowedSources",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const debounce = this.injector.get("debounceInput");
+              const modeling = this.injector.get("modeling");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                return bo.$attrs?.allowedSources || bo.allowedSources || "";
+              };
+
+              const setValue = (value: string) => {
+                modeling.updateProperties(props.element, {
+                  allowedSources: value || undefined,
+                });
+              };
+
+              return TextFieldEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("Allowed Sources"),
+                getValue,
+                setValue,
+                debounce,
+                description: translate("Multiple sources separated by commas"),
+                tooltip: translate("Specify the allowed sources for this message event. Multiple sources should be separated by commas (e.g., source1, source2, source3)"),
+                placeholder: translate("Enter sources separated by commas"),
+              });
+            }
+          ),
+        },
         // Flow Variable Assignments 列表组
         {
           id: "messageEventFlowVariableAssignments",
@@ -1889,13 +2226,13 @@ export default class XFlowPropertiesProvider {
             };
 
             const setValue = (value: string) => {
-              commandStack.execute("element.updateModdleProperties", {
+      commandStack.execute("element.updateModdleProperties", {
                 element: props.element,
                 moddleElement: declaration,
-                properties: {
+        properties: {
                   name: value,
-                },
-              });
+        },
+      });
             };
 
             return TextFieldEntry({
@@ -1918,7 +2255,7 @@ export default class XFlowPropertiesProvider {
             const translate = this.injector.get("translate");
             const debounce = this.injector.get("debounceInput");
 
-            const getValue = () => {
+  const getValue = () => {
               return declaration.field || "";
             };
 
@@ -1930,17 +2267,17 @@ export default class XFlowPropertiesProvider {
                   field: value,
                 },
               });
-            };
+  };
 
-            return TextFieldEntry({
+  return TextFieldEntry({
               id: props.id,
               element: props.element,
               label: translate("Field"),
-              getValue,
-              setValue,
-              debounce,
-            });
-          }
+    getValue,
+    setValue,
+    debounce,
+  });
+}
         ),
       },
       {
@@ -2334,6 +2671,56 @@ export default class XFlowPropertiesProvider {
 
     console.log(`Successfully initialized ${newDeclarations.length} Flow Variable Declarations`);
   }
+
+  // Event 扩展属性组
+  private createEventExtensionGroup(
+    element: BpmnElement,
+    businessObject: any
+  ): PropertiesPanelGroup {
+    return {
+      id: "eventExtension",
+      label: this.translate("Event Extension"),
+      entries: [
+        // Allowed Sources 输入框
+        {
+          id: "allowedSources",
+          element: element,
+          component: this.createCachedComponent(
+            "event-allowedSources",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const debounce = this.injector.get("debounceInput");
+              const modeling = this.injector.get("modeling");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                return bo.$attrs?.allowedSources || bo.allowedSources || "";
+              };
+
+              const setValue = (value: string) => {
+                modeling.updateProperties(props.element, {
+                  allowedSources: value || undefined,
+                });
+              };
+
+              return TextFieldEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("Allowed Sources"),
+                getValue,
+                setValue,
+                debounce,
+                description: translate("Multiple sources separated by commas"),
+                placeholder: translate("Enter sources separated by commas"),
+              });
+            }
+          ),
+          isEdited: () => false,
+        },
+      ],
+    };
+  }
+
 
   // 生成唯一ID
   private nextId(prefix: string): string {

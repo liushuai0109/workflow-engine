@@ -66,6 +66,19 @@
       ]
     },
     {
+      "name": "VisibleFlowVariables",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "variable",
+          "type": "Declaration",
+          "isMany": true
+        }
+      ]
+    },
+    {
       "name": "RequestParameterAssignments",
       "superClass": [
         "Element"
@@ -146,101 +159,6 @@
         {
           "name": "type",
           "type": "DeclarationType",
-          "isAttr": true
-        }
-      ]
-    },
-    {
-      "name": "InputOutput",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "input",
-          "type": "Input",
-          "isMany": true
-        },
-        {
-          "name": "output",
-          "type": "Output",
-          "isMany": true
-        }
-      ]
-    },
-    {
-      "name": "Input",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "name",
-          "type": "String",
-          "isAttr": true
-        },
-        {
-          "name": "variable",
-          "type": "Variable"
-        }
-      ]
-    },
-    {
-      "name": "Output",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "name",
-          "type": "String",
-          "isAttr": true
-        },
-        {
-          "name": "source",
-          "type": "Source"
-        },
-        {
-          "name": "variable",
-          "type": "Variable"
-        }
-      ]
-    },
-    {
-      "name": "Variable",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "name",
-          "type": "String",
-          "isAttr": true
-        }
-      ]
-    },
-    {
-      "name": "Source",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "value",
-          "type": "String",
-          "isBody": true
-        }
-      ]
-    },
-    {
-      "name": "SequenceFlow",
-      "superClass": [
-        "bpmn:SequenceFlow"
-      ],
-      "properties": [
-        {
-          "name": "priority",
-          "type": "Integer",
           "isAttr": true
         }
       ]
