@@ -1,0 +1,292 @@
+<!-- 流程引擎 dtd，用于定义流程引擎的 DSL，仅涉及描述流程所需的元素和属性，不涉及流程图的可视化呈现部分 -->
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 通用属性：所有元素都包含的基本属性 -->
+<!ENTITY % commonAttributes "
+  id ID #REQUIRED
+  name CDATA #IMPLIED
+">
+
+<!-- 通用子节点：所有元素都包含的公共子节点，用于元素的描述说明 -->
+<!ENTITY % commonChildren "document?">
+
+<!-- 流程元素：定义整个业务流程的容器，包含所有流程节点和连接 -->
+<!-- 
+declarations: 声明集合，包含多个变量或数据声明的容器，用于定义流程中使用的变量或数据结构
+  - 声明：定义变量或数据结构的单个声明项
+    - 声明的 name 属性为变量或数据结构的名称
+    - 声明的 field 属性为变量或数据结构的字段
+    - 声明的 type 属性为变量或数据结构的类型，目前仅支持 String, Integer, Boolean 三种类型
+businessNode: 业务节点，产品视角业务颗粒度节点
+startNode: 流程开始节点，用于标识流程或子流程的开始
+endNode: 流程结束节点，用于标识流程或子流程的结束
+sequenceFlow: 顺序流，用于连接流程节点，可包含条件表达式
+exclusiveGateway: 排他网关，用于根据条件选择一条路径执行的分支节点，支持条件表达式配置
+stateMachine: 状态机，用于描述流程或业务对象的状态转换逻辑
+message: 消息，用于定义流程中传递的消息定义
+-->
+<!ELEMENT process (%commonChildren;, declarations?, (businessNode | startNode | endNode | sequenceFlow | exclusiveGateway ｜ stateMachine ｜ message)*)>
+<!ATTLIST process
+  %commonAttributes;
+  version CDATA #IMPLIED>
+
+<!-- 声明集合：包含多个变量或数据声明的容器 -->
+<!ELEMENT declarations (declaration+)>
+
+<!-- 声明：定义变量或数据结构的单个声明项 -->
+<!ELEMENT declaration EMPTY>
+<!ATTLIST declaration
+  name CDATA #REQUIRED
+  field CDATA #REQUIRED
+  type CDATA #REQUIRED>  
+
+<!-- 业务节点：复合节点，支持嵌套流程定义 -->
+<!-- 
+userNode: 用户任务节点，用于标识需要人工参与完成的节点
+serviceNode: 服务任务节点，用于标识需要系统自动执行的服务调用节点
+eventBasedGateway: 基于事件的网关，用于根据事件触发选择路径的分支节点
+parallelGateway: 并行网关，用于表达流程进入多个并行分支的开始，与排他网关exclusiveGateway或并行网关parallelGateway配合使用，表达并行分支的汇聚
+  - 汇聚网关为排他网关时，表达任意分支节点到达即可继续后续流程
+  - 汇聚网关为并行网关时，表达所有分支节点到达后才能继续后续流程
+intermediateCatchEvent: 中间捕获事件，用于在流程执行过程中等待外部事件触发的中间节点
+boundaryEvent: 边界事件，用于附加在活动节点边界上，用于中断或非中断处理的事件
+  - 中断型边界事件：表达触发该事件会驱动流程在事件分支上继续执行，典型应用场景：一个页面有多个会驱动业务流程的请求，通过中断型边界事件表达
+  - 非中断型边界事件：表达该事件不会驱动流程在事件分支上继续执行，典型应用场景：首页获取初始化信息，卡 bin 检测接口
+-->
+<!ELEMENT businessNode (%commonChildren;, incoming*, outgoing*, (startNode | endNode | userNode | serviceNode | sequenceFlow | exclusiveGateway | eventBasedGateway | parallelGateway | intermediateCatchEvent | boundaryEvent)*)>
+<!ATTLIST businessNode
+  %commonAttributes;
+  canRollback (true | false) #IMPLIED>
+
+<!-- 开始节点：流程的起始点，可以有多个出流 -->
+<!ELEMENT startNode (%commonChildren;, outgoing*)>
+<!ATTLIST startNode
+  %commonAttributes;>
+
+<!-- 结束节点：流程的终止点，可以有多个入流 -->
+<!ELEMENT endNode (%commonChildren;, incoming*)>
+<!ATTLIST endNode
+  %commonAttributes;>
+
+<!-- 用户任务：需要人工参与完成的任务节点 -->
+<!--
+url: 用户任务关联的页面URL地址
+assignee: 用户任务的执行者
+visibleFlowVariables: 用户任务中可见的流程变量集合，前端通过流程引擎接口获取流程实例时，当前用户任务可见的流程变量，
+例如：实名首页节点有一个流程变量——是否命中同名小号灰度，前端需要用到这个变量，可以在userNode中配置visibleFlowVariables，前端在获取流程实例时，会自动获取当前用户任务可见的流程变量
+-->
+<!ELEMENT userNode (%commonChildren;, visibleFlowVariables?,incoming*, outgoing*)>
+<!ATTLIST userNode
+  %commonAttributes;
+  url CDATA #IMPLIED
+  assignee CDATA #IMPLIED>
+
+<!-- 可见流程变量：定义在任务中可见的流程变量集合 -->
+<!ELEMENT visibleFlowVariables (declaration*)>  
+
+<!-- 服务任务：由系统自动执行的服务调用任务节点 -->
+<!--
+callee: 被调用者，包含模块和方法信息的服务调用定义
+requestParameterAssignments: 用于将流程变量赋值给下游 callee 的请求参数
+flowVariableAssignments: 用于 callee 执行完成后，将其 response 赋值给流程变量
+allowedSources: 允许调用的来源，多个来源用逗号分隔，例如：liteapp,web,miniapp,httpbroker
+-->
+<!ELEMENT serviceNode (%commonChildren;, callee, requestParameterAssignments?, flowVariableAssignments?, incoming*, outgoing*)>
+<!ATTLIST serviceNode
+  %commonAttributes;
+  allowedSources CDATA #IMPLIED>
+
+<!-- 被调用者：包含模块和方法信息的服务调用定义 -->
+<!ELEMENT callee (%commonChildren;)>
+<!ATTLIST callee
+  %commonAttributes;
+  module CDATA #REQUIRED
+  cmdid CDATA #REQUIRED>
+
+<!-- 请求参数赋值集合：包含多个请求参数赋值操作的容器 -->
+<!ELEMENT requestParameterAssignments (assignment+)>
+
+<!-- 流程变量赋值集合：包含多个流程变量赋值操作的容器 -->
+<!ELEMENT flowVariableAssignments (assignment+)>
+
+<!-- 赋值：将源值赋给目标变量的赋值操作 -->
+<!ELEMENT assignment EMPTY>
+<!ATTLIST assignment
+  name CDATA #REQUIRED
+  target CDATA #REQUIRED
+  source CDATA #REQUIRED>
+
+<!-- 顺序流：连接流程节点的有向边，可包含条件表达式 -->
+<!ELEMENT sequenceFlow (%commonChildren;, conditionExpression?)>
+<!ATTLIST sequenceFlow
+  %commonAttributes;
+  sourceRef IDREF #REQUIRED
+  targetRef IDREF #REQUIRED
+  priority CDATA #IMPLIED>
+
+<!-- 条件表达式：用于顺序流或网关的条件判断表达式 -->
+<!ELEMENT conditionExpression (#PCDATA | document)*>
+<!ATTLIST conditionExpression
+  %commonAttributes;>
+
+<!-- 排他网关：根据条件选择一条路径执行的分支节点 -->
+<!-- 使用场景：
+1. 节点间基于条件判断的流转
+-->
+<!ELEMENT exclusiveGateway (%commonChildren;, incoming*, outgoing+)>
+<!ATTLIST exclusiveGateway
+  %commonAttributes;>
+
+<!-- 基于事件的网关：根据事件触发选择路径的分支节点 -->
+<!-- 使用场景：表达流程在等待多个互斥事件，与 intermediateCatchEvent 配合使用 
+1. 刷脸流程中，流程等待刷脸组件触发刷脸成功/刷脸失败这两个互斥事件   
+-->
+<!ELEMENT eventBasedGateway (%commonChildren;, incoming*, outgoing+)>
+<!ATTLIST eventBasedGateway
+  %commonAttributes;>
+
+
+<!-- 中间捕获事件：在流程执行过程中等待外部事件触发的中间节点 -->
+<!--
+messageEventDefinition: 消息事件定义，用于定义消息触发的事件类型
+-->
+<!ELEMENT intermediateCatchEvent (%commonChildren;, incoming*, outgoing+, messageEventDefinition?)>
+<!ATTLIST intermediateCatchEvent
+  %commonAttributes;>
+
+<!-- 边界事件：附加在活动节点边界上，用于中断或非中断处理的事件，目前仅限附加在 userNode 节点上 -->
+<!-- 
+boundaryEvent: 边界事件，用于附加在活动节点边界上，用于中断或非中断处理的事件
+  - 中断型边界事件：表达触发该事件会驱动流程在事件分支上继续执行，典型应用场景：一个页面有多个会驱动业务流程的请求，通过中断型边界事件表达
+  - 非中断型边界事件：表达该事件不会驱动流程在事件分支上继续执行，典型应用场景：首页获取初始化信息，卡 bin 检测接口
+-->
+<!-- 
+cancelActivity: 是否取消当前活动，true 表示取消当前活动，false 表示不取消当前活动
+attachedToRef: 附加在哪个节点上，attachedToRef 的值为 userNode 元素的 id
+messageEventDefinition: 消息事件定义，用于定义消息触发的事件类型
+-->
+<!ELEMENT boundaryEvent (%commonChildren;, outgoing+, messageEventDefinition?)>
+<!ATTLIST boundaryEvent
+  %commonAttributes;
+  cancelActivity (true | false) #IMPLIED
+  attachedToRef IDREF #REQUIRED>
+
+<!-- 消息事件定义：定义消息触发的事件类型 -->
+<!-- 
+messageRef: 消息引用，用于定义消息的类型，messageRef 的值为 message 元素的 id
+allowedSources: 允许触发该事件的来源，多个来源用逗号分隔，例如：liteapp,web,miniapp,httpbroker
+flowVariableAssignments: 用于事件触发后，将事件的参数赋值给流程变量
+-->
+<!ELEMENT messageEventDefinition (%commonChildren;, flowVariableAssignments?)>
+<!ATTLIST messageEventDefinition
+  %commonAttributes;
+  messageRef IDREF #IMPLIED
+  allowedSources CDATA #IMPLIED>
+
+<!-- 消息：流程中传递的消息定义 -->
+<!ELEMENT message (%commonChildren;)>
+<!ATTLIST message
+  %commonAttributes;>  
+
+<!-- 并行网关：用于并行分支和合并的同步节点 -->
+<!-- 
+parallelGateway: 并行网关，用于表达流程进入多个并行分支的开始，与排他网关exclusiveGateway或并行网关parallelGateway配合使用，表达并行分支的汇聚
+  - 汇聚网关为排他网关时，表达任意分支节点到达即可继续后续流程
+  - 汇聚网关为并行网关时，表达所有分支节点到达后才能继续后续流程
+
+使用场景：表达流程进入多个并行分支的开始，与排他网关exclusiveGateway或并行网关parallelGateway配合使用，表达并行分支的汇聚
+1. 用户提交人审后，流程进入了两个并行分支，一方面在等待业管的审核结果，一方面
+-->
+<!ELEMENT parallelGateway (%commonChildren;, incoming*, outgoing+)>
+<!ATTLIST parallelGateway
+  %commonAttributes;>
+
+<!-- 入流：指向当前节点的顺序流引用 -->
+<!ELEMENT incoming (#PCDATA)>
+<!-- 出流：从当前节点出发的顺序流引用 -->
+<!ELEMENT outgoing (#PCDATA)>
+
+<!-- 文档：元素的文档说明 -->
+<!ELEMENT document (#PCDATA)>
+
+<!-- 状态机：用于描述状态转换的状态机定义 -->
+<!-- 
+stateMachine: 状态机，用于描述流程或业务对象的状态转换逻辑
+  - 包含多个状态（states）、事件（events）和转换（transitions）
+  - 每个状态可以定义进入和退出时的行为
+  - 转换可以定义触发条件、守卫、动作等
+-->
+<!ELEMENT stateMachine (%commonChildren;, states, events, transitions)>
+<!ATTLIST stateMachine
+  %commonAttributes;>
+
+<!-- 状态集合：包含多个状态定义 -->
+<!ELEMENT states (state+)>
+
+<!-- 状态：状态机中的状态定义 -->
+<!-- 
+state: 状态，表示流程或业务对象的某个状态
+  - id: 状态的唯一标识
+  - name: 状态名称
+  - document: 状态描述（通过 document 子节点定义）
+-->
+<!ELEMENT state (%commonChildren;)>
+<!ATTLIST state
+  %commonAttributes;>
+
+<!-- 事件集合：包含多个事件定义 -->
+<!ELEMENT events (event+)>
+
+<!-- 事件：状态机中的事件定义 -->
+<!-- 
+event: 事件，用于触发状态转换
+  - id: 事件的唯一标识
+  - name: 事件名称
+  - document: 事件描述（通过 document 子节点定义）
+-->
+<!ELEMENT event (%commonChildren;)>
+<!ATTLIST event
+  %commonAttributes;>
+
+<!-- 转换集合：包含多个转换定义 -->
+<!ELEMENT transitions (transition+)>
+
+<!-- 转换：状态之间的转换定义 -->
+<!-- 
+transition: 转换，定义从一个状态到另一个状态的转换
+  - sourceState: 源状态ID
+  - targetState: 目标状态ID
+  - event: 触发转换的事件ID
+  - guards: 守卫条件集合（可选）
+  - exitFunc: 退出函数（可选）
+  - actions: 动作集合（可选）
+  - entryFunc: 进入函数（可选）
+-->
+<!ELEMENT transition (%commonChildren;, sourceState, targetState, eventRef, guards?, exitFunc?, actions?, entryFunc?)>
+
+<!-- 源状态：转换的源状态ID -->
+<!ELEMENT sourceState (#PCDATA)>
+
+<!-- 目标状态：转换的目标状态ID -->
+<!ELEMENT targetState (#PCDATA)>
+
+<!-- 事件引用：触发转换的事件ID -->
+<!ELEMENT eventRef (#PCDATA)>
+
+<!-- 守卫集合：包含多个守卫条件 -->
+<!ELEMENT guards (guard*)>
+
+<!-- 守卫：转换的守卫条件 -->
+<!ELEMENT guard (#PCDATA)>
+
+<!-- 退出函数：状态退出时执行的函数 -->
+<!ELEMENT exitFunc (#PCDATA)>
+
+<!-- 动作集合：包含多个动作 -->
+<!ELEMENT actions (action*)>
+
+<!-- 动作：转换执行时的动作 -->
+<!ELEMENT action (#PCDATA)>
+
+<!-- 进入函数：状态进入时执行的函数 -->
+<!ELEMENT entryFunc (#PCDATA)>
