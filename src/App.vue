@@ -104,16 +104,25 @@ const saveFile = async (): Promise<void> => {
     let conversionSucceeded = false
     try {
       xmlToSave = convertFromBPMNToXPMN(bpmnXml)
-      conversionSucceeded = true
+      // 验证转换结果是否真的是 XPMN 格式（根元素应该是 definitions 而不是 bpmn:definitions）
+      const isXpmnFormat = xmlToSave.includes('<definitions') && !xmlToSave.includes('<bpmn:definitions')
+      if (isXpmnFormat) {
+        conversionSucceeded = true
+      } else {
+        console.warn('XPMN conversion returned invalid format, saving as BPMN format')
+        xmlToSave = bpmnXml // 使用原始 BPMN 格式
+      }
     } catch (conversionError) {
       console.warn('XPMN conversion failed, saving as BPMN format:', conversionError)
       // 如果转换失败，使用原始 BPMN 格式
+      xmlToSave = bpmnXml
     }
     
     const blob = new Blob([xmlToSave], { type: 'application/xml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
+    // 根据转换是否成功决定文件扩展名
     a.download = conversionSucceeded ? 'diagram.xpmn' : 'diagram.bpmn'
     document.body.appendChild(a)
     a.click()
