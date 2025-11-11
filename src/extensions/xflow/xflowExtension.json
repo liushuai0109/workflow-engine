@@ -27,39 +27,18 @@
   ],
   "types": [
     {
-      "name": "Module",
+      "name": "Callee",
       "superClass": [
         "Element"
       ],
       "properties": [
         {
-          "name": "value",
+          "name": "module",
           "type": "String",
           "isAttr": true
-        }
-      ]
-    },
-    {
-      "name": "Method",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
+        },
         {
-          "name": "value",
-          "type": "String",
-          "isAttr": true
-        }
-      ]
-    },
-    {
-      "name": "Url",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "value",
+          "name": "cmdid",
           "type": "String",
           "isAttr": true
         }

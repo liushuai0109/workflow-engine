@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1">
+  <message id="Message_1" name="Test Message" />
+  <process id="Process_1" name="Complete Process">
+    <declarations>
+      <declaration name="var1" field="field1" type="String" />
+      <declaration name="var2" field="field2" type="Number" />
+    </declarations>
+    <startNode id="StartEvent_1" name="Start">
+      <outgoing>Flow_1</outgoing>
+      <documentation>Start documentation</documentation>
+    </startNode>
+    <userNode id="UserTask_1" name="User Task">
+      <incoming>Flow_1</incoming>
+      <outgoing>Flow_2</outgoing>
+      <visibleFlowVariables>
+        <declaration name="visibleVar" field="visibleField" type="String" />
+      </visibleFlowVariables>
+      <requestParameterAssignments>
+        <assignment name="reqParam" target="$REQUEST.param" source="$FLOW.param" />
+      </requestParameterAssignments>
+      <flowVariableAssignments>
+        <assignment name="flowVar" target="$FLOW.result" source="$RESPONSE.data" />
+      </flowVariableAssignments>
+    </userNode>
+    <serviceNode id="ServiceTask_1" name="Service Task">
+      <incoming>Flow_2</incoming>
+      <outgoing>Flow_3</outgoing>
+      <callee module="testModule" cmdid="testCmd" />
+    </serviceNode>
+    <parallelGateway id="ParallelGateway_1" name="Parallel Gateway">
+      <incoming>Flow_3</incoming>
+      <outgoing>Flow_4</outgoing>
+      <outgoing>Flow_5</outgoing>
+    </parallelGateway>
+    <exclusiveGateway id="ExclusiveGateway_1" name="Exclusive Gateway">
+      <incoming>Flow_4</incoming>
+      <incoming>Flow_5</incoming>
+      <outgoing>Flow_6</outgoing>
+      <outgoing>Flow_7</outgoing>
+    </exclusiveGateway>
+    <eventBasedGateway id="EventBasedGateway_1" name="Event Based Gateway">
+      <incoming>Flow_6</incoming>
+      <outgoing>Flow_8</outgoing>
+      <outgoing>Flow_9</outgoing>
+    </eventBasedGateway>
+    <intermediateCatchEvent id="IntermediateCatchEvent_1" name="Intermediate Catch">
+      <incoming>Flow_8</incoming>
+      <outgoing>Flow_10</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_1" messageRef="Message_1">
+        <flowVariableAssignments>
+          <assignment name="msgVar" target="$FLOW.message" source="$MESSAGE.content" />
+        </flowVariableAssignments>
+      </messageEventDefinition>
+    </intermediateCatchEvent>
+    <boundaryEvent id="BoundaryEvent_1" name="Boundary Event" attachedToRef="ServiceTask_1">
+      <outgoing>Flow_11</outgoing>
+      <messageEventDefinition id="MessageEventDefinition_2" messageRef="Message_1" />
+    </boundaryEvent>
+    <businessNode id="SubProcess_1" name="Sub Process">
+      <incoming>Flow_7</incoming>
+      <outgoing>Flow_12</outgoing>
+      <startNode id="SubStartEvent_1">
+        <outgoing>SubFlow_1</outgoing>
+      </startNode>
+      <userNode id="SubUserTask_1" name="Sub User Task">
+        <incoming>SubFlow_1</incoming>
+        <outgoing>SubFlow_2</outgoing>
+      </userNode>
+      <endNode id="SubEndEvent_1">
+        <incoming>SubFlow_2</incoming>
+      </endNode>
+      <sequenceFlow id="SubFlow_1" sourceRef="SubStartEvent_1" targetRef="SubUserTask_1" />
+      <sequenceFlow id="SubFlow_2" sourceRef="SubUserTask_1" targetRef="SubEndEvent_1" />
+    </businessNode>
+    <sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="UserTask_1" />
+    <sequenceFlow id="Flow_2" sourceRef="UserTask_1" targetRef="ServiceTask_1" />
+    <sequenceFlow id="Flow_3" sourceRef="ServiceTask_1" targetRef="ParallelGateway_1" />
+    <sequenceFlow id="Flow_4" sourceRef="ParallelGateway_1" targetRef="ExclusiveGateway_1" />
+    <sequenceFlow id="Flow_5" sourceRef="ParallelGateway_1" targetRef="ExclusiveGateway_1" />
+    <sequenceFlow id="Flow_6" sourceRef="ExclusiveGateway_1" targetRef="EventBasedGateway_1">
+      <conditionExpression xsi:type="tFormalExpression">
+        $FLOW.path == "path1"
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow_7" sourceRef="ExclusiveGateway_1" targetRef="SubProcess_1">
+      <conditionExpression xsi:type="tFormalExpression">
+        $FLOW.path == "path2"
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow_8" sourceRef="EventBasedGateway_1" targetRef="IntermediateCatchEvent_1" />
+    <sequenceFlow id="Flow_9" sourceRef="EventBasedGateway_1" targetRef="EndEvent_1" />
+    <sequenceFlow id="Flow_10" sourceRef="IntermediateCatchEvent_1" targetRef="EndEvent_1" />
+    <sequenceFlow id="Flow_11" sourceRef="BoundaryEvent_1" targetRef="EndEvent_1" />
+    <sequenceFlow id="Flow_12" sourceRef="SubProcess_1" targetRef="EndEvent_1" />
+    <endNode id="EndEvent_1" name="End">
+      <incoming>Flow_9</incoming>
+      <incoming>Flow_10</incoming>
+      <incoming>Flow_11</incoming>
+      <incoming>Flow_12</incoming>
+      <documentation>End documentation</documentation>
+    </endNode>
+  </process>
+  <stateMachine id="StateMachine_1" name="Statemachine 1">
+    <states>
+      <state id="State_1" name="State 1" />
+      <state id="State_2" name="State 2" />
+    </states>
+    <events>
+      <event id="Event_1" name="Event 1" />
+      <event id="Event_2" name="Event 2" />
+    </events>
+    <transitions>
+      <transition id="Transition_1">
+        <sourceState>State_1</sourceState>
+        <targetState>State_2</targetState>
+        <eventRef>Event_1</eventRef>
+        <guards>
+          <guard>
+            <conditionExpression xsi:type="tFormalExpression">
+              $FLOW.condition == true
+            </conditionExpression>
+          </guard>
+        </guards>
+        <actions>
+          <action>
+            <conditionExpression xsi:type="tFormalExpression">
+              $FLOW.action = "execute"
+            </conditionExpression>
+          </action>
+        </actions>
+      </transition>
+    </transitions>
+  </stateMachine>
+  <XPMNDiagram id="XPMNDiagram_1">
+    <XPMNPlane id="XPMNPlane_1" xpmnElement="Process_1">
+      <XPMNShape id="StartEvent_1_di" xpmnElement="StartEvent_1">
+        <Bounds x="100" y="100" width="36" height="36" />
+      </XPMNShape>
+      <XPMNShape id="UserTask_1_di" xpmnElement="UserTask_1">
+        <Bounds x="200" y="78" width="100" height="80" />
+      </XPMNShape>
+      <XPMNShape id="ServiceTask_1_di" xpmnElement="ServiceTask_1">
+        <Bounds x="350" y="78" width="100" height="80" />
+      </XPMNShape>
+      <XPMNShape id="ParallelGateway_1_di" xpmnElement="ParallelGateway_1">
+        <Bounds x="500" y="93" width="50" height="50" />
+      </XPMNShape>
+      <XPMNShape id="ExclusiveGateway_1_di" xpmnElement="ExclusiveGateway_1">
+        <Bounds x="600" y="93" width="50" height="50" />
+      </XPMNShape>
+      <XPMNShape id="EventBasedGateway_1_di" xpmnElement="EventBasedGateway_1">
+        <Bounds x="700" y="93" width="50" height="50" />
+      </XPMNShape>
+      <XPMNShape id="IntermediateCatchEvent_1_di" xpmnElement="IntermediateCatchEvent_1">
+        <Bounds x="800" y="100" width="36" height="36" />
+      </XPMNShape>
+      <XPMNShape id="BoundaryEvent_1_di" xpmnElement="BoundaryEvent_1">
+        <Bounds x="352" y="140" width="36" height="36" />
+      </XPMNShape>
+      <XPMNShape id="SubProcess_1_di" xpmnElement="SubProcess_1">
+        <Bounds x="650" y="200" width="200" height="150" />
+      </XPMNShape>
+      <XPMNShape id="EndEvent_1_di" xpmnElement="EndEvent_1">
+        <Bounds x="900" y="100" width="36" height="36" />
+      </XPMNShape>
+      <XPMNEdge id="Flow_1_di" xpmnElement="Flow_1">
+        <waypoint x="136" y="118" />
+        <waypoint x="200" y="118" />
+      </XPMNEdge>
+      <XPMNEdge id="Flow_2_di" xpmnElement="Flow_2">
+        <waypoint x="300" y="118" />
+        <waypoint x="350" y="118" />
+      </XPMNEdge>
+      <XPMNEdge id="Flow_3_di" xpmnElement="Flow_3">
+        <waypoint x="450" y="118" />
+        <waypoint x="500" y="118" />
+      </XPMNEdge>
+    </XPMNPlane>
+  </XPMNDiagram>
+</definitions>

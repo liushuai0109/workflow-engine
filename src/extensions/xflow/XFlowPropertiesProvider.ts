@@ -145,7 +145,7 @@ export default class XFlowPropertiesProvider {
 
               const getValue = () => {
                 const bo = getBusinessObject(props.element);
-                return bo.assignee || "";
+                return bo.$attrs.assignee || "";
               };
 
               const setValue = (value: string) => {
@@ -167,15 +167,41 @@ export default class XFlowPropertiesProvider {
             }
           ),
         },
-        // 普通属性 - URL
-        createPropertyEntry("url", element, TextFieldEntry, {
-          propertyPath: "value",
-          elementType: "xflow:Url",
-          label: "URL",
-          description: "Task related URL",
-          tooltip: "Set the URL for this task",
-          placeholder: "Enter URL",
-        }),
+        // URL 属性
+        {
+          id: "url",
+          component: this.createCachedComponent(
+            "userTask-url",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const debounce = this.injector.get("debounceInput");
+              const modeling = this.injector.get("modeling");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                return bo.$attrs.url || "";
+              };
+
+              const setValue = (value: string) => {
+                modeling.updateProperties(props.element, {
+                  url: value || undefined,
+                });
+              };
+
+              return TextFieldEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("URL"),
+                getValue,
+                setValue,
+                debounce,
+                description: translate("Task related URL"),
+                tooltip: translate("Set the URL for this task"),
+                placeholder: translate("Enter URL"),
+              });
+            }
+          ),
+        },
         // Visible Flow Variables 列表组
         {
           id: "visibleFlowVariables",
@@ -709,22 +735,13 @@ export default class XFlowPropertiesProvider {
       id: "serviceTaskExtension",
       label: "Service Task Extension",
       entries: [
-        createPropertyEntry("moduleName", element, TextFieldEntry, {
-          propertyPath: "value",
-          elementType: "xflow:Module",
-          label: "Module Name",
-          description: "The name of the module",
-          tooltip: "The name of the module",
-          placeholder: "Enter the name of the module",
-        }),
-        createPropertyEntry("methodName", element, TextFieldEntry, {
-          propertyPath: "value",
-          elementType: "xflow:Method",
-          label: "Method Name",
-          description: "The name of the method",
-          tooltip: "The name of the method",
-          placeholder: "Enter the name of the method",
-        }),
+        // Callee 列表组
+        {
+          id: "callee",
+          label: this.translate("Callee"),
+          component: ListGroup,
+          ...this.createCalleeListGroup(element),
+        } as any,
 
         // Allowed Sources 输入框
         {
@@ -1073,6 +1090,23 @@ export default class XFlowPropertiesProvider {
 
     return businessObject.extensionElements.values.find(
       (el: any) => el.$type === "xflow:FlowVariableAssignments"
+    );
+  }
+
+  // 获取 Callee 扩展元素
+  private getCalleeElement(businessObject: any): any {
+    if (
+      !businessObject.extensionElements ||
+      !businessObject.extensionElements.values
+    ) {
+      return null;
+    }
+
+    return businessObject.extensionElements.values.find(
+      (el: any) => el.$type === "xflow:Callee" || 
+                   el.$type === "ns0:callee" || 
+                   el.$type === "callee" ||
+                   el.$type.endsWith(":callee")
     );
   }
 
@@ -1514,6 +1548,194 @@ export default class XFlowPropertiesProvider {
         },
       });
     };
+  }
+
+  // 创建 Callee 列表组
+  private createCalleeListGroup(element: BpmnElement) {
+    const businessObject = getBusinessObject(element);
+    const callee = this.getCalleeElement(businessObject);
+    
+    // 每个 serviceTask 只有一个 callee，所以 items 数组只有一个 item
+    // 即使 callee 不存在，也显示一个 item，让用户可以直接输入
+    const items = [{
+      id: element.id + "-callee-0",
+      label: "Callee",
+      entries: this.createCalleeEntries(element.id + "-callee-0", element, callee),
+      autoFocusEntry: element.id + "-callee-0-module",
+    }];
+
+    return {
+      items,
+      add: undefined, // 不显示添加按钮，因为始终显示一个 item
+    };
+  }
+
+  // 创建 Callee 条目
+  private createCalleeEntries(
+    idPrefix: string,
+    element: BpmnElement,
+    callee: any
+  ): any[] {
+    return [
+      {
+        id: idPrefix + "-module",
+        component: this.createCachedComponent(
+          `callee-module-${idPrefix}`,
+          () => (props: { element: BpmnElement; id: string }) => {
+            const translate = this.injector.get("translate");
+            const debounce = this.injector.get("debounceInput");
+            const commandStack = this.injector.get("commandStack");
+
+            const getValue = () => {
+              const bo = getBusinessObject(props.element);
+              const currentCallee = this.getCalleeElement(bo);
+              return currentCallee ? (currentCallee.module || "") : "";
+            };
+
+            const setValue = (value: string) => {
+              const bo = getBusinessObject(props.element);
+              let currentCallee = this.getCalleeElement(bo);
+              
+              // 如果 callee 不存在，创建它
+              if (!currentCallee) {
+                const bpmnFactory = this.injector.get("bpmnFactory");
+                let extensionElements = bo.extensionElements;
+                
+                if (!extensionElements) {
+                  extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
+                    values: [],
+                  });
+                  bo.extensionElements = extensionElements;
+                  commandStack.execute("element.updateModdleProperties", {
+                    element: props.element,
+                    moddleElement: bo,
+                    properties: { extensionElements },
+                  });
+                }
+
+                if (!extensionElements.values) {
+                  extensionElements.values = [];
+                }
+
+                currentCallee = bpmnFactory.create("xflow:Callee", {
+                  module: "",
+                  cmdid: "",
+                });
+                currentCallee.$parent = extensionElements;
+                extensionElements.values.push(currentCallee);
+                commandStack.execute("element.updateModdleProperties", {
+                  element: props.element,
+                  moddleElement: extensionElements,
+                  properties: {
+                    values: extensionElements.values,
+                  },
+                });
+              }
+              
+              currentCallee.module = value || undefined;
+              commandStack.execute("element.updateModdleProperties", {
+                element: props.element,
+                moddleElement: currentCallee,
+                properties: {
+                  module: currentCallee.module,
+                },
+              });
+            };
+
+            return TextFieldEntry({
+              id: props.id,
+              element: props.element,
+              label: translate("Module"),
+              getValue,
+              setValue,
+              debounce,
+              description: translate("The module name of the callee"),
+              tooltip: translate("Enter the module name for the callee"),
+              placeholder: translate("Enter module name"),
+            });
+          }
+        ),
+      },
+      {
+        id: idPrefix + "-cmdid",
+        component: this.createCachedComponent(
+          `callee-cmdid-${idPrefix}`,
+          () => (props: { element: BpmnElement; id: string }) => {
+            const translate = this.injector.get("translate");
+            const debounce = this.injector.get("debounceInput");
+            const commandStack = this.injector.get("commandStack");
+
+            const getValue = () => {
+              const bo = getBusinessObject(props.element);
+              const currentCallee = this.getCalleeElement(bo);
+              return currentCallee ? (currentCallee.cmdid || "") : "";
+            };
+
+            const setValue = (value: string) => {
+              const bo = getBusinessObject(props.element);
+              let currentCallee = this.getCalleeElement(bo);
+              
+              // 如果 callee 不存在，创建它
+              if (!currentCallee) {
+                const bpmnFactory = this.injector.get("bpmnFactory");
+                let extensionElements = bo.extensionElements;
+                
+                if (!extensionElements) {
+                  extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
+                    values: [],
+                  });
+                  bo.extensionElements = extensionElements;
+                  commandStack.execute("element.updateModdleProperties", {
+                    element: props.element,
+                    moddleElement: bo,
+                    properties: { extensionElements },
+                  });
+                }
+
+                if (!extensionElements.values) {
+                  extensionElements.values = [];
+                }
+
+                currentCallee = bpmnFactory.create("xflow:Callee", {
+                  module: "",
+                  cmdid: "",
+                });
+                currentCallee.$parent = extensionElements;
+                extensionElements.values.push(currentCallee);
+                commandStack.execute("element.updateModdleProperties", {
+                  element: props.element,
+                  moddleElement: extensionElements,
+                  properties: {
+                    values: extensionElements.values,
+                  },
+                });
+              }
+              
+              currentCallee.cmdid = value || undefined;
+              commandStack.execute("element.updateModdleProperties", {
+                element: props.element,
+                moddleElement: currentCallee,
+                properties: {
+                  cmdid: currentCallee.cmdid,
+                },
+              });
+            };
+
+            return TextFieldEntry({
+              id: props.id,
+              element: props.element,
+              label: translate("CmdId"),
+              getValue,
+              setValue,
+              debounce,
+              description: translate("The command ID of the callee"),
+              tooltip: translate("Enter the command ID for the callee"),
+              placeholder: translate("Enter command ID"),
+            });
+          }
+        ),
+      },
+    ];
   }
 
   // 创建 RequestParameterAssignments 列表组

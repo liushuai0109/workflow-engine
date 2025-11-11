@@ -8,28 +8,26 @@ export interface CustomField {
   required?: boolean
 }
 
-export interface XFlowModule {
-  value?: string
-}
-
-export interface XFlowMethod {
-  value?: string
-}
-
 // UserTask 扩展
 export interface UserTaskExtension extends Injectable {
   priority?: string
   approvalLevel?: number
   assignee?: string
+  url?: string
   dueDate?: string
   customFields?: CustomField[]
+}
+
+// Callee 接口
+export interface XFlowCallee {
+  module?: string
+  cmdid?: string
 }
 
 // ServiceTask 扩展
 export interface ServiceTaskExtension extends Injectable {
   extensionElements?: {
-    module?: XFlowModule
-    method?: XFlowMethod
+    callee?: XFlowCallee
   }
 }
 

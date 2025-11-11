@@ -67,7 +67,7 @@
     </div>
 
     <!-- 隐藏的文件输入 -->
-    <input ref="fileInput" type="file" accept=".bpmn,.xml" @change="handleFileSelect" style="display: none" />
+    <input ref="fileInput" type="file" accept=".bpmn,.xml,.xpmn" @change="handleFileSelect" style="display: none" />
   </div>
 </template>
 
@@ -75,6 +75,7 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import BpmnEditor from './components/BpmnEditor.vue'
 import { LocalStorageService } from './services/localStorageService'
+import { convertFromXPMNToBPMN, convertFromBPMNToXPMN } from './extensions/xflow/BpmnAdapter/BpmnAdapter'
 import type { BpmnOptions, FileOperationResult, FileValidationResult } from './types'
 
 // 响应式数据
@@ -95,14 +96,25 @@ const saveFile = async (): Promise<void> => {
   if (!bpmnEditor.value) return
 
   try {
-    // 从 BpmnEditor 获取最新的 XML 内容
-    const latestXml = await bpmnEditor.value.getXml()
+    // 从 BpmnEditor 获取最新的 XML 内容（BPMN 格式）
+    const bpmnXml = await bpmnEditor.value.getXml()
     
-    const blob = new Blob([latestXml], { type: 'application/xml' })
+    // 将 BPMN 格式转换为 XPMN 格式用于保存
+    let xmlToSave = bpmnXml
+    let conversionSucceeded = false
+    try {
+      xmlToSave = convertFromBPMNToXPMN(bpmnXml)
+      conversionSucceeded = true
+    } catch (conversionError) {
+      console.warn('XPMN conversion failed, saving as BPMN format:', conversionError)
+      // 如果转换失败，使用原始 BPMN 格式
+    }
+    
+    const blob = new Blob([xmlToSave], { type: 'application/xml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'diagram.bpmn'
+    a.download = conversionSucceeded ? 'diagram.xpmn' : 'diagram.bpmn'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -189,19 +201,37 @@ const processFile = (file: File): void => {
   hasError.value = false
 
   const reader = new FileReader()
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const content = e.target?.result as string
-      if (isValidBpmnXml(content)) {
-        currentDiagram.value = content
+      
+      // 尝试将 XPMN 格式转换为 BPMN 格式
+      let bpmnContent = content
+      try {
+        // 检查是否是 XPMN 格式（根元素是 definitions 而不是 bpmn:definitions）
+        const isXpmnFormat = (content.includes('<definitions') && !content.includes('<bpmn:definitions')) ||
+                             (content.includes('<process') && !content.includes('bpmn:process'))
+        if (isXpmnFormat) {
+          bpmnContent = convertFromXPMNToBPMN(content)
+          console.log('Converted XPMN to BPMN format', bpmnContent)
+        }
+      } catch (conversionError) {
+        console.error('XPMN conversion failed:', conversionError)
+        // 如果转换失败，抛出错误而不是使用原始内容
+        throw new Error(`Failed to convert XPMN to BPMN: ${conversionError}`)
+      }
+      
+      if (isValidBpmnXml(bpmnContent)) {
+        currentDiagram.value = bpmnContent
 
-        // 保存到 localStorage
+        // 保存到 localStorage（保存转换后的 BPMN 格式）
         if (LocalStorageService.isAvailable()) {
-          LocalStorageService.saveDiagram(content, file.name)
+          LocalStorageService.saveDiagram(bpmnContent, file.name)
         }
 
         showStatus(`File loaded: ${file.name}`, 'success')
       } else {
+        console.log('Invalid BPMN content', bpmnContent)
         showStatus('Invalid BPMN content', 'error')
       }
     } catch (error) {
@@ -223,7 +253,7 @@ const processFile = (file: File): void => {
 // 文件验证
 const validateFile = (file: File): FileValidationResult => {
   const maxSize = 10 * 1024 * 1024 // 10MB
-  const allowedTypes = ['.bpmn', '.xml']
+  const allowedTypes = ['.bpmn', '.xml', '.xpmn']
   const fileName = file.name.toLowerCase()
 
   if (file.size > maxSize) {
@@ -242,7 +272,7 @@ const isValidBpmnXml = (content: string): boolean => {
     const parser = new DOMParser()
     const doc = parser.parseFromString(content, 'application/xml')
     const parseError = doc.querySelector('parsererror')
-
+    console.error('isValidBpmnXml', parseError);
     if (parseError) return false
 
     // 检查是否包含 BPMN 命名空间
@@ -296,7 +326,7 @@ const handleDiagramChanged = (xml: string): void => {
 }
 
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   console.log('BPMN Explorer initialized')
 
   // 尝试从 localStorage 加载保存的图表
@@ -304,7 +334,20 @@ onMounted(() => {
     const savedDiagram = LocalStorageService.loadDiagram()
     if (savedDiagram && !currentDiagram.value) {
       console.log('Loading saved diagram from localStorage:', savedDiagram.name)
-      currentDiagram.value = savedDiagram.xml
+      // 检查是否是 XPMN 格式，如果是则转换为 BPMN
+      let xmlContent = savedDiagram.xml
+      const isXpmnFormat = (xmlContent.includes('<definitions') && !xmlContent.includes('<bpmn:definitions')) ||
+                           (xmlContent.includes('<process') && !xmlContent.includes('bpmn:process'))
+      if (isXpmnFormat) {
+        try {
+          
+          xmlContent = convertFromXPMNToBPMN(xmlContent)
+          console.log('Converted XPMN to BPMN format from localStorage', xmlContent)
+        } catch (conversionError) {
+          console.error('XPMN conversion failed from localStorage:', conversionError)
+        }
+      }
+      currentDiagram.value = xmlContent
     }
   }
 })

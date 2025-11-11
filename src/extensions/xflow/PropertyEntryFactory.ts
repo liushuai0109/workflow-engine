@@ -81,7 +81,7 @@ function findExtensionElementByType(
       // 处理命名空间别名问题
       // XML 解析器或序列化器可能会为自定义扩展生成不同的命名空间前缀（如 ns0, ns1 等）
       // 同时，扩展定义中使用了 tagAlias: "lowerCase"，所以元素名会是小写的
-      // 例如：xflow:Url 可能被解析为 ns0:url，xflow:Module 可能被解析为 ns0:module
+      // 例如：xflow:Url 可能被解析为 ns0:url，xflow:Callee 可能被解析为 ns0:callee
       if (elementType === 'xflow:Url') {
         return el.$type === 'xflow:Url' || 
                el.$type === 'ns0:url' || 
@@ -89,19 +89,12 @@ function findExtensionElementByType(
                el.$type.endsWith(':url');
       }
       
-      // 处理其他扩展元素类型
-      if (elementType === 'xflow:Module') {
-        return el.$type === 'xflow:Module' || 
-               el.$type === 'ns0:module' || 
-               el.$type === 'module' ||
-               el.$type.endsWith(':module');
-      }
-      
-      if (elementType === 'xflow:Method') {
-        return el.$type === 'xflow:Method' || 
-               el.$type === 'ns0:method' || 
-               el.$type === 'method' ||
-               el.$type.endsWith(':method');
+      // 处理 Callee 扩展元素类型
+      if (elementType === 'xflow:Callee') {
+        return el.$type === 'xflow:Callee' || 
+               el.$type === 'ns0:callee' || 
+               el.$type === 'callee' ||
+               el.$type.endsWith(':callee');
       }
       
       if (elementType === 'xflow:RequestParameterAssignments') {
@@ -179,7 +172,7 @@ export function createPropertyComponent(
         return "";
       }
 
-      // 支持嵌套属性路径，如 'extensionElements.xflow:Module.value'
+      // 支持嵌套属性路径，如 'extensionElements.xflow:Callee.module'
       const pathParts = config.propertyPath.split(".");
       let value: any = businessObject;
 
@@ -203,7 +196,7 @@ export function createPropertyComponent(
               return "";
             }
           }
-          // 处理带命名空间的属性，如 'xflow:Module'
+          // 处理带命名空间的属性，如 'xflow:Callee'
           else if (part.includes(":")) {
             const [namespace, property] = part.split(":");
             if (namespace && property) {
@@ -253,17 +246,11 @@ export function createPropertyComponent(
                      el.$type === 'url' ||
                      el.$type.endsWith(':url');
             }
-            if (config.elementType === 'xflow:Module') {
-              return el.$type === 'xflow:Module' || 
-                     el.$type === 'ns0:module' || 
-                     el.$type === 'module' ||
-                     el.$type.endsWith(':module');
-            }
-            if (config.elementType === 'xflow:Method') {
-              return el.$type === 'xflow:Method' || 
-                     el.$type === 'ns0:method' || 
-                     el.$type === 'method' ||
-                     el.$type.endsWith(':method');
+            if (config.elementType === 'xflow:Callee') {
+              return el.$type === 'xflow:Callee' || 
+                     el.$type === 'ns0:callee' || 
+                     el.$type === 'callee' ||
+                     el.$type.endsWith(':callee');
             }
             return el.$type === config.elementType;
           }

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xflow="http://example.com/bpmn/xflow-extension" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:message id="Message_1" name="Test Message"/>
+  <bpmn:process id="Process_1" name="Complete Process" isExecutable="true">
+    <bpmn:extensionElements>
+      <xflow:declarations>
+        <xflow:declaration name="var1" field="field1" type="String"/>
+        <xflow:declaration name="var2" field="field2" type="Number"/>
+      </xflow:declarations>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+      <bpmn:documentation>Start documentation</bpmn:documentation>
+    </bpmn:startEvent>
+    <bpmn:userTask id="UserTask_1" name="User Task">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <xflow:visibleFlowVariables>
+          <xflow:declaration name="visibleVar" field="visibleField" type="String"/>
+        </xflow:visibleFlowVariables>
+        <xflow:requestParameterAssignments>
+          <xflow:assignment name="reqParam" target="$REQUEST.param" source="$FLOW.param"/>
+        </xflow:requestParameterAssignments>
+        <xflow:flowVariableAssignments>
+          <xflow:assignment name="flowVar" target="$FLOW.result" source="$RESPONSE.data"/>
+        </xflow:flowVariableAssignments>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ServiceTask_1" name="Service Task">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <xflow:callee module="testModule" cmdid="testCmd"/>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="ParallelGateway_1" name="Parallel Gateway">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_1" name="Exclusive Gateway">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:eventBasedGateway id="EventBasedGateway_1" name="Event Based Gateway">
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+      <bpmn:outgoing>Flow_9</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="IntermediateCatchEvent_1" name="Intermediate Catch">
+      <bpmn:incoming>Flow_8</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1" messageRef="Message_1">
+        <bpmn:extensionElements>
+          <xflow:flowVariableAssignments>
+            <xflow:assignment name="msgVar" target="$FLOW.message" source="$MESSAGE.content"/>
+          </xflow:flowVariableAssignments>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:boundaryEvent id="BoundaryEvent_1" name="Boundary Event" attachedToRef="ServiceTask_1">
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_2" messageRef="Message_1"/>
+    </bpmn:boundaryEvent>
+    <bpmn:subProcess id="SubProcess_1" name="Sub Process">
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:outgoing>Flow_12</bpmn:outgoing>
+      <bpmn:startEvent id="SubStartEvent_1">
+        <bpmn:outgoing>SubFlow_1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:userTask id="SubUserTask_1" name="Sub User Task">
+        <bpmn:incoming>SubFlow_1</bpmn:incoming>
+        <bpmn:outgoing>SubFlow_2</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:endEvent id="SubEndEvent_1">
+        <bpmn:incoming>SubFlow_2</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="SubFlow_1" sourceRef="SubStartEvent_1" targetRef="SubUserTask_1"/>
+      <bpmn:sequenceFlow id="SubFlow_2" sourceRef="SubUserTask_1" targetRef="SubEndEvent_1"/>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="UserTask_1"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="UserTask_1" targetRef="ServiceTask_1"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="ServiceTask_1" targetRef="ParallelGateway_1"/>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="ParallelGateway_1" targetRef="ExclusiveGateway_1"/>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="ParallelGateway_1" targetRef="ExclusiveGateway_1"/>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="ExclusiveGateway_1" targetRef="EventBasedGateway_1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">$FLOW.path == "path1"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="ExclusiveGateway_1" targetRef="SubProcess_1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">$FLOW.path == "path2"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="EventBasedGateway_1" targetRef="IntermediateCatchEvent_1"/>
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="EventBasedGateway_1" targetRef="EndEvent_1"/>
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="IntermediateCatchEvent_1" targetRef="EndEvent_1"/>
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="BoundaryEvent_1" targetRef="EndEvent_1"/>
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="SubProcess_1" targetRef="EndEvent_1"/>
+    <bpmn:endEvent id="EndEvent_1" name="End">
+      <bpmn:incoming>Flow_9</bpmn:incoming>
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:incoming>Flow_12</bpmn:incoming>
+      <bpmn:documentation>End documentation</bpmn:documentation>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmn:extensionElements>
+    <xflow:stateMachine id="StateMachine_1" name="Statemachine 1">
+      <xflow:states>
+        <xflow:state id="State_1" name="State 1"/>
+        <xflow:state id="State_2" name="State 2"/>
+      </xflow:states>
+      <xflow:events>
+        <xflow:event id="Event_1" name="Event 1"/>
+        <xflow:event id="Event_2" name="Event 2"/>
+      </xflow:events>
+      <xflow:transitions>
+        <xflow:transition id="Transition_1">
+          <xflow:sourceState>State_1</xflow:sourceState>
+          <xflow:targetState>State_2</xflow:targetState>
+          <xflow:eventRef>Event_1</xflow:eventRef>
+          <xflow:guards>
+            <xflow:guard>
+              <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">$FLOW.condition == true</bpmn:conditionExpression>
+            </xflow:guard>
+          </xflow:guards>
+          <xflow:actions>
+            <xflow:action>
+              <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">$FLOW.action = "execute"</bpmn:conditionExpression>
+            </xflow:action>
+          </xflow:actions>
+        </xflow:transition>
+      </xflow:transitions>
+    </xflow:stateMachine>
+  </bpmn:extensionElements>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="100" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_1_di" bpmnElement="UserTask_1">
+        <dc:Bounds x="200" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1_di" bpmnElement="ServiceTask_1">
+        <dc:Bounds x="350" y="78" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ParallelGateway_1_di" bpmnElement="ParallelGateway_1">
+        <dc:Bounds x="500" y="93" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1_di" bpmnElement="ExclusiveGateway_1">
+        <dc:Bounds x="600" y="93" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EventBasedGateway_1_di" bpmnElement="EventBasedGateway_1">
+        <dc:Bounds x="700" y="93" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_1_di" bpmnElement="IntermediateCatchEvent_1">
+        <dc:Bounds x="800" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_1_di" bpmnElement="BoundaryEvent_1">
+        <dc:Bounds x="352" y="140" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SubProcess_1_di" bpmnElement="SubProcess_1">
+        <dc:Bounds x="650" y="200" width="200" height="150"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="900" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="136" y="118"/>
+        <di:waypoint x="200" y="118"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="300" y="118"/>
+        <di:waypoint x="350" y="118"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="450" y="118"/>
+        <di:waypoint x="500" y="118"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

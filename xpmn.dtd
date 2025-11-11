@@ -1,5 +1,4 @@
 <!-- 流程引擎 dtd，用于定义流程引擎的 DSL，仅涉及描述流程所需的元素和属性，不涉及流程图的可视化呈现部分 -->
-<?xml version="1.0" encoding="UTF-8"?>
 
 <!-- 通用属性：所有元素都包含的基本属性 -->
 <!ENTITY % commonAttributes "
@@ -8,7 +7,18 @@
 ">
 
 <!-- 通用子节点：所有元素都包含的公共子节点，用于元素的描述说明 -->
-<!ENTITY % commonChildren "document?">
+<!ENTITY % commonChildren "documentation?">
+
+<!-- 根元素：定义整个流程定义文档的容器 -->
+<!-- 
+definitions: 流程定义文档的根元素，包含所有流程定义和消息定义
+  - id: 定义的唯一标识
+  - targetNamespace: 目标命名空间，用于标识流程定义的命名空间
+-->
+<!ELEMENT definitions (message*, process*, stateMachine*)>
+<!ATTLIST definitions
+  id ID #REQUIRED
+  targetNamespace CDATA #IMPLIED>
 
 <!-- 流程元素：定义整个业务流程的容器，包含所有流程节点和连接 -->
 <!-- 
@@ -25,7 +35,7 @@ exclusiveGateway: 排他网关，用于根据条件选择一条路径执行的�
 stateMachine: 状态机，用于描述流程或业务对象的状态转换逻辑
 message: 消息，用于定义流程中传递的消息定义
 -->
-<!ELEMENT process (%commonChildren;, declarations?, (businessNode | startNode | endNode | sequenceFlow | exclusiveGateway ｜ stateMachine ｜ message)*)>
+<!ELEMENT process ((%commonChildren; | declarations? | businessNode | startNode | endNode | userNode | serviceNode | parallelGateway | exclusiveGateway | eventBasedGateway | intermediateCatchEvent | boundaryEvent | sequenceFlow)*)>
 <!ATTLIST process
   %commonAttributes;
   version CDATA #IMPLIED>
@@ -53,18 +63,18 @@ boundaryEvent: 边界事件，用于附加在活动节点边界上，用于中�
   - 中断型边界事件：表达触发该事件会驱动流程在事件分支上继续执行，典型应用场景：一个页面有多个会驱动业务流程的请求，通过中断型边界事件表达
   - 非中断型边界事件：表达该事件不会驱动流程在事件分支上继续执行，典型应用场景：首页获取初始化信息，卡 bin 检测接口
 -->
-<!ELEMENT businessNode (%commonChildren;, incoming*, outgoing*, (startNode | endNode | userNode | serviceNode | sequenceFlow | exclusiveGateway | eventBasedGateway | parallelGateway | intermediateCatchEvent | boundaryEvent)*)>
+<!ELEMENT businessNode ((%commonChildren; | incoming | outgoing | startNode | endNode | userNode | serviceNode | sequenceFlow | exclusiveGateway | eventBasedGateway | parallelGateway | intermediateCatchEvent | boundaryEvent)*)>
 <!ATTLIST businessNode
   %commonAttributes;
   canRollback (true | false) #IMPLIED>
 
 <!-- 开始节点：流程的起始点，可以有多个出流 -->
-<!ELEMENT startNode (%commonChildren;, outgoing*)>
+<!ELEMENT startNode ((%commonChildren; | outgoing)*)>
 <!ATTLIST startNode
   %commonAttributes;>
 
 <!-- 结束节点：流程的终止点，可以有多个入流 -->
-<!ELEMENT endNode (%commonChildren;, incoming*)>
+<!ELEMENT endNode ((%commonChildren; | incoming)*)>
 <!ATTLIST endNode
   %commonAttributes;>
 
@@ -75,7 +85,7 @@ assignee: 用户任务的执行者
 visibleFlowVariables: 用户任务中可见的流程变量集合，前端通过流程引擎接口获取流程实例时，当前用户任务可见的流程变量，
 例如：实名首页节点有一个流程变量——是否命中同名小号灰度，前端需要用到这个变量，可以在userNode中配置visibleFlowVariables，前端在获取流程实例时，会自动获取当前用户任务可见的流程变量
 -->
-<!ELEMENT userNode (%commonChildren;, visibleFlowVariables?,incoming*, outgoing*)>
+<!ELEMENT userNode ((%commonChildren; | visibleFlowVariables? | requestParameterAssignments? | flowVariableAssignments? | incoming | outgoing)*)>
 <!ATTLIST userNode
   %commonAttributes;
   url CDATA #IMPLIED
@@ -91,7 +101,7 @@ requestParameterAssignments: 用于将流程变量赋值给下游 callee 的请�
 flowVariableAssignments: 用于 callee 执行完成后，将其 response 赋值给流程变量
 allowedSources: 允许调用的来源，多个来源用逗号分隔，例如：liteapp,web,miniapp,httpbroker
 -->
-<!ELEMENT serviceNode (%commonChildren;, callee, requestParameterAssignments?, flowVariableAssignments?, incoming*, outgoing*)>
+<!ELEMENT serviceNode ((%commonChildren; | callee | requestParameterAssignments? | flowVariableAssignments? | incoming | outgoing)*)>
 <!ATTLIST serviceNode
   %commonAttributes;
   allowedSources CDATA #IMPLIED>
@@ -99,7 +109,8 @@ allowedSources: 允许调用的来源，多个来源用逗号分隔，例如：l
 <!-- 被调用者：包含模块和方法信息的服务调用定义 -->
 <!ELEMENT callee (%commonChildren;)>
 <!ATTLIST callee
-  %commonAttributes;
+  id ID #IMPLIED
+  name CDATA #IMPLIED
   module CDATA #REQUIRED
   cmdid CDATA #REQUIRED>
 
@@ -127,7 +138,9 @@ allowedSources: 允许调用的来源，多个来源用逗号分隔，例如：l
 <!-- 条件表达式：用于顺序流或网关的条件判断表达式 -->
 <!ELEMENT conditionExpression (#PCDATA | document)*>
 <!ATTLIST conditionExpression
-  %commonAttributes;>
+  id ID #IMPLIED
+  name CDATA #IMPLIED
+  type CDATA #IMPLIED>
 
 <!-- 排他网关：根据条件选择一条路径执行的分支节点 -->
 <!-- 使用场景：
@@ -209,6 +222,9 @@ parallelGateway: 并行网关，用于表达流程进入多个并行分支的开
 <!-- 文档：元素的文档说明 -->
 <!ELEMENT document (#PCDATA)>
 
+<!-- 文档说明：元素的文档说明（documentation 是 document 的别名） -->
+<!ELEMENT documentation (#PCDATA)>
+
 <!-- 状态机：用于描述状态转换的状态机定义 -->
 <!-- 
 stateMachine: 状态机，用于描述流程或业务对象的状态转换逻辑
@@ -263,6 +279,8 @@ transition: 转换，定义从一个状态到另一个状态的转换
   - entryFunc: 进入函数（可选）
 -->
 <!ELEMENT transition (%commonChildren;, sourceState, targetState, eventRef, guards?, exitFunc?, actions?, entryFunc?)>
+<!ATTLIST transition
+  %commonAttributes;>
 
 <!-- 源状态：转换的源状态ID -->
 <!ELEMENT sourceState (#PCDATA)>
@@ -277,16 +295,10 @@ transition: 转换，定义从一个状态到另一个状态的转换
 <!ELEMENT guards (guard*)>
 
 <!-- 守卫：转换的守卫条件 -->
-<!ELEMENT guard (#PCDATA)>
-
-<!-- 退出函数：状态退出时执行的函数 -->
-<!ELEMENT exitFunc (#PCDATA)>
+<!ELEMENT guard (conditionExpression?)>
 
 <!-- 动作集合：包含多个动作 -->
 <!ELEMENT actions (action*)>
 
 <!-- 动作：转换执行时的动作 -->
-<!ELEMENT action (#PCDATA)>
-
-<!-- 进入函数：状态进入时执行的函数 -->
-<!ELEMENT entryFunc (#PCDATA)>
+<!ELEMENT action (conditionExpression?)>

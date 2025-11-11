@@ -8,8 +8,7 @@ export { default as xflowExtension } from './xflowExtension.json'
 // 导出类型
 export type { 
   CustomField,
-  XFlowModule,
-  XFlowMethod,
+  XFlowCallee,
   UserTaskExtension,
   ServiceTaskExtension,
   ScriptTaskExtension,
