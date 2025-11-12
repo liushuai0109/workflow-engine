@@ -38,7 +38,8 @@ message: 消息，用于定义流程中传递的消息定义
 <!ELEMENT process ((%commonChildren; | declarations? | businessNode | startNode | endNode | userNode | serviceNode | parallelGateway | exclusiveGateway | eventBasedGateway | intermediateCatchEvent | boundaryEvent | sequenceFlow)*)>
 <!ATTLIST process
   %commonAttributes;
-  version CDATA #IMPLIED>
+  version CDATA #IMPLIED
+  bizType CDATA #IMPLIED>
 
 <!-- 声明集合：包含多个变量或数据声明的容器 -->
 <!ELEMENT declarations (declaration+)>
