@@ -113,24 +113,97 @@
       <userNode id="Activity_0drpb6p" name="核心信息填写页" url="pages/realname/CollectRealnameInfo">
         <visibleFlowVariables/>
         <incoming>Flow_1nvmomc</incoming>
-        <outgoing>Flow_1t9vybo</outgoing>
       </userNode>
       <sequenceFlow id="Flow_1nvmomc" sourceRef="Event_0zq3005" targetRef="Activity_0drpb6p"/>
-      <serviceNode id="Activity_0wre4jv" name="提交核心信息" module="mmpayuserbasicinfomedi" cmdid="submitcreinfo">
+      <serviceNode id="Activity_0wre4jv" name="提交核心信息 - 影印件" module="mmpayuserbasicinfomedi" cmdid="submitcreinfo">
         <flowVariableAssignments>
           <assignment name="是否需要提交非核心信息" target="$FLOW.is_need_extend_info" source="$FLOW.is_gray_dup_name_acct &amp;&amp; $RESPONSE.is_need_extend_info"/>
           <assignment name="是否仅需要绑卡" target="$FLOW.is_need_bind" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_bind"/>
           <assignment name="是否仅需要刷脸" target="$FLOW.is_need_face" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face"/>
           <assignment name="是否自主选择绑卡或刷脸" target="$FLOW" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face_or_bind"/>
         </flowVariableAssignments>
-        <incoming>Flow_1t9vybo</incoming>
+        <incoming>Flow_0a8y8ek</incoming>
         <outgoing>Flow_0hvxquh</outgoing>
       </serviceNode>
-      <sequenceFlow id="Flow_1t9vybo" sourceRef="Activity_0drpb6p" targetRef="Activity_0wre4jv"/>
       <sequenceFlow id="Flow_0hvxquh" sourceRef="Activity_0wre4jv" targetRef="Event_0hm27h4"/>
       <endNode id="Event_0hm27h4" name="">
         <incoming>Flow_0hvxquh</incoming>
       </endNode>
+      <boundaryEvent id="Event_0cuwc78" attachedToRef="Activity_0drpb6p">
+        <outgoing>Flow_0a8y8ek</outgoing>
+        <messageEventDefinition id="MessageEventDefinition_18tu5vu"/>
+      </boundaryEvent>
+      <sequenceFlow id="Flow_0a8y8ek" sourceRef="Event_0cuwc78" targetRef="Activity_0wre4jv"/>
+      <serviceNode id="Activity_14vuq4u" name="提交核心信息">
+        <flowVariableAssignments>
+          <assignment name="是否需要提交非核心信息" target="$FLOW.is_need_extend_info" source="$FLOW.is_gray_dup_name_acct &amp;&amp; $RESPONSE.is_need_extend_info"/>
+          <assignment name="是否仅需要绑卡" target="$FLOW.is_need_bind" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_bind"/>
+          <assignment name="是否仅需要刷脸" target="$FLOW.is_need_face" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face"/>
+          <assignment name="是否自主选择绑卡或刷脸" target="$FLOW" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face_or_bind"/>
+        </flowVariableAssignments>
+        <incoming>Flow_1c2g06q</incoming>
+        <outgoing>Flow_0p7deb2</outgoing>
+      </serviceNode>
+      <serviceNode id="Activity_1q3n34i" name="提交核心信息">
+        <flowVariableAssignments>
+          <assignment name="是否需要提交非核心信息" target="$FLOW.is_need_extend_info" source="$FLOW.is_gray_dup_name_acct &amp;&amp; $RESPONSE.is_need_extend_info"/>
+          <assignment name="是否仅需要绑卡" target="$FLOW.is_need_bind" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_bind"/>
+          <assignment name="是否仅需要刷脸" target="$FLOW.is_need_face" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face"/>
+          <assignment name="是否自主选择绑卡或刷脸" target="$FLOW" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face_or_bind"/>
+        </flowVariableAssignments>
+        <incoming>Flow_1gd5qeq</incoming>
+        <outgoing>Flow_1yt0jdk</outgoing>
+      </serviceNode>
+      <serviceNode id="Activity_00uco20" name="提交核心信息 - 非影印件">
+        <flowVariableAssignments>
+          <assignment name="是否需要提交非核心信息" target="$FLOW.is_need_extend_info" source="$FLOW.is_gray_dup_name_acct &amp;&amp; $RESPONSE.is_need_extend_info"/>
+          <assignment name="是否仅需要绑卡" target="$FLOW.is_need_bind" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_bind"/>
+          <assignment name="是否仅需要刷脸" target="$FLOW.is_need_face" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face"/>
+          <assignment name="是否自主选择绑卡或刷脸" target="$FLOW" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_face_or_bind"/>
+        </flowVariableAssignments>
+        <incoming>Flow_13r0s9e</incoming>
+        <outgoing>Flow_09r3dbw</outgoing>
+      </serviceNode>
+      <boundaryEvent id="Event_0cmegqx" attachedToRef="Activity_0drpb6p">
+        <outgoing>Flow_1c2g06q</outgoing>
+        <messageEventDefinition id="MessageEventDefinition_1t33fg4"/>
+      </boundaryEvent>
+      <sequenceFlow id="Flow_1c2g06q" sourceRef="Event_0cmegqx" targetRef="Activity_14vuq4u"/>
+      <boundaryEvent id="Event_1wtba7f" attachedToRef="Activity_0drpb6p">
+        <outgoing>Flow_1gd5qeq</outgoing>
+        <messageEventDefinition id="MessageEventDefinition_1wqyo3t"/>
+      </boundaryEvent>
+      <sequenceFlow id="Flow_1gd5qeq" sourceRef="Event_1wtba7f" targetRef="Activity_1q3n34i"/>
+      <boundaryEvent id="Event_0d3swww" attachedToRef="Activity_0drpb6p">
+        <outgoing>Flow_13r0s9e</outgoing>
+        <messageEventDefinition id="MessageEventDefinition_0dap34y"/>
+      </boundaryEvent>
+      <sequenceFlow id="Flow_13r0s9e" sourceRef="Event_0d3swww" targetRef="Activity_00uco20"/>
+      <endNode id="Event_11dewg8">
+        <incoming>Flow_09r3dbw</incoming>
+      </endNode>
+      <sequenceFlow id="Flow_09r3dbw" sourceRef="Activity_00uco20" targetRef="Event_11dewg8"/>
+      <endNode id="Event_01kdcri">
+        <incoming>Flow_0p7deb2</incoming>
+      </endNode>
+      <sequenceFlow id="Flow_0p7deb2" sourceRef="Activity_14vuq4u" targetRef="Event_01kdcri"/>
+      <endNode id="Event_1mz78vp">
+        <incoming>Flow_1yt0jdk</incoming>
+      </endNode>
+      <sequenceFlow id="Flow_1yt0jdk" sourceRef="Activity_1q3n34i" targetRef="Event_1mz78vp"/>
+      <boundaryEvent id="Event_127uscg" cancelActivity="false" attachedToRef="Activity_0drpb6p">
+        <outgoing>Flow_0qxym2p</outgoing>
+        <messageEventDefinition id="MessageEventDefinition_1fmlmn3"/>
+      </boundaryEvent>
+      <serviceNode id="Activity_01zcpyo" name="上传影印件">
+        <incoming>Flow_0qxym2p</incoming>
+        <outgoing>Flow_1sdjgrd</outgoing>
+      </serviceNode>
+      <sequenceFlow id="Flow_0qxym2p" sourceRef="Event_127uscg" targetRef="Activity_01zcpyo"/>
+      <endNode id="Event_18gu9or">
+        <incoming>Flow_1sdjgrd</incoming>
+      </endNode>
+      <sequenceFlow id="Flow_1sdjgrd" sourceRef="Activity_01zcpyo" targetRef="Event_18gu9or"/>
     </businessNode>
     <sequenceFlow id="Flow_05yzbx1" sourceRef="Activity_1l2xee9" targetRef="Activity_0szh94f"/>
     <businessNode id="Activity_07rl53h" name="提交非核心信息">
@@ -1147,24 +1220,105 @@
         <Bounds x="470" y="240" width="100" height="80"/>
         <XPMNLabel/>
       </XPMNShape>
+      <XPMNShape id="XPMNShape_0l3gwnu" xpmnElement="Activity_00uco20">
+        <Bounds x="730" y="162" width="100" height="80"/>
+        <XPMNLabel/>
+      </XPMNShape>
+      <XPMNShape id="Event_11dewg8_di" xpmnElement="Event_11dewg8">
+        <Bounds x="1022" y="184" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="XPMNShape_10mj7fl" xpmnElement="Activity_1q3n34i">
+        <Bounds x="730" y="710" width="100" height="80"/>
+        <XPMNLabel/>
+      </XPMNShape>
+      <XPMNShape id="Event_1mz78vp_di" xpmnElement="Event_1mz78vp">
+        <Bounds x="1052" y="732" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="XPMNShape_1vfbbs3" xpmnElement="Activity_14vuq4u">
+        <Bounds x="730" y="560" width="100" height="80"/>
+        <XPMNLabel/>
+      </XPMNShape>
+      <XPMNShape id="Event_01kdcri_di" xpmnElement="Event_01kdcri">
+        <Bounds x="1052" y="582" width="36" height="36"/>
+      </XPMNShape>
       <XPMNShape id="Activity_0wre4jv_di" xpmnElement="Activity_0wre4jv">
-        <Bounds x="630" y="240" width="100" height="80"/>
+        <Bounds x="730" y="400" width="100" height="80"/>
         <XPMNLabel/>
       </XPMNShape>
       <XPMNShape id="Event_0hm27h4_di" xpmnElement="Event_0hm27h4">
-        <Bounds x="802" y="262" width="36" height="36"/>
+        <Bounds x="1052" y="422" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="Activity_01zcpyo_di" xpmnElement="Activity_01zcpyo">
+        <Bounds x="730" y="270" width="100" height="80"/>
+        <XPMNLabel/>
+      </XPMNShape>
+      <XPMNShape id="Event_18gu9or_di" xpmnElement="Event_18gu9or">
+        <Bounds x="1052" y="292" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="Event_0cuwc78_di" xpmnElement="Event_0cuwc78">
+        <Bounds x="532" y="302" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="XPMNShape_19sjilx" xpmnElement="Event_0cmegqx">
+        <Bounds x="492" y="302" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="XPMNShape_15rewg9" xpmnElement="Event_1wtba7f">
+        <Bounds x="452" y="302" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="XPMNShape_1vi43rq" xpmnElement="Event_0d3swww">
+        <Bounds x="502" y="222" width="36" height="36"/>
+      </XPMNShape>
+      <XPMNShape id="Event_127uscg_di" xpmnElement="Event_127uscg">
+        <Bounds x="552" y="262" width="36" height="36"/>
       </XPMNShape>
       <XPMNEdge id="Flow_1nvmomc_di" xpmnElement="Flow_1nvmomc">
         <waypoint x="418" y="280"/>
         <waypoint x="470" y="280"/>
       </XPMNEdge>
-      <XPMNEdge id="Flow_1t9vybo_di" xpmnElement="Flow_1t9vybo">
-        <waypoint x="570" y="280"/>
-        <waypoint x="630" y="280"/>
-      </XPMNEdge>
       <XPMNEdge id="Flow_0hvxquh_di" xpmnElement="Flow_0hvxquh">
-        <waypoint x="730" y="280"/>
-        <waypoint x="802" y="280"/>
+        <waypoint x="830" y="440"/>
+        <waypoint x="1052" y="440"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_0a8y8ek_di" xpmnElement="Flow_0a8y8ek">
+        <waypoint x="550" y="338"/>
+        <waypoint x="550" y="440"/>
+        <waypoint x="730" y="440"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_1c2g06q_di" xpmnElement="Flow_1c2g06q">
+        <waypoint x="510" y="338"/>
+        <waypoint x="510" y="600"/>
+        <waypoint x="730" y="600"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_1gd5qeq_di" xpmnElement="Flow_1gd5qeq">
+        <waypoint x="470" y="338"/>
+        <waypoint x="470" y="750"/>
+        <waypoint x="730" y="750"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_13r0s9e_di" xpmnElement="Flow_13r0s9e">
+        <waypoint x="520" y="222"/>
+        <waypoint x="520" y="202"/>
+        <waypoint x="730" y="202"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_09r3dbw_di" xpmnElement="Flow_09r3dbw">
+        <waypoint x="830" y="202"/>
+        <waypoint x="1022" y="202"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_0p7deb2_di" xpmnElement="Flow_0p7deb2">
+        <waypoint x="830" y="600"/>
+        <waypoint x="1052" y="600"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_1yt0jdk_di" xpmnElement="Flow_1yt0jdk">
+        <waypoint x="830" y="750"/>
+        <waypoint x="1052" y="750"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_0qxym2p_di" xpmnElement="Flow_0qxym2p">
+        <waypoint x="588" y="280"/>
+        <waypoint x="659" y="280"/>
+        <waypoint x="659" y="310"/>
+        <waypoint x="730" y="310"/>
+      </XPMNEdge>
+      <XPMNEdge id="Flow_1sdjgrd_di" xpmnElement="Flow_1sdjgrd">
+        <waypoint x="830" y="310"/>
+        <waypoint x="1052" y="310"/>
       </XPMNEdge>
     </XPMNPlane>
   </XPMNDiagram>
