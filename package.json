@@ -19,6 +19,7 @@
     "@vue/vue3-jest": "^29.2.6",
     "bpmn-js": "^11.5.0",
     "bpmn-js-properties-panel": "^1.26.0",
+    "diagram-js": "^15.4.0",
     "vue": "^3.3.4",
     "vue-bpmn": "^0.3.0",
     "xml-formatter": "^3.6.7",

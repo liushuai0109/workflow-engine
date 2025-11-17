@@ -40,7 +40,8 @@
         <incoming>Flow_1a3rx7y</incoming>
       </userNode>
       <sequenceFlow id="Flow_0eqfugk" sourceRef="Event_0myqw68" targetRef="Activity_0z1uz4q"/>
-      <serviceNode id="Activity_0nqv1mm" name="获取首页信息" module="mmpayrealnameappsvr" cmdid="openrealnamehomepage">
+      <serviceNode id="Activity_0nqv1mm" name="获取首页信息">
+        <callee module="mmpayrealnameappsvr" cmdid="openrealnamehomepage"/>
         <flowVariableAssignments>
           <assignment name="是否命中同名小号灰度" target="$FLOW.is_gray_dup_name_acct" source="$RESPONSE.is_gray_dup_name_acct"/>
           <assignment name="是否部分驳回" target="$FLOW.is_partial_reject" source="$RESPONSE.state == mmpayrealnameregcomm.RealNameRegFlowStateEnum.REAL_NAME_REG_FLOW_STATE_AUDIT_PART_REJECTED"/>
@@ -66,13 +67,15 @@
         <messageEventDefinition id="MessageEventDefinition_1asynck" messageRef="Message_2v86si2"/>
       </boundaryEvent>
       <sequenceFlow id="Flow_1vn3uxh" sourceRef="Event_0w0n2z5" targetRef="Activity_0nqv1mm"/>
-      <serviceNode id="Activity_1t6mla1" name="关闭申请单" module="mmpayrealnameappsvr" cmdid="closerealnameapply">
+      <serviceNode id="Activity_1t6mla1" name="关闭申请单">
+        <callee module="mmpayrealnameappsvr" cmdid="closerealnameapply"/>
         <incoming>Flow_01hx4rl</incoming>
         <outgoing>Flow_1a3rx7y</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_01hx4rl" sourceRef="Event_0i0795c" targetRef="Activity_1t6mla1"/>
       <sequenceFlow id="Flow_1a3rx7y" sourceRef="Activity_1t6mla1" targetRef="Activity_0z1uz4q"/>
-      <serviceNode id="Activity_0gok3nw" name="获取申请单信息" module="mmpayrealnameappsvr" cmdid="getcreinfo">
+      <serviceNode id="Activity_0gok3nw" name="获取申请单信息">
+        <callee module="mmpayrealnameappsvr" cmdid="getcreinfo"/>
         <flowVariableAssignments>
           <assignment name="是否仅需要绑卡" target="$FLOW.is_need_bind" source="$RESPONSE.busi_response.is_need_bind"/>
           <assignment name="是否仅需要刷脸" target="$FLOW.is_need_face" source="$RESPONSE.busi_response.is_need_face"/>
@@ -115,7 +118,8 @@
         <incoming>Flow_1nvmomc</incoming>
       </userNode>
       <sequenceFlow id="Flow_1nvmomc" sourceRef="Event_0zq3005" targetRef="Activity_0drpb6p"/>
-      <serviceNode id="Activity_0wre4jv" name="提交核心信息 - 影印件" module="mmpayuserbasicinfomedi" cmdid="submitcreinfo">
+      <serviceNode id="Activity_0wre4jv" name="提交核心信息 - 影印件">
+        <callee module="mmpayuserbasicinfomedi" cmdid="submitcreinfo"/>
         <flowVariableAssignments>
           <assignment name="是否需要提交非核心信息" target="$FLOW.is_need_extend_info" source="$FLOW.is_gray_dup_name_acct &amp;&amp; $RESPONSE.is_need_extend_info"/>
           <assignment name="是否仅需要绑卡" target="$FLOW.is_need_bind" source="$FLOW.is_need_extend_info &amp;&amp; $RESPONSE.is_need_bind"/>
@@ -217,7 +221,8 @@
         <outgoing>Flow_1sx1a8s</outgoing>
       </userNode>
       <sequenceFlow id="Flow_03to0nl" sourceRef="Event_1gyqu0t" targetRef="Activity_1vrui3p"/>
-      <serviceNode id="Activity_1vaotp5" module="mmpayuserbasicinfomedi" cmdid="SubmitExtendInfo">
+      <serviceNode id="Activity_1vaotp5">
+        <callee module="mmpayuserbasicinfomedi" cmdid="SubmitExtendInfo"/>
         <incoming>Flow_1sx1a8s</incoming>
         <outgoing>Flow_1tzkm16</outgoing>
       </serviceNode>
@@ -254,7 +259,8 @@
         <messageEventDefinition id="MessageEventDefinition_1kb96yy" messageRef="Message_2pmphcq"/>
       </intermediateCatchEvent>
       <sequenceFlow id="Flow_1h7al8y" sourceRef="Event_0drptsd" targetRef="Event_1diy09u"/>
-      <serviceNode id="Activity_0x7pcpj" name="获取刷脸签名" module="mmpayrealnameappsvr" cmdid="getfacepackagesign">
+      <serviceNode id="Activity_0x7pcpj" name="获取刷脸签名">
+        <callee module="mmpayrealnameappsvr" cmdid="getfacepackagesign"/>
         <flowVariableAssignments>
           <assignment name="人脸签名" target="$FLOW.package_sign" source="$RESPONSE.package_sign"/>
         </flowVariableAssignments>
@@ -268,7 +274,8 @@
         <messageEventDefinition id="MessageEventDefinition_0ii962s" messageRef="Message_3ijgb6q"/>
       </intermediateCatchEvent>
       <sequenceFlow id="Flow_0xn4dg9" sourceRef="Gateway_19vear6" targetRef="Event_0cfm4jl"/>
-      <serviceNode id="Activity_0blpjio" name="验证刷脸 Token" module="mmpayuserbasicinfomedi" cmdid="verifyfacetoken">
+      <serviceNode id="Activity_0blpjio" name="验证刷脸 Token">
+        <callee module="mmpayuserbasicinfomedi" cmdid="verifyfacetoken"/>
         <flowVariableAssignments>
           <assignment name="是否刷脸成功" target="$FLOW.is_verify_face_succeed" source="true"/>
         </flowVariableAssignments>
@@ -323,7 +330,8 @@
         <outgoing>Flow_1udsqfy</outgoing>
         <messageEventDefinition id="MessageEventDefinition_0ebwscj"/>
       </boundaryEvent>
-      <serviceNode id="Activity_1jjjrxt" name="卡 bin 检测" module="mmpayresourceappsvr" cmdid="getbanktypebycardbin">
+      <serviceNode id="Activity_1jjjrxt" name="卡 bin 检测">
+        <callee module="mmpayresourceappsvr" cmdid="getbanktypebycardbin"/>
         <flowVariableAssignments>
           <assignment name="银行卡是否外卡" target="$FLOW.is_oversea_card" source="$RESPONSE.bank_card_region_type == mmpayrealnameregcomm.BankCardRegionTypeEnum.BANK_CARD_REGION_TYPE_OVERSEA"/>
         </flowVariableAssignments>
@@ -339,7 +347,8 @@
         <outgoing>Flow_0b6oand</outgoing>
         <messageEventDefinition id="MessageEventDefinition_12qtudb"/>
       </boundaryEvent>
-      <serviceNode id="Activity_19immn2" name="签署银行协议" module="mmpayrealnameappsvr" cmdid="signcontract">
+      <serviceNode id="Activity_19immn2" name="签署银行协议">
+        <callee module="mmpayrealnameappsvr" cmdid="signcontract"/>
         <incoming>Flow_0b6oand</incoming>
         <outgoing>Flow_0fjax79</outgoing>
       </serviceNode>
@@ -370,7 +379,8 @@
         <messageEventDefinition id="MessageEventDefinition_0w7218e" messageRef="Message_0ot1des"/>
       </intermediateCatchEvent>
       <sequenceFlow id="Flow_0xyyqao" sourceRef="Gateway_0gjpgok" targetRef="Event_1ugjd5f"/>
-      <serviceNode id="Activity_0ia3ino" name="保存外卡" module="mmpayrealnameappsvr" cmdid="saveoverseabankcardinfo">
+      <serviceNode id="Activity_0ia3ino" name="保存外卡">
+        <callee module="mmpayrealnameappsvr" cmdid="saveoverseabankcardinfo"/>
         <flowVariableAssignments>
           <assignment name="是否需要 3ds 鉴权" target="$FLOW.is_need_3ds_auth" source="$RESPONSE.is_3dsPrefix"/>
         </flowVariableAssignments>
@@ -390,7 +400,8 @@
         <messageEventDefinition id="MessageEventDefinition_18fh0ov" messageRef="Message_19m5c90"/>
       </intermediateCatchEvent>
       <sequenceFlow id="Flow_1etuhba" sourceRef="Gateway_04jdq9m" targetRef="Event_089ip0f"/>
-      <serviceNode id="Activity_1btseuu" name="3ds鉴权" module="mmpayrealnameappsvr" cmdid="bindoverseacardregauthen">
+      <serviceNode id="Activity_1btseuu" name="3ds鉴权">
+        <callee module="mmpayrealnameappsvr" cmdid="bindoverseacardregauthen"/>
         <incoming>Flow_1d49tqp</incoming>
         <outgoing>Flow_1oyuypy</outgoing>
       </serviceNode>
@@ -430,7 +441,8 @@
         <outgoing>Flow_10imy8o</outgoing>
         <messageEventDefinition id="MessageEventDefinition_0y6xzna" messageRef="Message_1oh1uc7"/>
       </boundaryEvent>
-      <serviceNode id="Activity_1894i95" name="仅证件发短验证码" module="mmpayrealnameappsvr" cmdid="sendsms4crerealname">
+      <serviceNode id="Activity_1894i95" name="仅证件发短验证码">
+        <callee module="mmpayrealnameappsvr" cmdid="sendsms4crerealname"/>
         <incoming>Flow_0d9yken</incoming>
         <outgoing>Flow_19s81yd</outgoing>
       </serviceNode>
@@ -439,12 +451,14 @@
         <outgoing>Flow_1ypfxi5</outgoing>
         <messageEventDefinition id="MessageEventDefinition_1qg02y7" messageRef="Message_2l6agmj"/>
       </boundaryEvent>
-      <serviceNode id="Activity_0o5bzmf" name="外卡发短验证码" module="mmpayrealnameappsvr" cmdid="sendsms4crerealname">
+      <serviceNode id="Activity_0o5bzmf" name="外卡发短验证码">
+        <callee module="mmpayrealnameappsvr" cmdid="sendsms4crerealname"/>
         <incoming>Flow_10imy8o</incoming>
         <outgoing>Flow_1y8xnd7</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_10imy8o" sourceRef="Event_0j79t7w" targetRef="Activity_0o5bzmf"/>
-      <serviceNode id="Activity_0uawbkv" name="国内卡发短验证码" module="mmpayrealnameappsvr" cmdid="sendsms4bankcardrealname">
+      <serviceNode id="Activity_0uawbkv" name="国内卡发短验证码">
+        <callee module="mmpayrealnameappsvr" cmdid="sendsms4bankcardrealname"/>
         <incoming>Flow_1ypfxi5</incoming>
         <outgoing>Flow_13o1zdd</outgoing>
       </serviceNode>
@@ -486,17 +500,20 @@
         <messageEventDefinition id="MessageEventDefinition_0fkruf5" messageRef="Message_27o6d4m"/>
       </intermediateCatchEvent>
       <sequenceFlow id="Flow_0t88rym" sourceRef="Gateway_0zfscdd" targetRef="Event_0f1nioe"/>
-      <serviceNode id="Activity_1wedlfq" name="仅证件验短" module="mmpayrealnameappsvr" cmdid="verifysms4crerealname">
+      <serviceNode id="Activity_1wedlfq" name="仅证件验短">
+        <callee module="mmpayrealnameappsvr" cmdid="verifysms4crerealname"/>
         <incoming>Flow_16avz8o</incoming>
         <outgoing>Flow_1g9piyq</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_16avz8o" sourceRef="Event_0t1o7v4" targetRef="Activity_1wedlfq"/>
-      <serviceNode id="Activity_02f6tdg" name="外卡验短" module="mmpayrealnameappsvr" cmdid="verifysms4crerealname">
+      <serviceNode id="Activity_02f6tdg" name="外卡验短">
+        <callee module="mmpayrealnameappsvr" cmdid="verifysms4crerealname"/>
         <incoming>Flow_10h7a1i</incoming>
         <outgoing>Flow_1vdfo1f</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_10h7a1i" sourceRef="Event_1ao1h9c" targetRef="Activity_02f6tdg"/>
-      <serviceNode id="Activity_05s52xg" name="内卡验短" module="mmpayrealnameappsvr" cmdid="verifysms4bankcardrealname">
+      <serviceNode id="Activity_05s52xg" name="内卡验短">
+        <callee module="mmpayrealnameappsvr" cmdid="verifysms4bankcardrealname"/>
         <incoming>Flow_0q2ryol</incoming>
         <outgoing>Flow_00qhkl7</outgoing>
       </serviceNode>
@@ -525,7 +542,8 @@
         <outgoing>Flow_08ld8fc</outgoing>
       </userNode>
       <sequenceFlow id="Flow_0z6yil5" sourceRef="Event_0lltgv0" targetRef="Activity_05wzn7m"/>
-      <serviceNode id="Activity_0cazcxm" name="上传手持证件照" module="mmpayuserbasicinfomedi" cmdid="RegUploadHandHeldPhoto">
+      <serviceNode id="Activity_0cazcxm" name="上传手持证件照">
+        <callee module="mmpayuserbasicinfomedi" cmdid="RegUploadHandHeldPhoto"/>
         <flowVariableAssignments>
           <assignment name="是否驳回之后的重新提交" target="$FLOW.is_resubmit" source="$RESPONSE.is_resubmit"/>
         </flowVariableAssignments>
@@ -533,7 +551,8 @@
         <outgoing>Flow_1ujkszb</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_08ld8fc" sourceRef="Activity_05wzn7m" targetRef="Activity_0cazcxm"/>
-      <serviceNode id="Activity_14b0ugh" name="获取上传序列号" module="mmpayuserbasicinfomedi" cmdid="GetUploadSeqNo">
+      <serviceNode id="Activity_14b0ugh" name="获取上传序列号">
+        <callee module="mmpayuserbasicinfomedi" cmdid="GetUploadSeqNo"/>
         <incoming>Flow_0h64hkb</incoming>
         <outgoing>Flow_06ib591</outgoing>
       </serviceNode>
@@ -595,22 +614,26 @@
         <messageEventDefinition id="MessageEventDefinition_0rcnwht" messageRef="Message_2sc1j0e"/>
       </intermediateCatchEvent>
       <sequenceFlow id="Flow_0z4q7j3" sourceRef="Gateway_1hq2m22" targetRef="Event_0jsytxy"/>
-      <serviceNode id="Activity_1vf1rwk" name="生僻字设密" module="mmpayrealnameappsvr" cmdid="setpwd4uncommonnamerealname">
+      <serviceNode id="Activity_1vf1rwk" name="生僻字设密">
+        <callee module="mmpayrealnameappsvr" cmdid="setpwd4uncommonnamerealname"/>
         <incoming>Flow_0risf0u</incoming>
         <outgoing>Flow_1ptix2r</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_0risf0u" sourceRef="Event_0pq5rgr" targetRef="Activity_1vf1rwk"/>
-      <serviceNode id="Activity_0pdzgz6" name="上传影印件设密" module="mmpayrealnameappsvr" cmdid="setpwd4photocopyrealname">
+      <serviceNode id="Activity_0pdzgz6" name="上传影印件设密">
+        <callee module="mmpayrealnameappsvr" cmdid="setpwd4photocopyrealname"/>
         <incoming>Flow_1vjs0ui</incoming>
         <outgoing>Flow_0twxp7f</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_1vjs0ui" sourceRef="Event_1i38yxi" targetRef="Activity_0pdzgz6"/>
-      <serviceNode id="Activity_15sifce" name="仅证件实名设密" module="mmpayrealnameappsvr" cmdid="setpwd4crerealname">
+      <serviceNode id="Activity_15sifce" name="仅证件实名设密">
+        <callee module="mmpayrealnameappsvr" cmdid="setpwd4crerealname"/>
         <incoming>Flow_0fbjc7y</incoming>
         <outgoing>Flow_0xqkky1</outgoing>
       </serviceNode>
       <sequenceFlow id="Flow_0fbjc7y" sourceRef="Event_191x0ta" targetRef="Activity_15sifce"/>
-      <serviceNode id="Activity_1bg3lh0" name="绑卡实名设密" module="mmpayrealnameappsvr" cmdid="setpwd4bankcardrealname">
+      <serviceNode id="Activity_1bg3lh0" name="绑卡实名设密">
+        <callee module="mmpayrealnameappsvr" cmdid="setpwd4bankcardrealname"/>
         <incoming>Flow_1dux7tf</incoming>
         <outgoing>Flow_0e9a0xq</outgoing>
       </serviceNode>
@@ -671,7 +694,8 @@
         <incoming>Flow_0vehfx0</incoming>
       </endNode>
       <sequenceFlow id="Flow_0vehfx0" sourceRef="Gateway_1oyafbc" targetRef="Event_16lk0hg"/>
-      <serviceNode id="Activity_0fxpuk7" name="取消注册" module="mmpayrealnameappsvr" cmdid="cancelrealnameapply">
+      <serviceNode id="Activity_0fxpuk7" name="取消注册">
+        <callee module="mmpayrealnameappsvr" cmdid="cancelrealnameapply"/>
         <flowVariableAssignments>
           <assignment name="Assignment_1762744876040_bvzdy" target="$FLOW" source=""/>
         </flowVariableAssignments>
