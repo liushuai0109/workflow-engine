@@ -1,6 +1,6 @@
 /**
- * XPMN 适配器
- * 用于在 XPMN 格式（无前缀）和 XPMN 格式（带 bpmn: 或 xflow: 前缀）之间进行转换
+ * BPMN 适配器
+ * 用于在 BPMN 格式（无前缀）和 BPMN 格式（带 bpmn: 或 xflow: 前缀）之间进行转换
  */
 
 import elementMapping from './elementMapping.json'
@@ -13,11 +13,11 @@ export const formatOptions = {
   lineSeparator: '\n'
 }
 
-// XPMN 命名空间
-const BPMN_NS = 'http://www.omg.org/spec/XPMN/20100524/MODEL'
+// BPMN 命名空间
+const BPMN_NS = 'http://www.omg.org/spec/BPMN/20100524/MODEL'
 const XFLOW_NS = 'http://example.com/bpmn/xflow-extension'
 
-// 反向映射：从 XPMN 元素名（带前缀）映射到 XPMN 元素名
+// 反向映射：从 BPMN 元素名（带前缀）映射到 BPMN 元素名
 const reverseMapping: Record<string, string> = {}
 Object.entries(elementMapping.elements).forEach(([xpmnName, bpmnName]) => {
   if (bpmnName) {
@@ -34,7 +34,7 @@ Object.entries(elementMapping.elements).forEach(([xpmnName, bpmnName]) => {
   }
 })
 
-// 反向属性映射：从 XPMN 属性名映射到 XPMN 属性名
+// 反向属性映射：从 BPMN 属性名映射到 BPMN 属性名
 const reverseAttributeMapping: Record<string, string> = {}
 Object.entries(elementMapping.attributes).forEach(([xpmnAttr, bpmnAttr]) => {
   if (bpmnAttr) {
@@ -43,7 +43,7 @@ Object.entries(elementMapping.attributes).forEach(([xpmnAttr, bpmnAttr]) => {
 })
 
 /**
- * 从 XPMN 格式转换为 XPMN 格式
+ * 从 BPMN 格式转换为 BPMN 格式
  * - 将元素名转换为带 bpmn: 或 xflow: 前缀
  * - 将 xflow: 前缀的元素放在 bpmn:extensionElements 下
  * - 将 xpmndi:BPMNDiagram 及其子元素中的 xpmn 关键字恢复为 bpmn
@@ -75,7 +75,7 @@ export function convertFromXPMNToBPMN(xml: string): string {
     
       // 从映射文件中动态获取所有带前缀的元素，用于后续处理
       const prefixToNamespace: Record<string, string> = {
-        'bpmndi': 'http://www.omg.org/spec/XPMN/20100524/DI',
+        'bpmndi': 'http://www.omg.org/spec/BPMN/20100524/DI',
         'dc': 'http://www.omg.org/spec/DD/20100524/DC',
         'di': 'http://www.omg.org/spec/DD/20100524/DI',
         'xflow': XFLOW_NS,
@@ -150,7 +150,7 @@ export function convertFromXPMNToBPMN(xml: string): string {
       const requiredNamespaces: Record<string, string> = {
         'xmlns:bpmn': BPMN_NS,
         'xmlns:xflow': XFLOW_NS,
-        'xmlns:bpmndi': 'http://www.omg.org/spec/XPMN/20100524/DI',
+        'xmlns:bpmndi': 'http://www.omg.org/spec/BPMN/20100524/DI',
         'xmlns:dc': 'http://www.omg.org/spec/DD/20100524/DC',
         'xmlns:di': 'http://www.omg.org/spec/DD/20100524/DI'
       }
@@ -221,7 +221,7 @@ export function convertFromXPMNToBPMN(xml: string): string {
     result = fixNamespaceAliases(result)
     return formatXML(result)
   } catch (error) {
-    console.error('Error converting from XPMN to XPMN:', error)
+    console.error('Error converting from BPMN to BPMN:', error)
     throw error
   }
 }
@@ -232,9 +232,9 @@ export function convertFromXPMNToBPMN(xml: string): string {
 function fixNamespaceAliases(xml: string): string {
   // 确定每个命名空间 URI 应该使用的前缀
   const uriToPrefix: Record<string, string> = {
-    'http://www.omg.org/spec/XPMN/20100524/MODEL': 'bpmn',
+    'http://www.omg.org/spec/BPMN/20100524/MODEL': 'bpmn',
     'http://example.com/bpmn/xflow-extension': 'xflow',
-    'http://www.omg.org/spec/XPMN/20100524/DI': 'bpmndi',
+    'http://www.omg.org/spec/BPMN/20100524/DI': 'bpmndi',
     'http://www.omg.org/spec/DD/20100524/DC': 'dc',
     'http://www.omg.org/spec/DD/20100524/DI': 'di',
     'http://www.w3.org/2001/XMLSchema-instance': 'xsi'
@@ -287,7 +287,7 @@ function fixNamespaceAliases(xml: string): string {
       // 在根元素开始标签后添加命名空间声明
       result = result.replace(
         /<bpmn:definitions\s+/,
-        '<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/XPMN/20100524/MODEL" '
+        '<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" '
       )
     }
   }
@@ -297,7 +297,7 @@ function fixNamespaceAliases(xml: string): string {
 
 /**
  * 对 process 的子元素进行排序，确保被引用的元素在引用它们的元素之前
- * 这对于 XPMN 规范很重要：被引用的元素必须在引用它们的元素之前定义
+ * 这对于 BPMN 规范很重要：被引用的元素必须在引用它们的元素之前定义
  */
 function sortProcessChildren(processElement: Element): void {
   // 使用 childNodes 而不是 children，因为 @xmldom/xmldom 可能不支持 children
@@ -461,7 +461,7 @@ function formatXML(xml: string): string {
 }
 
 /**
- * 从 XPMN 格式转换为 XPMN 格式
+ * 从 BPMN 格式转换为 BPMN 格式
  * - 从根元素 bpmn:definitions 开始转换
  * - 将 bpmn:process 及其子元素转换为无前缀
  * - 删除 bpmn:extensionElements 容器，直接使用扩展元素
@@ -558,13 +558,13 @@ export function convertFromBPMNToXPMN(xml: string): string {
     const result = new XMLSerializer().serializeToString(doc)
     return formatXML(result)
   } catch (error) {
-    console.error('Error converting from XPMN to XPMN:', error)
+    console.error('Error converting from BPMN to BPMN:', error)
     throw error
   }
 }
 
 /**
- * 转换 definitions 元素从 XPMN 到 XPMN
+ * 转换 definitions 元素从 BPMN 到 BPMN
  * 所有子元素都通过 elementMapping.json 的映射关系统一处理
  */
 function convertXPMNDefinitionsToBPMN(element: Element, doc: Document): Element {
@@ -605,7 +605,7 @@ function convertXPMNDefinitionsToBPMN(element: Element, doc: Document): Element 
     const childTagName = child.tagName
     
     // XPMNDiagram 需要特殊处理（将 xpmn 关键字恢复为 bpmn，这是 DI 命名空间的特殊处理）
-      // XPMN 格式中 Diagram 元素没有前缀
+      // BPMN 格式中 Diagram 元素没有前缀
       if (childLocalName === 'XPMNDiagram' || childTagName.startsWith('xpmndi:XPMNDiagram') || childTagName === 'XPMNDiagram') {
       const convertedDiagram = convertXPMNDiagramToBPMN(child, doc)
         diagramElements.push(convertedDiagram)
@@ -668,7 +668,7 @@ function convertXPMNDefinitionsToBPMN(element: Element, doc: Document): Element 
 }
 
 /**
- * 转换 definitions 元素从 XPMN 到 XPMN
+ * 转换 definitions 元素从 BPMN 到 BPMN
  * 对于 definitions 元素本身，只需要去掉 bpmn: 前缀即可
  * 所有子元素都通过 elementMapping.json 的映射关系统一处理
  */
@@ -772,7 +772,7 @@ function convertBPMNDefinitionsToXPMN(element: Element, doc: Document): Element 
 }
 
 /**
- * 转换 XPMNDiagram 元素从 XPMN 到 XPMN（将 xpmn 恢复为 bpmn）
+ * 转换 XPMNDiagram 元素从 BPMN 到 BPMN（将 xpmn 恢复为 bpmn）
  */
 function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
   // 使用映射文件获取元素名（从 XPMNDiagram -> bpmndi:BPMNDiagram）
@@ -784,8 +784,8 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
     // 如果没有映射，使用字符串替换作为后备
   const tagName = element.tagName
     .replace(/xpmn/g, 'bpmn')
-    .replace(/XPMN/g, 'XPMN')
-    diagram = doc.createElementNS('http://www.omg.org/spec/XPMN/20100524/DI', tagName)
+    .replace(/BPMN/g, 'BPMN')
+    diagram = doc.createElementNS('http://www.omg.org/spec/BPMN/20100524/DI', tagName)
   } else {
     // 解析前缀和本地名（例如：bpmndi:BPMNDiagram -> prefix: bpmndi, localName: BPMNDiagram）
     const [prefix, localName] = bpmnName.includes(':') 
@@ -795,13 +795,13 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
     // 根据前缀确定命名空间
     let namespace: string
     if (prefix === 'bpmndi') {
-      namespace = 'http://www.omg.org/spec/XPMN/20100524/DI'
+      namespace = 'http://www.omg.org/spec/BPMN/20100524/DI'
     } else if (prefix === 'dc') {
       namespace = 'http://www.omg.org/spec/DD/20100524/DC'
     } else if (prefix === 'di') {
       namespace = 'http://www.omg.org/spec/DD/20100524/DI'
     } else {
-      namespace = 'http://www.omg.org/spec/XPMN/20100524/DI'
+      namespace = 'http://www.omg.org/spec/BPMN/20100524/DI'
     }
     
     // 使用 createElementNS 创建元素，但使用本地名（不包含前缀）
@@ -832,7 +832,7 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
       // 如果没有映射，使用字符串替换（将 xpmn 恢复为 bpmn）
     attrName = attrName.replace(/xpmn/gi, (match) => {
       if (match === 'xpmn') return 'bpmn'
-      if (match === 'XPMN') return 'XPMN'
+      if (match === 'BPMN') return 'BPMN'
       return 'bpmn'
     })
     }
@@ -845,7 +845,7 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
     // 将属性值中的 xpmn 恢复为 bpmn（保持大小写）
       // 注意：id 属性值也应该被转换（XPMNDiagram_1 -> BPMNDiagram_1）
       // 先替换大写，再替换小写，避免重复替换
-      attrValue = attrValue.replace(/XPMN/g, 'XPMN')
+      attrValue = attrValue.replace(/BPMN/g, 'BPMN')
       attrValue = attrValue.replace(/xpmn/g, 'bpmn')
     }
     
@@ -862,7 +862,7 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
       const childLocalName = child.localName || child.tagName.split(':').pop() || child.tagName
       const childNamespaceURI = child.namespaceURI
       
-      // 使用映射文件获取子元素的 XPMN 名称
+      // 使用映射文件获取子元素的 BPMN 名称
       const childBpmnName = elementMapping.elements[childLocalName as keyof typeof elementMapping.elements]
       
       if (childBpmnName) {
@@ -874,13 +874,13 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
         // 根据前缀确定命名空间
         let childNamespace: string
         if (childPrefix === 'bpmndi') {
-          childNamespace = 'http://www.omg.org/spec/XPMN/20100524/DI'
+          childNamespace = 'http://www.omg.org/spec/BPMN/20100524/DI'
         } else if (childPrefix === 'dc') {
           childNamespace = 'http://www.omg.org/spec/DD/20100524/DC'
         } else if (childPrefix === 'di') {
           childNamespace = 'http://www.omg.org/spec/DD/20100524/DI'
         } else {
-          childNamespace = 'http://www.omg.org/spec/XPMN/20100524/DI'
+          childNamespace = 'http://www.omg.org/spec/BPMN/20100524/DI'
         }
         
         // 创建子元素
@@ -900,7 +900,7 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
             // 因为它指向的是 process 元素的 id，而不是包含 xpmn 关键字的字符串
             if (!isXpmnElementAttr) {
               // 转换属性值中的 xpmn -> bpmn
-              attrValue = attrValue.replace(/XPMN/g, 'XPMN')
+              attrValue = attrValue.replace(/BPMN/g, 'BPMN')
               attrValue = attrValue.replace(/xpmn/g, 'bpmn')
             }
             childElement.setAttribute(attrName, attrValue)
@@ -931,15 +931,15 @@ function convertXPMNDiagramToBPMN(element: Element, doc: Document): Element {
 }
 
 /**
- * 转换 BPMNDiagram 元素从 XPMN 到 XPMN（将 bpmn 改为 xpmn）
+ * 转换 BPMNDiagram 元素从 BPMN 到 XPMN（将 bpmn 改为 xpmn）
  */
 function convertBPMNDiagramToXPMN(element: Element, doc: Document): Element {
-  // 获取元素标签名，将 XPMN 改为 XPMN（去掉 bpmndi: 前缀，XPMN 格式不使用前缀）
+  // 获取元素标签名，将 BPMN 改为 XPMN（去掉 bpmndi: 前缀，XPMN 格式不使用前缀）
   const localName = element.localName || element.tagName.split(':').pop() || element.tagName
-  // 将元素名中的 XPMN 改为 XPMN（不添加前缀）
-  const tagName = localName.replace(/XPMN/g, 'XPMN').replace(/bpmn/g, 'xpmn')
+  // 将元素名中的 BPMN 改为 XPMN（不添加前缀）
+  const tagName = localName.replace(/BPMN/g, 'BPMN').replace(/bpmn/g, 'xpmn')
   
-  // 创建 XPMN 格式的元素（无前缀）
+  // 创建 BPMN 格式的元素（无前缀）
   const diagram = doc.createElement(tagName)
   
   // 复制所有属性，处理属性映射和值转换
@@ -964,7 +964,7 @@ function convertBPMNDiagramToXPMN(element: Element, doc: Document): Element {
         // 如果没有映射，使用字符串替换（将 bpmn 改为 xpmn）
     attrName = attrName.replace(/bpmn/gi, (match) => {
       if (match === 'bpmn') return 'xpmn'
-      if (match === 'XPMN') return 'XPMN'
+      if (match === 'BPMN') return 'BPMN'
       return 'xpmn'
     })
       }
@@ -975,7 +975,7 @@ function convertBPMNDiagramToXPMN(element: Element, doc: Document): Element {
     // 注意：id 属性值也应该被转换（BPMNDiagram_1 -> XPMNDiagram_1）
     attrValue = attrValue.replace(/bpmn/gi, (match) => {
       if (match === 'bpmn') return 'xpmn'
-      if (match === 'XPMN') return 'XPMN'
+      if (match === 'BPMN') return 'BPMN'
       return 'xpmn'
     })
     
@@ -1025,7 +1025,7 @@ function convertBPMNDiagramToXPMN(element: Element, doc: Document): Element {
 }
 
 /**
- * 递归转换元素树从 XPMN 格式到 XPMN 格式
+ * 递归转换元素树从 BPMN 格式到 BPMN 格式
  */
 function convertXPMNElementTreeToBPMN(element: Element, doc: Document): Element {
   const xpmnName = element.localName || element.tagName.split(':').pop() || element.tagName
@@ -1188,13 +1188,13 @@ function convertXPMNElementTreeToBPMN(element: Element, doc: Document): Element 
 }
 
 /**
- * 递归转换元素树从 XPMN 格式到 XPMN 格式
+ * 递归转换元素树从 BPMN 格式到 BPMN 格式
  */
 function convertElementTreeToXPMN(element: Element, doc: Document): Element {
   const localName = element.localName || element.tagName.split(':').pop() || element.tagName
   const fullName = element.tagName
   
-  // 获取 XPMN 元素名
+  // 获取 BPMN 元素名
   let xpmnName: string
   if (fullName.startsWith('bpmn:') || element.namespaceURI === BPMN_NS) {
     xpmnName = reverseMapping[`bpmn:${localName}`] || reverseMapping[localName] || localName
@@ -1204,7 +1204,7 @@ function convertElementTreeToXPMN(element: Element, doc: Document): Element {
     xpmnName = reverseMapping[localName] || localName
   }
   
-  // 创建 XPMN 格式的元素（无命名空间）
+  // 创建 BPMN 格式的元素（无命名空间）
   const targetElement = doc.createElement(xpmnName)
   
   // 复制所有属性，处理属性映射和值转换

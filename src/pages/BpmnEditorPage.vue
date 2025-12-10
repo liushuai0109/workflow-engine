@@ -110,7 +110,7 @@ const saveFile = async (): Promise<void> => {
     // 从 BpmnEditor 获取最新的 XML 内容（XPMN 格式）
     const bpmnXml = await bpmnEditor.value.getXml()
     
-    // 将 XPMN 格式转换为 XPMN 格式用于保存
+    // 将 BPMN 格式转换为 XPMN 格式用于保存
     let xmlToSave = bpmnXml
     let conversionSucceeded = false
     try {
@@ -124,7 +124,7 @@ const saveFile = async (): Promise<void> => {
         xmlToSave = bpmnXml // 使用原始 XPMN 格式
       }
     } catch (conversionError) {
-      console.warn('XPMN conversion failed, saving as XPMN format:', conversionError)
+      console.warn('XPMN conversion failed, saving as BPMN format:', conversionError)
       // 如果转换失败，使用原始 XPMN 格式
       xmlToSave = bpmnXml
     }
@@ -153,7 +153,7 @@ const saveFile = async (): Promise<void> => {
 
 const newDiagram = (): void => {
   const defaultXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/XPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/XPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js" exporterVersion="9.4.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js" exporterVersion="9.4.0">
   <bpmn:process id="Process_1" isExecutable="false">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
@@ -225,7 +225,7 @@ const processFile = (file: File): void => {
     try {
       const content = e.target?.result as string
       
-      // 尝试将 XPMN 格式转换为 XPMN 格式
+      // 尝试将 XPMN 格式转换为 BPMN 格式
       let bpmnContent = content
       try {
         // 检查是否是 XPMN 格式（根元素是 definitions 而不是 bpmn:definitions）
@@ -233,12 +233,12 @@ const processFile = (file: File): void => {
                              (content.includes('<process') && !content.includes('bpmn:process'))
         if (isXpmnFormat) {
           bpmnContent = convertFromXPMNToBPMN(content)
-          console.log('Converted XPMN to XPMN format', bpmnContent)
+          console.log('Converted XPMN to BPMN format', bpmnContent)
         }
       } catch (conversionError) {
         console.error('XPMN conversion failed:', conversionError)
         // 如果转换失败，抛出错误而不是使用原始内容
-        throw new Error(`Failed to convert XPMN to XPMN: ${conversionError}`)
+        throw new Error(`Failed to convert XPMN to BPMN: ${conversionError}`)
       }
       
       if (isValidBpmnXml(bpmnContent)) {
@@ -295,8 +295,8 @@ const isValidBpmnXml = (content: string): boolean => {
     console.error('isValidBpmnXml', parseError);
     if (parseError) return false
 
-    // 检查是否包含 XPMN 命名空间
-    return content.includes('http://www.omg.org/spec/XPMN/20100524/MODEL')
+    // 检查是否包含 BPMN 命名空间
+    return content.includes('http://www.omg.org/spec/BPMN/20100524/MODEL')
   } catch {
     return false
   }
@@ -375,7 +375,7 @@ onMounted(async () => {
     const savedDiagram = LocalStorageService.loadDiagram()
     if (savedDiagram && !currentDiagram.value) {
       console.log('Loading saved diagram from localStorage:', savedDiagram.name)
-      // 检查是否是 XPMN 格式，如果是则转换为 XPMN
+      // 检查是否是 XPMN 格式，如果是则转换为 BPMN
       let xmlContent = savedDiagram.xml
       const isXpmnFormat = (xmlContent.includes('<definitions') && !xmlContent.includes('<bpmn:definitions')) ||
                            (xmlContent.includes('<process') && !xmlContent.includes('bpmn:process'))
@@ -383,7 +383,7 @@ onMounted(async () => {
         try {
           
           xmlContent = convertFromXPMNToBPMN(xmlContent)
-          console.log('Converted XPMN to XPMN format from localStorage', xmlContent)
+          console.log('Converted XPMN to BPMN format from localStorage', xmlContent)
         } catch (conversionError) {
           console.error('XPMN conversion failed from localStorage:', conversionError)
         }
