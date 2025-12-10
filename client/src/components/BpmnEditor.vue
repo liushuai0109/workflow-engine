@@ -401,6 +401,11 @@ watch(() => props.xml, (newXml, oldXml) => {
 }, { immediate: false })
 
 // 暴露方法
+// 加载新的 XML（暴露给父组件使用）
+const loadDiagram = async (xml: string): Promise<void> => {
+  await loadXml(xml)
+}
+
 defineExpose({
   getXml,
   getSvg,
@@ -408,7 +413,8 @@ defineExpose({
   triggerChanged,
   enableFlowVisualization,
   simulateFlow,
-  isFlowVisualizationEnabled
+  isFlowVisualizationEnabled,
+  loadDiagram
 })
 
 // 生命周期
