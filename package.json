@@ -1,7 +1,7 @@
 {
   "name": "bpmn-explorer",
   "version": "1.0.0",
-  "description": "A comprehensive BPMN diagram editor based on vue-bpmn with Vue 3 and TypeScript",
+  "description": "A comprehensive XPMN diagram editor based on vue-bpmn with Vue 3 and TypeScript",
   "main": "index.html",
   "scripts": {
     "dev": "vite",
@@ -22,6 +22,7 @@
     "diagram-js": "^15.4.0",
     "vue": "^3.3.4",
     "vue-bpmn": "^0.3.0",
+    "vue-router": "^4.6.3",
     "xml-formatter": "^3.6.7",
     "xml2js": "^0.6.2"
   },

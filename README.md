@@ -1,18 +1,18 @@
-# BPMN Explorer
+# XPMN Explorer
 
-一个基于 Vue 3 + TypeScript + vue-bpmn 的现代化 BPMN 图表编辑器，提供完整的 BPMN 2.0 支持。
+一个基于 Vue 3 + TypeScript + vue-bpmn 的现代化 XPMN 图表编辑器，提供完整的 XPMN 2.0 支持。
 
 ## ✨ 功能特性
 
 ### 🎨 核心功能
-- **完整的 BPMN 2.0 支持** - 支持所有标准 BPMN 元素
+- **完整的 XPMN 2.0 支持** - 支持所有标准 XPMN 元素
 - **Vue 3 + TypeScript** - 现代化的开发体验
 - **响应式设计** - 适配各种屏幕尺寸
 - **实时编辑** - 所见即所得的编辑体验
 
 ### 📁 文件操作
-- **打开 BPMN 文件** - 支持 .bpmn 和 .xml 格式
-- **保存 BPMN 文件** - 导出为标准 BPMN 2.0 XML
+- **打开 XPMN 文件** - 支持 .bpmn 和 .xml 格式
+- **保存 XPMN 文件** - 导出为标准 XPMN 2.0 XML
 - **文件验证** - 自动验证文件格式和内容
 - **拖拽上传** - 支持拖拽文件到编辑器
 
@@ -56,11 +56,11 @@ npm run build
    - 或使用欢迎界面的 "Create New Diagram" 按钮
 
 2. **打开文件**
-   - 点击 "Open BPMN" 按钮选择文件
-   - 或直接拖拽 BPMN 文件到编辑器
+   - 点击 "Open XPMN" 按钮选择文件
+   - 或直接拖拽 XPMN 文件到编辑器
 
 3. **保存文件**
-   - 点击 "Save BPMN" 按钮
+   - 点击 "Save XPMN" 按钮
    - 文件将自动下载为 .bpmn 格式
 
 ### 编辑功能
@@ -83,8 +83,8 @@ npm run build
 
 ### 工具栏功能
 
-- **📁 Open BPMN** - 打开 BPMN 文件
-- **💾 Save BPMN** - 保存当前图表
+- **📁 Open XPMN** - 打开 XPMN 文件
+- **💾 Save XPMN** - 保存当前图表
 - **🆕 New** - 创建新图表
 - **🎨 Show/Hide Palette** - 切换画板显示
 - **⚙️ Show/Hide Properties** - 切换属性面板显示
@@ -94,8 +94,8 @@ npm run build
 - **Vue 3** - 渐进式 JavaScript 框架
 - **TypeScript** - 类型安全的 JavaScript
 - **Vite** - 快速的构建工具
-- **bpmn-js** - BPMN 2.0 渲染和编辑库
-- **vue-bpmn** - Vue 3 的 BPMN 组件
+- **bpmn-js** - XPMN 2.0 渲染和编辑库
+- **vue-bpmn** - Vue 3 的 XPMN 组件
 - **bpmn-js-properties-panel** - 属性面板支持
 
 ## 📁 项目结构
@@ -103,10 +103,10 @@ npm run build
 ```
 bpmn-explorer/
 ├── public/                 # 静态资源
-│   └── sample.bpmn        # 示例 BPMN 文件
+│   └── sample.bpmn        # 示例 XPMN 文件
 ├── src/
 │   ├── components/        # Vue 组件
-│   │   └── BpmnEditor.vue # 自定义 BPMN 编辑器
+│   │   └── BpmnEditor.vue # 自定义 XPMN 编辑器
 │   ├── types/            # TypeScript 类型定义
 │   │   └── index.ts      # 类型声明
 │   ├── App.vue           # 主应用组件
@@ -135,7 +135,7 @@ const CustomContextPadModule = {
 
 ### 样式自定义
 
-所有 BPMN 元素的样式都可以通过 `src/styles.css` 进行自定义：
+所有 XPMN 元素的样式都可以通过 `src/styles.css` 进行自定义：
 
 - 线条粗细
 - 颜色主题
@@ -144,7 +144,7 @@ const CustomContextPadModule = {
 
 ## 🔧 开发指南
 
-### 添加新的 BPMN 元素
+### 添加新的 XPMN 元素
 
 1. 在 `BpmnEditor.vue` 中扩展 `CustomContextPadModule`
 2. 添加新的元素类型到 Palette

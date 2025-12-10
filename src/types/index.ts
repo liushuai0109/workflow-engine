@@ -1,4 +1,4 @@
-// BPMN 相关类型定义
+// XPMN 相关类型定义
 export interface BpmnOptions {
   propertiesPanel?: {
     parent?: string

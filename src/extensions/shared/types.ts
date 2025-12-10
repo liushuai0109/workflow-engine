@@ -1,4 +1,4 @@
-// BPMN 扩展相关类型定义
+// XPMN 扩展相关类型定义
 
 export interface CustomField {
   name: string
