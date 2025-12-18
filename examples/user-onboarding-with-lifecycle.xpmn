@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xflow="http://example.com/bpmn/xflow-extension"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             id="Definitions_UserOnboarding"
+             targetNamespace="http://bpmn.io/schema/bpmn"
+             exporter="bpmn-js"
+             exporterVersion="11.5.0">
+
+  <process id="Process_UserOnboarding" name="User Onboarding Workflow" isExecutable="true">
+
+    <!-- Workflow-level metadata -->
+    <extensionElements>
+      <xflow:workflowMetadata
+        id="workflow-onboarding-001"
+        name="User Onboarding Workflow"
+        description="Complete user onboarding process from registration to first purchase"
+        workflowPurpose="Onboarding"
+        workflowVersion="1.0.0"
+        workflowStatus="active"
+        owner="product-team@example.com"
+        published="true"
+        publishedAt="2024-12-18T10:00:00.000Z"
+        createdAt="2024-12-15T08:00:00.000Z"
+        updatedAt="2024-12-18T10:00:00.000Z"
+        createdBy="john.doe@example.com"
+        updatedBy="jane.smith@example.com"
+        businessImpact="High"
+        expectedVolume="1000"
+        tags="onboarding,activation,revenue"
+        metrics="completion_rate,time_to_first_purchase"
+        targetSegments="new_users,free_trial_users" />
+    </extensionElements>
+
+    <!-- Start Node - User Registers -->
+    <startNode id="StartNode_Register" name="User Registers">
+      <documentation>User signs up for the platform (Acquisition stage)</documentation>
+      <outgoing>Flow_1</outgoing>
+    </startNode>
+
+    <!-- User Node 1 - Email Verification -->
+    <userNode id="UserNode_EmailVerification" name="Verify Email">
+      <documentation>User confirms their email address (Acquisition stage)</documentation>
+      <incoming>Flow_1</incoming>
+      <outgoing>Flow_2</outgoing>
+    </userNode>
+
+    <!-- User Node 2 - Complete Profile -->
+    <userNode id="UserNode_CompleteProfile" name="Complete Profile">
+      <documentation>User fills out their profile information (Activation stage)</documentation>
+      <incoming>Flow_2</incoming>
+      <outgoing>Flow_3</outgoing>
+    </userNode>
+
+    <!-- User Node 3 - Take Product Tour -->
+    <userNode id="UserNode_ProductTour" name="Take Product Tour">
+      <documentation>User completes the interactive product tour (Activation stage)</documentation>
+      <incoming>Flow_3</incoming>
+      <outgoing>Flow_4</outgoing>
+    </userNode>
+
+    <!-- User Node 4 - Create First Project -->
+    <userNode id="UserNode_FirstProject" name="Create First Project">
+      <documentation>User creates their first project (Activation stage)</documentation>
+      <incoming>Flow_4</incoming>
+      <outgoing>Flow_5</outgoing>
+    </userNode>
+
+    <!-- Gateway - Check Engagement -->
+    <exclusiveGateway id="Gateway_CheckEngagement" name="Active User?">
+      <incoming>Flow_5</incoming>
+      <outgoing>Flow_Engaged</outgoing>
+      <outgoing>Flow_NotEngaged</outgoing>
+    </exclusiveGateway>
+
+    <!-- Service Node 1 - Send Engagement Email -->
+    <serviceNode id="ServiceNode_EngagementEmail" name="Send Engagement Email">
+      <documentation>Send personalized engagement email to inactive users (Retention stage)</documentation>
+      <incoming>Flow_NotEngaged</incoming>
+      <outgoing>Flow_6</outgoing>
+    </serviceNode>
+
+    <!-- User Node 5 - Invite Team Members -->
+    <userNode id="UserNode_InviteTeam" name="Invite Team Members">
+      <documentation>User invites team members to join (Referral stage)</documentation>
+      <incoming>Flow_Engaged</incoming>
+      <outgoing>Flow_7</outgoing>
+    </userNode>
+
+    <!-- User Node 6 - Show Upgrade Options -->
+    <userNode id="UserNode_UpgradePrompt" name="Show Upgrade Options">
+      <documentation>Present premium plan options to user (Revenue stage)</documentation>
+      <incoming>Flow_7</incoming>
+      <incoming>Flow_6</incoming>
+      <outgoing>Flow_8</outgoing>
+    </userNode>
+
+    <!-- Gateway - Purchase Decision -->
+    <exclusiveGateway id="Gateway_PurchaseDecision" name="Purchased?">
+      <incoming>Flow_8</incoming>
+      <outgoing>Flow_Purchased</outgoing>
+      <outgoing>Flow_NotPurchased</outgoing>
+    </exclusiveGateway>
+
+    <!-- Service Node 2 - Process Payment -->
+    <serviceNode id="ServiceNode_ProcessPayment" name="Process Payment">
+      <documentation>Process user payment for premium plan (Revenue stage)</documentation>
+      <incoming>Flow_Purchased</incoming>
+      <outgoing>Flow_9</outgoing>
+    </serviceNode>
+
+    <!-- Service Node 3 - Send Thank You -->
+    <serviceNode id="ServiceNode_ThankYou" name="Send Thank You Email">
+      <documentation>Send thank you email and premium onboarding materials (Retention stage)</documentation>
+      <incoming>Flow_9</incoming>
+      <outgoing>Flow_10</outgoing>
+    </serviceNode>
+
+    <!-- End Node - Onboarding Complete -->
+    <endNode id="EndNode_Complete" name="Onboarding Complete">
+      <documentation>User onboarding process completed</documentation>
+      <incoming>Flow_10</incoming>
+      <incoming>Flow_NotPurchased</incoming>
+    </endNode>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="Flow_1" sourceRef="StartNode_Register" targetRef="UserNode_EmailVerification" />
+    <sequenceFlow id="Flow_2" sourceRef="UserNode_EmailVerification" targetRef="UserNode_CompleteProfile" />
+    <sequenceFlow id="Flow_3" sourceRef="UserNode_CompleteProfile" targetRef="UserNode_ProductTour" />
+    <sequenceFlow id="Flow_4" sourceRef="UserNode_ProductTour" targetRef="UserNode_FirstProject" />
+    <sequenceFlow id="Flow_5" sourceRef="UserNode_FirstProject" targetRef="Gateway_CheckEngagement" />
+    <sequenceFlow id="Flow_Engaged" name="Yes" sourceRef="Gateway_CheckEngagement" targetRef="UserNode_InviteTeam" />
+    <sequenceFlow id="Flow_NotEngaged" name="No" sourceRef="Gateway_CheckEngagement" targetRef="ServiceNode_EngagementEmail" />
+    <sequenceFlow id="Flow_6" sourceRef="ServiceNode_EngagementEmail" targetRef="UserNode_UpgradePrompt" />
+    <sequenceFlow id="Flow_7" sourceRef="UserNode_InviteTeam" targetRef="UserNode_UpgradePrompt" />
+    <sequenceFlow id="Flow_8" sourceRef="UserNode_UpgradePrompt" targetRef="Gateway_PurchaseDecision" />
+    <sequenceFlow id="Flow_Purchased" name="Yes" sourceRef="Gateway_PurchaseDecision" targetRef="ServiceNode_ProcessPayment" />
+    <sequenceFlow id="Flow_NotPurchased" name="No" sourceRef="Gateway_PurchaseDecision" targetRef="EndNode_Complete" />
+    <sequenceFlow id="Flow_9" sourceRef="ServiceNode_ProcessPayment" targetRef="ServiceNode_ThankYou" />
+    <sequenceFlow id="Flow_10" sourceRef="ServiceNode_ThankYou" targetRef="EndNode_Complete" />
+
+  </process>
+
+  <!-- Diagram Visualization -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_UserOnboarding">
+    <bpmndi:BPMNPlane id="BPMNPlane_UserOnboarding" bpmnElement="Process_UserOnboarding">
+
+      <bpmndi:BPMNShape id="StartNode_Register_di" bpmnElement="StartNode_Register">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="132" y="145" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="UserNode_EmailVerification_di" bpmnElement="UserNode_EmailVerification">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="UserNode_CompleteProfile_di" bpmnElement="UserNode_CompleteProfile">
+        <dc:Bounds x="390" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="UserNode_ProductTour_di" bpmnElement="UserNode_ProductTour">
+        <dc:Bounds x="540" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="UserNode_FirstProject_di" bpmnElement="UserNode_FirstProject">
+        <dc:Bounds x="690" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_CheckEngagement_di" bpmnElement="Gateway_CheckEngagement" isMarkerVisible="true">
+        <dc:Bounds x="845" y="95" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="836" y="71" width="68" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="ServiceNode_EngagementEmail_di" bpmnElement="ServiceNode_EngagementEmail">
+        <dc:Bounds x="820" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="UserNode_InviteTeam_di" bpmnElement="UserNode_InviteTeam">
+        <dc:Bounds x="950" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="UserNode_UpgradePrompt_di" bpmnElement="UserNode_UpgradePrompt">
+        <dc:Bounds x="1100" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_PurchaseDecision_di" bpmnElement="Gateway_PurchaseDecision" isMarkerVisible="true">
+        <dc:Bounds x="1255" y="95" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1248" y="71" width="64" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="ServiceNode_ProcessPayment_di" bpmnElement="ServiceNode_ProcessPayment">
+        <dc:Bounds x="1230" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="ServiceNode_ThankYou_di" bpmnElement="ServiceNode_ThankYou">
+        <dc:Bounds x="1380" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndNode_Complete_di" bpmnElement="EndNode_Complete">
+        <dc:Bounds x="1412" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1397" y="145" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="390" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="490" y="120" />
+        <di:waypoint x="540" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="640" y="120" />
+        <di:waypoint x="690" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
+        <di:waypoint x="790" y="120" />
+        <di:waypoint x="845" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Engaged_di" bpmnElement="Flow_Engaged">
+        <di:waypoint x="895" y="120" />
+        <di:waypoint x="950" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_NotEngaged_di" bpmnElement="Flow_NotEngaged">
+        <di:waypoint x="870" y="145" />
+        <di:waypoint x="870" y="200" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
+        <di:waypoint x="920" y="240" />
+        <di:waypoint x="1150" y="240" />
+        <di:waypoint x="1150" y="160" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_7_di" bpmnElement="Flow_7">
+        <di:waypoint x="1050" y="120" />
+        <di:waypoint x="1100" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_8_di" bpmnElement="Flow_8">
+        <di:waypoint x="1200" y="120" />
+        <di:waypoint x="1255" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Purchased_di" bpmnElement="Flow_Purchased">
+        <di:waypoint x="1280" y="145" />
+        <di:waypoint x="1280" y="200" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_NotPurchased_di" bpmnElement="Flow_NotPurchased">
+        <di:waypoint x="1305" y="120" />
+        <di:waypoint x="1412" y="120" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_9_di" bpmnElement="Flow_9">
+        <di:waypoint x="1330" y="240" />
+        <di:waypoint x="1380" y="240" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="1430" y="200" />
+        <di:waypoint x="1430" y="138" />
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

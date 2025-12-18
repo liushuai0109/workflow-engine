@@ -141,6 +141,34 @@
           "isAttr": true
         }
       ]
+    },
+    {
+      "name": "FigmaLink",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "fileKey",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "nodeId",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "fileUrl",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "nodeName",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
     }
   ]
 }

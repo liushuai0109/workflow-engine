@@ -97,6 +97,120 @@ XPMN 是一种流程定义语言，用于描述业务流程。以下是 XPMN 的
 </sequenceFlow>
 \`\`\`
 
+### 布局规范 (BPMNDiagram)
+
+**重要：必须包含完整的布局信息，确保流程图视觉效果清晰、专业**
+
+#### 基本原则
+
+1. **节点不重叠**: 确保所有节点有足够间距，不相互遮挡
+2. **连线避开节点**: sequenceFlow 必须使用 waypoint 折角绕开所有节点，避免线条覆盖节点
+3. **连接点在边缘**: waypoint 连接到节点的边缘（left/right/top/bottom），不连接节点中心
+4. **文字不遮挡**: BPMNLabel 位置要避开连线和节点，确保标签清晰可读
+
+#### 节点布局 (BPMNShape)
+
+\`\`\`xml
+<!-- 标准节点尺寸 -->
+<BPMNShape id="UserTask_1_di" xpmnElement="UserTask_1">
+  <Bounds x="300" y="117" width="100" height="80"/>
+</BPMNShape>
+
+<!-- 网关 (菱形) -->
+<BPMNShape id="Gateway_1_di" xpmnElement="Gateway_1" isMarkerVisible="true">
+  <Bounds x="700" y="132" width="50" height="50"/>
+  <BPMNLabel>
+    <Bounds x="681" y="182" width="88" height="27"/>
+  </BPMNLabel>
+</BPMNShape>
+
+<!-- 开始/结束事件 (圆形) -->
+<BPMNShape id="StartEvent_1_di" xpmnElement="StartEvent_1">
+  <Bounds x="122" y="139" width="36" height="36"/>
+  <BPMNLabel>
+    <Bounds x="118" y="175" width="44" height="14"/>
+  </BPMNLabel>
+</BPMNShape>
+\`\`\`
+
+**节点间距规则**：
+- 水平间距：主流程节点间隔 100-200px
+- 垂直间距：分支节点间隔至少 150px
+- 标签位置：通常在节点下方或旁边，与节点边距 5-10px
+
+#### 连线布局 (BPMNEdge)
+
+**直线连接** (节点在同一水平线)：
+\`\`\`xml
+<BPMNEdge id="Flow_1_di" xpmnElement="Flow_1">
+  <waypoint x="158" y="157"/>  <!-- 起点：前一节点右边缘 -->
+  <waypoint x="300" y="157"/>  <!-- 终点：下一节点左边缘 -->
+</BPMNEdge>
+\`\`\`
+
+**折角连接** (回流或跨越节点)：
+\`\`\`xml
+<!-- 示例：从网关向上回流到前面的节点 -->
+<BPMNEdge id="Flow_Fail_di" xpmnElement="Flow_Fail">
+  <waypoint x="725" y="132"/>   <!-- 起点：网关上边缘 -->
+  <waypoint x="725" y="50"/>    <!-- 向上折 -->
+  <waypoint x="350" y="50"/>    <!-- 水平移动到目标节点上方 -->
+  <waypoint x="350" y="117"/>   <!-- 向下连到目标节点上边缘 -->
+  <BPMNLabel>
+    <Bounds x="352" y="48" width="44" height="14"/>  <!-- 标签在水平线段上方 -->
+  </BPMNLabel>
+</BPMNEdge>
+\`\`\`
+
+**避让规则**：
+- 回流线：向上或向下折角，避开主流程区域
+- 跨越多个节点：在节点上方或下方绕行
+- waypoint 至少包含起点和终点，复杂路径增加中间折点
+- 每个折点都应避开节点区域（Bounds）
+
+#### 标签布局 (BPMNLabel)
+
+\`\`\`xml
+<!-- 节点标签：通常在节点下方 -->
+<BPMNLabel>
+  <Bounds x="118" y="175" width="44" height="14"/>
+</BPMNLabel>
+
+<!-- 连线标签：在线段中点附近，避开节点和其他线 -->
+<BPMNLabel>
+  <Bounds x="850" y="153" width="44" height="14"/>
+</BPMNLabel>
+\`\`\`
+
+**标签定位要点**：
+- 确保标签 Bounds 不与节点 Bounds 重叠
+- 不被 sequenceFlow 遮挡（偏离线条 5-10px）
+- width 根据文字长度设置（中文约 14px/字）
+- height 通常为 14px（单行文字）
+
+#### 完整布局示例
+
+\`\`\`xml
+<BPMNDiagram id="BPMNDiagram_1">
+  <BPMNPlane id="BPMNPlane_1" xpmnElement="Process_1">
+    <!-- 1. 先定义所有节点 BPMNShape -->
+    <BPMNShape id="StartEvent_1_di" xpmnElement="StartEvent_1">
+      <Bounds x="122" y="139" width="36" height="36"/>
+    </BPMNShape>
+
+    <BPMNShape id="Task_1_di" xpmnElement="Task_1">
+      <Bounds x="300" y="117" width="100" height="80"/>
+    </BPMNShape>
+
+    <!-- 2. 再定义所有连线 BPMNEdge -->
+    <BPMNEdge id="Flow_1_di" xpmnElement="Flow_1">
+      <waypoint x="158" y="157"/>
+      <waypoint x="300" y="157"/>
+    </BPMNEdge>
+  </BPMNPlane>
+</BPMNDiagram>
+\`\`\`
+
 ### ID 命名规范
 
 - startNode: StartEvent_1, StartEvent_2, ...
@@ -120,6 +234,12 @@ XPMN 是一种流程定义语言，用于描述业务流程。以下是 XPMN 的
    - 每个 sequenceFlow 的 sourceRef 和 targetRef 必须指向存在的节点
    - incoming 和 outgoing 必须正确引用 sequenceFlow 的 ID
    - XML 格式必须正确且完整
+5. **布局质量保证**（重要）:
+   - **必须包含 BPMNDiagram 布局信息**，不能省略
+   - **连线必须避开节点**: 使用多个 waypoint 折角绕行，绝不覆盖节点
+   - **连接点在边缘**: waypoint 连到节点边界，不连节点中心
+   - **文字不遮挡**: BPMNLabel 位置避开所有连线和节点
+   - 参考上述"布局规范"章节，确保视觉效果清晰专业
 
 ## 示例
 

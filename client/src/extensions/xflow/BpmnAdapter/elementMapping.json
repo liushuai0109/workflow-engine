@@ -41,6 +41,14 @@
     "guard": "xflow:guard",
     "actions": "xflow:actions",
     "action": "xflow:action",
+    "lifecycleMetadata": "xflow:lifecycleMetadata",
+    "workflowMetadata": "xflow:workflowMetadata",
+    "targetSegments": "xflow:targetSegments",
+    "segment": "xflow:segment",
+    "triggers": "xflow:triggers",
+    "trigger": "xflow:trigger",
+    "metrics": "xflow:metrics",
+    "metric": "xflow:metric",
     "XPMNDiagram": "bpmndi:BPMNDiagram",
     "XPMNPlane": "bpmndi:BPMNPlane",
     "XPMNShape": "bpmndi:BPMNShape",
@@ -51,6 +59,11 @@
   },
   "attributes": {
     "xpmnElement": "bpmnElement",
-    "type": "xsi:type"
+    "type": "xsi:type",
+    "lifecycleStage": "lifecycleStage",
+    "lifecycleVersion": "lifecycleVersion",
+    "workflowPurpose": "workflowPurpose",
+    "workflowVersion": "workflowVersion",
+    "workflowStatus": "workflowStatus"
   }
 }
