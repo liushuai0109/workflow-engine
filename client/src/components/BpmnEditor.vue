@@ -32,6 +32,20 @@
       >
         <span class="entry-icon">1:1</span>
       </button>
+      <button 
+        class="io-zoom-control" 
+        @click="togglePropertiesPanel" 
+        :title="isPropertiesPanelVisible ? '隐藏属性面板' : '显示属性面板'"
+      >
+        <span class="entry-icon">{{ isPropertiesPanelVisible ? '◄' : '►' }}</span>
+      </button>
+      <button 
+        class="io-zoom-control" 
+        @click="togglePalette" 
+        :title="isPaletteVisible ? '隐藏工具栏' : '显示工具栏'"
+      >
+        <span class="entry-icon">{{ isPaletteVisible ? '◄' : '►' }}</span>
+      </button>
     </div>
   </div>
 </template>
@@ -47,9 +61,6 @@ import XFlowExtensionModule from '../extensions/xflow/XFlowExtensionModule'
 import xflowExtension from '../extensions/xflow/xflowExtension.json'
 import { LocalStorageService } from '../services/localStorageService'
 import type { BpmnModelerInstance, BpmnEvent } from '../types'
-import FlowVisualizationModule from '../extensions/flow/FlowVisualizationModule'
-import FlowSimulator from '../extensions/flow/FlowSimulator'
-import type { FlowData } from '../extensions/flow'
 
 // Props
 interface Props {
@@ -73,6 +84,8 @@ const emit = defineEmits<{
 // Refs
 const container = ref<HTMLElement>()
 let modeler: BpmnModelerInstance;
+const isPropertiesPanelVisible = ref<boolean>(true)
+const isPaletteVisible = ref<boolean>(true)
 
 // 防抖函数
 let saveTimeout: NodeJS.Timeout | null = null
@@ -144,7 +157,48 @@ const zoomReset = () => {
   canvas.zoom(1)
 }
 
-// 初始化 XPMN 编辑器
+const togglePropertiesPanel = () => {
+  isPropertiesPanelVisible.value = !isPropertiesPanelVisible.value
+  // 通知父组件更新状态
+  const event = new CustomEvent('toggle-properties-panel', { 
+    detail: { visible: isPropertiesPanelVisible.value } 
+  })
+  window.dispatchEvent(event)
+}
+
+const togglePalette = () => {
+  if (!modeler) return
+  
+  isPaletteVisible.value = !isPaletteVisible.value
+  
+  // 使用 CSS 方式控制 palette 显示/隐藏
+  const paletteElement = document.querySelector('.djs-palette') as HTMLElement
+  if (paletteElement) {
+    if (isPaletteVisible.value) {
+      paletteElement.style.display = ''
+      paletteElement.style.transform = 'translateX(0)'
+      paletteElement.style.opacity = '1'
+    } else {
+      paletteElement.style.display = 'none'
+    }
+  }
+  
+  // 尝试使用 API 方式（如果可用）
+  try {
+    const palette = modeler.get('palette')
+    if (palette) {
+      if (isPaletteVisible.value) {
+        palette.open()
+      } else {
+        palette.close()
+      }
+    }
+  } catch (error) {
+    // API 方式失败时，CSS 方式已经处理了
+  }
+}
+
+// 初始化 BPMN 编辑器
 const initModeler = (): void => {
   if (!container.value) return
 
@@ -155,7 +209,6 @@ const initModeler = (): void => {
         BpmnPropertiesPanelModule,
         BpmnPropertiesProviderModule,
         XFlowExtensionModule,
-        FlowVisualizationModule,
       ],
       moddleExtensions: {
         xflow: xflowExtension,
@@ -179,7 +232,7 @@ const initModeler = (): void => {
     }
 
   } catch (error) {
-    console.error('Failed to initialize XPMN modeler:', error)
+    console.error('Failed to initialize BPMN modeler:', error)
     emit('error', error as Error)
   }
 }
@@ -189,7 +242,18 @@ const setupEventListeners = (): void => {
   if (!modeler) return
 
   modeler.on('import.done', (event: BpmnEvent) => {
-    console.log('XPMN diagram imported successfully')
+    console.log('BPMN diagram imported successfully')
+    // 确保 palette 状态正确
+    setTimeout(() => {
+      const paletteElement = document.querySelector('.djs-palette') as HTMLElement
+      if (paletteElement) {
+        if (isPaletteVisible.value) {
+          paletteElement.style.display = ''
+        } else {
+          paletteElement.style.display = 'none'
+        }
+      }
+    }, 100)
     emit('shown')
   })
 
@@ -200,8 +264,8 @@ const setupEventListeners = (): void => {
   })
 
   modeler.on('error', (event: BpmnEvent) => {
-    console.error('XPMN modeler error:', event)
-    emit('error', new Error('XPMN modeler error'))
+    console.error('BPMN modeler error:', event)
+    emit('error', new Error('BPMN modeler error'))
   })
 }
 
@@ -314,83 +378,6 @@ const getModeler = (): BpmnModelerInstance => {
   return modeler
 }
 
-// 流量可视化相关方法
-const enableFlowVisualization = (enabled: boolean): void => {
-  if (!modeler) return
-
-  try {
-    const flowRenderer = modeler.get('flowRenderer')
-    flowRenderer.setEnabled(enabled)
-
-    if (enabled) {
-      // 启用时，立即触发流量模拟
-      simulateFlow()
-    } else {
-      // 禁用时，重新导入XML以恢复默认样式
-      refreshDiagram()
-    }
-  } catch (error) {
-    console.error('Failed to toggle flow visualization:', error)
-  }
-}
-
-const simulateFlow = (initialFlow: number = 100): void => {
-  if (!modeler) return
-
-  try {
-    const elementRegistry = modeler.get('elementRegistry')
-    const flowRenderer = modeler.get('flowRenderer')
-
-    // 创建流量模拟器
-    const simulator = new FlowSimulator(elementRegistry)
-    simulator.setInitialFlow(initialFlow)
-
-    // 生成流量数据
-    const flowData: FlowData = simulator.simulate()
-
-    // 设置流量数据到渲染器
-    flowRenderer.setFlowData(flowData)
-
-    // 刷新图表以应用新的渲染
-    refreshDiagram()
-
-    console.log('Flow simulation completed:', flowData)
-  } catch (error) {
-    console.error('Failed to simulate flow:', error)
-  }
-}
-
-const refreshDiagram = async (): Promise<void> => {
-  if (!modeler) return
-
-  try {
-    // 保存当前视口和XML
-    saveViewbox()
-    const currentXml = await modeler.saveXML({ format: true })
-
-    // 重新导入XML以触发完整重新渲染
-    await modeler.importXML(currentXml.xml)
-
-    // 恢复视口
-    setTimeout(() => {
-      restoreViewbox()
-    }, 50)
-  } catch (error) {
-    console.error('Failed to refresh diagram:', error)
-  }
-}
-
-const isFlowVisualizationEnabled = (): boolean => {
-  if (!modeler) return false
-
-  try {
-    const flowRenderer = modeler.get('flowRenderer')
-    return flowRenderer.isEnabled()
-  } catch (error) {
-    return false
-  }
-}
-
 // 监听 XML 属性变化
 watch(() => props.xml, (newXml, oldXml) => {
   // 只有当 XML 真正发生变化且 modeler 已初始化时才重新加载
@@ -400,21 +387,13 @@ watch(() => props.xml, (newXml, oldXml) => {
   }
 }, { immediate: false })
 
-// 暴露方法
-// 加载新的 XML（暴露给父组件使用）
-const loadDiagram = async (xml: string): Promise<void> => {
-  await loadXml(xml)
-}
-
+// 暴露方法和状态
 defineExpose({
   getXml,
   getSvg,
   getModeler,
   triggerChanged,
-  enableFlowVisualization,
-  simulateFlow,
-  isFlowVisualizationEnabled,
-  loadDiagram
+  isPropertiesPanelVisible
 })
 
 // 生命周期
@@ -456,6 +435,19 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 2px;
   z-index: 1000;
+}
+
+/* 属性面板和工具栏切换按钮特殊样式 */
+.io-zoom-control:nth-last-child(2) {
+  margin-top: 4px;
+  border-top: 2px solid #e5e7eb;
+  padding-top: 6px;
+}
+
+.io-zoom-control:last-child {
+  margin-top: 2px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 6px;
 }
 
 .io-zoom-control {
@@ -504,5 +496,10 @@ onBeforeUnmount(() => {
 :deep(.entry-icon) {
   font-size: 16px !important;
   font-weight: bold !important;
+}
+
+/* Palette 隐藏样式 */
+:deep(.djs-palette.hidden) {
+  display: none !important;
 }
 </style>
