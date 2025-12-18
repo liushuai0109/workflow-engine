@@ -30,7 +30,7 @@ export default class XFlowRenderer extends BaseRenderer {
   }
 
   drawShape(parentNode: SVGElement, element: any): SVGElement {
-    // 使用默认的 XPMN 渲染器绘制基础形状
+    // 使用默认的 BPMN 渲染器绘制基础形状
     const shape = this.bpmnRenderer.drawShape(parentNode, element)
     
     // 添加 XFlow 扩展元素

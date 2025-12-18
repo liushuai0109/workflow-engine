@@ -1,4 +1,4 @@
-// XPMN 扩展模块的主入口文件
+// XFlow BPMN 扩展模块的主入口文件
 
 // XFlow 统一扩展（推荐使用）
 export * from './xflow'

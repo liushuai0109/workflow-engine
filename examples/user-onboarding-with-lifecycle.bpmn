@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
              xmlns:xflow="http://example.com/bpmn/xflow-extension"
              xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
              xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
              xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              id="Definitions_UserOnboarding"
              targetNamespace="http://bpmn.io/schema/bpmn"
              exporter="bpmn-js"
              exporterVersion="11.5.0">
 
-  <process id="Process_UserOnboarding" name="User Onboarding Workflow" isExecutable="true">
+  <bpmn:process id="Process_UserOnboarding" name="User Onboarding Workflow" isExecutable="true">
 
     <!-- Workflow-level metadata -->
-    <extensionElements>
+    <bpmn:extensionElements>
       <xflow:workflowMetadata
         id="workflow-onboarding-001"
         name="User Onboarding Workflow"
@@ -32,118 +33,118 @@
         tags="onboarding,activation,revenue"
         metrics="completion_rate,time_to_first_purchase"
         targetSegments="new_users,free_trial_users" />
-    </extensionElements>
+    </bpmn:extensionElements>
 
-    <!-- Start Node - User Registers -->
-    <startNode id="StartNode_Register" name="User Registers">
-      <documentation>User signs up for the platform (Acquisition stage)</documentation>
-      <outgoing>Flow_1</outgoing>
-    </startNode>
+    <!-- Start Event - User Registers -->
+    <bpmn:startEvent id="StartNode_Register" name="User Registers">
+      <bpmn:documentation>User signs up for the platform (Acquisition stage)</bpmn:documentation>
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
 
-    <!-- User Node 1 - Email Verification -->
-    <userNode id="UserNode_EmailVerification" name="Verify Email">
-      <documentation>User confirms their email address (Acquisition stage)</documentation>
-      <incoming>Flow_1</incoming>
-      <outgoing>Flow_2</outgoing>
-    </userNode>
+    <!-- User Task 1 - Email Verification -->
+    <bpmn:userTask id="UserNode_EmailVerification" name="Verify Email">
+      <bpmn:documentation>User confirms their email address (Acquisition stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:userTask>
 
-    <!-- User Node 2 - Complete Profile -->
-    <userNode id="UserNode_CompleteProfile" name="Complete Profile">
-      <documentation>User fills out their profile information (Activation stage)</documentation>
-      <incoming>Flow_2</incoming>
-      <outgoing>Flow_3</outgoing>
-    </userNode>
+    <!-- User Task 2 - Complete Profile -->
+    <bpmn:userTask id="UserNode_CompleteProfile" name="Complete Profile">
+      <bpmn:documentation>User fills out their profile information (Activation stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
 
-    <!-- User Node 3 - Take Product Tour -->
-    <userNode id="UserNode_ProductTour" name="Take Product Tour">
-      <documentation>User completes the interactive product tour (Activation stage)</documentation>
-      <incoming>Flow_3</incoming>
-      <outgoing>Flow_4</outgoing>
-    </userNode>
+    <!-- User Task 3 - Take Product Tour -->
+    <bpmn:userTask id="UserNode_ProductTour" name="Take Product Tour">
+      <bpmn:documentation>User completes the interactive product tour (Activation stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:userTask>
 
-    <!-- User Node 4 - Create First Project -->
-    <userNode id="UserNode_FirstProject" name="Create First Project">
-      <documentation>User creates their first project (Activation stage)</documentation>
-      <incoming>Flow_4</incoming>
-      <outgoing>Flow_5</outgoing>
-    </userNode>
+    <!-- User Task 4 - Create First Project -->
+    <bpmn:userTask id="UserNode_FirstProject" name="Create First Project">
+      <bpmn:documentation>User creates their first project (Activation stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:userTask>
 
-    <!-- Gateway - Check Engagement -->
-    <exclusiveGateway id="Gateway_CheckEngagement" name="Active User?">
-      <incoming>Flow_5</incoming>
-      <outgoing>Flow_Engaged</outgoing>
-      <outgoing>Flow_NotEngaged</outgoing>
-    </exclusiveGateway>
+    <!-- Exclusive Gateway - Check Engagement -->
+    <bpmn:exclusiveGateway id="Gateway_CheckEngagement" name="Active User?">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:outgoing>Flow_Engaged</bpmn:outgoing>
+      <bpmn:outgoing>Flow_NotEngaged</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
 
-    <!-- Service Node 1 - Send Engagement Email -->
-    <serviceNode id="ServiceNode_EngagementEmail" name="Send Engagement Email">
-      <documentation>Send personalized engagement email to inactive users (Retention stage)</documentation>
-      <incoming>Flow_NotEngaged</incoming>
-      <outgoing>Flow_6</outgoing>
-    </serviceNode>
+    <!-- Service Task 1 - Send Engagement Email -->
+    <bpmn:serviceTask id="ServiceNode_EngagementEmail" name="Send Engagement Email">
+      <bpmn:documentation>Send personalized engagement email to inactive users (Retention stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_NotEngaged</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+    </bpmn:serviceTask>
 
-    <!-- User Node 5 - Invite Team Members -->
-    <userNode id="UserNode_InviteTeam" name="Invite Team Members">
-      <documentation>User invites team members to join (Referral stage)</documentation>
-      <incoming>Flow_Engaged</incoming>
-      <outgoing>Flow_7</outgoing>
-    </userNode>
+    <!-- User Task 5 - Invite Team Members -->
+    <bpmn:userTask id="UserNode_InviteTeam" name="Invite Team Members">
+      <bpmn:documentation>User invites team members to join (Referral stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_Engaged</bpmn:incoming>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+    </bpmn:userTask>
 
-    <!-- User Node 6 - Show Upgrade Options -->
-    <userNode id="UserNode_UpgradePrompt" name="Show Upgrade Options">
-      <documentation>Present premium plan options to user (Revenue stage)</documentation>
-      <incoming>Flow_7</incoming>
-      <incoming>Flow_6</incoming>
-      <outgoing>Flow_8</outgoing>
-    </userNode>
+    <!-- User Task 6 - Show Upgrade Options -->
+    <bpmn:userTask id="UserNode_UpgradePrompt" name="Show Upgrade Options">
+      <bpmn:documentation>Present premium plan options to user (Revenue stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+    </bpmn:userTask>
 
-    <!-- Gateway - Purchase Decision -->
-    <exclusiveGateway id="Gateway_PurchaseDecision" name="Purchased?">
-      <incoming>Flow_8</incoming>
-      <outgoing>Flow_Purchased</outgoing>
-      <outgoing>Flow_NotPurchased</outgoing>
-    </exclusiveGateway>
+    <!-- Exclusive Gateway - Purchase Decision -->
+    <bpmn:exclusiveGateway id="Gateway_PurchaseDecision" name="Purchased?">
+      <bpmn:incoming>Flow_8</bpmn:incoming>
+      <bpmn:outgoing>Flow_Purchased</bpmn:outgoing>
+      <bpmn:outgoing>Flow_NotPurchased</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
 
-    <!-- Service Node 2 - Process Payment -->
-    <serviceNode id="ServiceNode_ProcessPayment" name="Process Payment">
-      <documentation>Process user payment for premium plan (Revenue stage)</documentation>
-      <incoming>Flow_Purchased</incoming>
-      <outgoing>Flow_9</outgoing>
-    </serviceNode>
+    <!-- Service Task 2 - Process Payment -->
+    <bpmn:serviceTask id="ServiceNode_ProcessPayment" name="Process Payment">
+      <bpmn:documentation>Process user payment for premium plan (Revenue stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_Purchased</bpmn:incoming>
+      <bpmn:outgoing>Flow_9</bpmn:outgoing>
+    </bpmn:serviceTask>
 
-    <!-- Service Node 3 - Send Thank You -->
-    <serviceNode id="ServiceNode_ThankYou" name="Send Thank You Email">
-      <documentation>Send thank you email and premium onboarding materials (Retention stage)</documentation>
-      <incoming>Flow_9</incoming>
-      <outgoing>Flow_10</outgoing>
-    </serviceNode>
+    <!-- Service Task 3 - Send Thank You -->
+    <bpmn:serviceTask id="ServiceNode_ThankYou" name="Send Thank You Email">
+      <bpmn:documentation>Send thank you email and premium onboarding materials (Retention stage)</bpmn:documentation>
+      <bpmn:incoming>Flow_9</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:serviceTask>
 
-    <!-- End Node - Onboarding Complete -->
-    <endNode id="EndNode_Complete" name="Onboarding Complete">
-      <documentation>User onboarding process completed</documentation>
-      <incoming>Flow_10</incoming>
-      <incoming>Flow_NotPurchased</incoming>
-    </endNode>
+    <!-- End Event - Onboarding Complete -->
+    <bpmn:endEvent id="EndNode_Complete" name="Onboarding Complete">
+      <bpmn:documentation>User onboarding process completed</bpmn:documentation>
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:incoming>Flow_NotPurchased</bpmn:incoming>
+    </bpmn:endEvent>
 
     <!-- Sequence Flows -->
-    <sequenceFlow id="Flow_1" sourceRef="StartNode_Register" targetRef="UserNode_EmailVerification" />
-    <sequenceFlow id="Flow_2" sourceRef="UserNode_EmailVerification" targetRef="UserNode_CompleteProfile" />
-    <sequenceFlow id="Flow_3" sourceRef="UserNode_CompleteProfile" targetRef="UserNode_ProductTour" />
-    <sequenceFlow id="Flow_4" sourceRef="UserNode_ProductTour" targetRef="UserNode_FirstProject" />
-    <sequenceFlow id="Flow_5" sourceRef="UserNode_FirstProject" targetRef="Gateway_CheckEngagement" />
-    <sequenceFlow id="Flow_Engaged" name="Yes" sourceRef="Gateway_CheckEngagement" targetRef="UserNode_InviteTeam" />
-    <sequenceFlow id="Flow_NotEngaged" name="No" sourceRef="Gateway_CheckEngagement" targetRef="ServiceNode_EngagementEmail" />
-    <sequenceFlow id="Flow_6" sourceRef="ServiceNode_EngagementEmail" targetRef="UserNode_UpgradePrompt" />
-    <sequenceFlow id="Flow_7" sourceRef="UserNode_InviteTeam" targetRef="UserNode_UpgradePrompt" />
-    <sequenceFlow id="Flow_8" sourceRef="UserNode_UpgradePrompt" targetRef="Gateway_PurchaseDecision" />
-    <sequenceFlow id="Flow_Purchased" name="Yes" sourceRef="Gateway_PurchaseDecision" targetRef="ServiceNode_ProcessPayment" />
-    <sequenceFlow id="Flow_NotPurchased" name="No" sourceRef="Gateway_PurchaseDecision" targetRef="EndNode_Complete" />
-    <sequenceFlow id="Flow_9" sourceRef="ServiceNode_ProcessPayment" targetRef="ServiceNode_ThankYou" />
-    <sequenceFlow id="Flow_10" sourceRef="ServiceNode_ThankYou" targetRef="EndNode_Complete" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartNode_Register" targetRef="UserNode_EmailVerification" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="UserNode_EmailVerification" targetRef="UserNode_CompleteProfile" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="UserNode_CompleteProfile" targetRef="UserNode_ProductTour" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="UserNode_ProductTour" targetRef="UserNode_FirstProject" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="UserNode_FirstProject" targetRef="Gateway_CheckEngagement" />
+    <bpmn:sequenceFlow id="Flow_Engaged" name="Yes" sourceRef="Gateway_CheckEngagement" targetRef="UserNode_InviteTeam" />
+    <bpmn:sequenceFlow id="Flow_NotEngaged" name="No" sourceRef="Gateway_CheckEngagement" targetRef="ServiceNode_EngagementEmail" />
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="ServiceNode_EngagementEmail" targetRef="UserNode_UpgradePrompt" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="UserNode_InviteTeam" targetRef="UserNode_UpgradePrompt" />
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="UserNode_UpgradePrompt" targetRef="Gateway_PurchaseDecision" />
+    <bpmn:sequenceFlow id="Flow_Purchased" name="Yes" sourceRef="Gateway_PurchaseDecision" targetRef="ServiceNode_ProcessPayment" />
+    <bpmn:sequenceFlow id="Flow_NotPurchased" name="No" sourceRef="Gateway_PurchaseDecision" targetRef="EndNode_Complete" />
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="ServiceNode_ProcessPayment" targetRef="ServiceNode_ThankYou" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="ServiceNode_ThankYou" targetRef="EndNode_Complete" />
 
-  </process>
+  </bpmn:process>
 
-  <!-- Diagram Visualization -->
+  <!-- BPMN Diagram Visualization -->
   <bpmndi:BPMNDiagram id="BPMNDiagram_UserOnboarding">
     <bpmndi:BPMNPlane id="BPMNPlane_UserOnboarding" bpmnElement="Process_UserOnboarding">
 
@@ -286,4 +287,4 @@
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 
-</definitions>
+</bpmn:definitions>

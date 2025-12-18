@@ -60,7 +60,7 @@ export default class XFlowPropertiesProvider {
     if (eventBus) {
       // 监听模型导入完成事件
       eventBus.on("import.done", () => {
-        console.log("XPMN model imported, initializing Flow Variable Declarations");
+        console.log("BPMN model imported, initializing Flow Variable Declarations");
         this.initializeFlowVariableDeclarations();
       });
     }

@@ -5,11 +5,11 @@
       <div class="toolbar-left">
         <button @click="openFile" class="btn btn-primary">
           <span class="icon">📁</span>
-          Open XPMN
+          Open BPMN
         </button>
         <button @click="saveFile" class="btn btn-secondary" :disabled="!currentDiagram">
           <span class="icon">💾</span>
-          Save XPMN
+          Save BPMN
         </button>
         <button @click="newDiagram" class="btn btn-outline">
           <span class="icon">🆕</span>
@@ -30,7 +30,7 @@
 
     <!-- 主内容区域 -->
     <div class="main-content">
-      <!-- XPMN 编辑器 -->
+      <!-- BPMN 编辑器 -->
       <div class="editor-container">
         <BpmnEditor v-if="currentDiagram" ref="bpmnEditor" :xml="currentDiagram" @error="handleError"
           @shown="handleShown" @loading="handleLoading" @changed="handleDiagramChanged" />
@@ -38,12 +38,12 @@
         <!-- 欢迎界面 -->
         <div v-else class="welcome-screen">
           <div class="welcome-content">
-            <h1>XPMN Explorer</h1>
-            <p>Create and edit XPMN diagrams with ease</p>
+            <h1>BPMN Explorer</h1>
+            <p>Create and edit BPMN diagrams with ease</p>
             <div class="welcome-actions">
               <button @click="openFile" class="btn btn-primary btn-large">
                 <span class="icon">📁</span>
-                Open XPMN File
+                Open BPMN File
               </button>
               <button @click="newDiagram" class="btn btn-outline btn-large">
                 <span class="icon">🆕</span>
@@ -51,7 +51,7 @@
               </button>
             </div>
             <div class="drag-hint">
-              <p>Or drag and drop a XPMN file here</p>
+              <p>Or drag and drop a BPMN file here</p>
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@
     </div>
 
     <!-- 隐藏的文件输入 -->
-    <input ref="fileInput" type="file" accept=".bpmn,.xml,.xpmn" @change="handleFileSelect" style="display: none" />
+    <input ref="fileInput" type="file" accept=".bpmn,.xml" @change="handleFileSelect" style="display: none" />
 
     <!-- 客服按钮 -->
     <div
@@ -107,12 +107,10 @@ import ChatBox from '../components/ChatBox.vue'
 import { LocalStorageService } from '../services/localStorageService'
 import { llmService } from '../services/llmService'
 import type { Message, FunctionCall } from '../services/llmService'
-import { XPMN_SYSTEM_PROMPT } from '../prompts/xpmnSystemPrompt'
 import { BPMN_SYSTEM_PROMPT } from '../prompts/bpmnSystemPrompt'
 import { EDITOR_SYSTEM_PROMPT } from '../prompts/editorSystemPrompt'
 import { availableTools } from '../services/llmTools'
 import { editorOperationService } from '../services/editorOperationService'
-import { convertFromXPMNToBPMN, convertFromBPMNToXPMN } from '../extensions/xflow/BpmnAdapter/BpmnAdapter'
 import type { FileValidationResult } from '../types'
 
 // 配置：是否使用 Function Calling 模式
@@ -141,34 +139,14 @@ const saveFile = async (): Promise<void> => {
   if (!bpmnEditor.value) return
 
   try {
-    // 从 BpmnEditor 获取最新的 XML 内容（XPMN 格式）
+    // 从 BpmnEditor 获取最新的 XML 内容（BPMN 格式）
     const bpmnXml = await bpmnEditor.value.getXml()
-    
-    // 将 BPMN 格式转换为 XPMN 格式用于保存
-    let xmlToSave = bpmnXml
-    let conversionSucceeded = false
-    try {
-      xmlToSave = convertFromBPMNToXPMN(bpmnXml)
-      // 验证转换结果是否真的是 XPMN 格式（根元素应该是 definitions 而不是 bpmn:definitions）
-      const isXpmnFormat = xmlToSave.includes('<definitions') && !xmlToSave.includes('<bpmn:definitions')
-      if (isXpmnFormat) {
-        conversionSucceeded = true
-      } else {
-        console.warn('XPMN conversion returned invalid format, saving as XPMN format')
-        xmlToSave = bpmnXml // 使用原始 XPMN 格式
-      }
-    } catch (conversionError) {
-      console.warn('XPMN conversion failed, saving as BPMN format:', conversionError)
-      // 如果转换失败，使用原始 XPMN 格式
-      xmlToSave = bpmnXml
-    }
-    
-    const blob = new Blob([xmlToSave], { type: 'application/xml' })
+
+    const blob = new Blob([bpmnXml], { type: 'application/xml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    // 根据转换是否成功决定文件扩展名
-    a.download = conversionSucceeded ? 'diagram.xpmn' : 'diagram.bpmn'
+    a.download = 'diagram.bpmn'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -176,7 +154,7 @@ const saveFile = async (): Promise<void> => {
 
     // 手动触发 changed 事件来更新 currentDiagram
     await bpmnEditor.value.triggerChanged()
-    
+
     lastSaved.value = new Date()
     showStatus('File saved successfully', 'success')
   } catch (error) {
@@ -258,35 +236,19 @@ const processFile = (file: File): void => {
   reader.onload = async (e) => {
     try {
       const content = e.target?.result as string
-      
-      // 尝试将 XPMN 格式转换为 BPMN 格式
-      let bpmnContent = content
-      try {
-        // 检查是否是 XPMN 格式（根元素是 definitions 而不是 bpmn:definitions）
-        const isXpmnFormat = (content.includes('<definitions') && !content.includes('<bpmn:definitions')) ||
-                             (content.includes('<process') && !content.includes('bpmn:process'))
-        if (isXpmnFormat) {
-          bpmnContent = convertFromXPMNToBPMN(content)
-          console.log('Converted XPMN to BPMN format', bpmnContent)
-        }
-      } catch (conversionError) {
-        console.error('XPMN conversion failed:', conversionError)
-        // 如果转换失败，抛出错误而不是使用原始内容
-        throw new Error(`Failed to convert XPMN to BPMN: ${conversionError}`)
-      }
-      
-      if (isValidBpmnXml(bpmnContent)) {
-        currentDiagram.value = bpmnContent
 
-        // 保存到 localStorage（保存转换后的 XPMN 格式）
+      if (isValidBpmnXml(content)) {
+        currentDiagram.value = content
+
+        // 保存到 localStorage
         if (LocalStorageService.isAvailable()) {
-          LocalStorageService.saveDiagram(bpmnContent, file.name)
+          LocalStorageService.saveDiagram(content, file.name)
         }
 
         showStatus(`File loaded: ${file.name}`, 'success')
       } else {
-        console.log('Invalid XPMN content', bpmnContent)
-        showStatus('Invalid XPMN content', 'error')
+        console.log('Invalid BPMN content', content)
+        showStatus('Invalid BPMN content', 'error')
       }
     } catch (error) {
       console.error('File processing error:', error)
@@ -307,7 +269,7 @@ const processFile = (file: File): void => {
 // 文件验证
 const validateFile = (file: File): FileValidationResult => {
   const maxSize = 10 * 1024 * 1024 // 10MB
-  const allowedTypes = ['.bpmn', '.xml', '.xpmn']
+  const allowedTypes = ['.bpmn', '.xml']
   const fileName = file.name.toLowerCase()
 
   if (file.size > maxSize) {
@@ -315,7 +277,7 @@ const validateFile = (file: File): FileValidationResult => {
   }
 
   if (!allowedTypes.some(type => fileName.endsWith(type))) {
-    return { isValid: false, error: 'Please select a XPMN or XML file' }
+    return { isValid: false, error: 'Please select a BPMN or XML file' }
   }
 
   return { isValid: true, size: file.size, type: file.type }
@@ -354,21 +316,21 @@ const formatTime = (date: Date): string => {
 
 // 事件处理
 const handleError = (err: Error): void => {
-  console.error('XPMN error:', err)
+  console.error('BPMN error:', err)
   hasError.value = true
   errorMessage.value = err.message || 'Unknown error occurred'
   isLoading.value = false
 }
 
 const handleShown = (): void => {
-  console.log('XPMN diagram shown')
+  console.log('BPMN diagram shown')
   isLoading.value = false
   hasError.value = false
   errorMessage.value = ''
 }
 
 const handleLoading = (): void => {
-  console.log('XPMN diagram loading')
+  console.log('BPMN diagram loading')
   isLoading.value = true
   hasError.value = false
   errorMessage.value = ''
@@ -453,7 +415,7 @@ const executeFunctionCall = (functionCall: FunctionCall): any => {
 
 // 检测消息是否是流程图相关的请求
 const isFlowDiagramRequest = (message: string): boolean => {
-  const keywords = ['流程', '流程图', '画', '创建', '生成', '添加', '修改', 'XPMN', 'BPMN', '节点', '开始', '结束', '任务', '网关', '删除', '清空']
+  const keywords = ['流程', '流程图', '画', '创建', '生成', '添加', '修改', 'BPMN', '节点', '开始', '结束', '任务', '网关', '删除', '清空']
   return keywords.some(keyword => message.includes(keyword))
 }
 
@@ -872,19 +834,13 @@ const handleChatWithXMLGeneration = async (message: string): Promise<void> => {
   if (currentDiagram.value && bpmnEditor.value) {
     try {
       const currentBpmnXml = await bpmnEditor.value.getXml()
-      let currentXpmnXml = currentBpmnXml
-      try {
-        currentXpmnXml = convertFromBPMNToXPMN(currentBpmnXml)
-      } catch (e) {
-        console.warn('无法转换当前图表为 XPMN', e)
-      }
-      fullMessage = `当前流程图如下:\n\`\`\`xml\n${currentXpmnXml}\n\`\`\`\n\n用户请求: ${message}`
+      fullMessage = `当前流程图如下:\n\`\`\`xml\n${currentBpmnXml}\n\`\`\`\n\n用户请求: ${message}`
     } catch (e) {
       console.warn('无法获取当前流程图', e)
     }
   }
 
-  // 调用 LLM 生成 BPMN（直接生成标准 BPMN 格式，不再使用 XPMN）
+  // 调用 LLM 生成 BPMN
   const response = await llmService.sendMessage(fullMessage, BPMN_SYSTEM_PROMPT)
 
   // 尝试提取和应用 XML
@@ -1058,33 +1014,20 @@ const toggleChatBox = (): void => {
 
 // 生命周期
 onMounted(async () => {
-  console.log('XPMN Explorer initialized')
+  console.log('BPMN Explorer initialized')
 
   // 尝试从 localStorage 加载保存的图表
   if (LocalStorageService.isAvailable() && LocalStorageService.hasSavedDiagram()) {
     const savedDiagram = LocalStorageService.loadDiagram()
     if (savedDiagram && !currentDiagram.value) {
       console.log('Loading saved diagram from localStorage:', savedDiagram.name)
-      // 检查是否是 XPMN 格式，如果是则转换为 BPMN
-      let xmlContent = savedDiagram.xml
-      const isXpmnFormat = (xmlContent.includes('<definitions') && !xmlContent.includes('<bpmn:definitions')) ||
-                           (xmlContent.includes('<process') && !xmlContent.includes('bpmn:process'))
-      if (isXpmnFormat) {
-        try {
-          
-          xmlContent = convertFromXPMNToBPMN(xmlContent)
-          console.log('Converted XPMN to BPMN format from localStorage', xmlContent)
-        } catch (conversionError) {
-          console.error('XPMN conversion failed from localStorage:', conversionError)
-        }
-      }
-      currentDiagram.value = xmlContent
+      currentDiagram.value = savedDiagram.xml
     }
   }
 })
 
 onBeforeUnmount(() => {
-  console.log('XPMN Explorer cleanup')
+  console.log('BPMN Explorer cleanup')
 })
 </script>
 
