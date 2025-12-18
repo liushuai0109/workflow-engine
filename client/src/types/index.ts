@@ -63,3 +63,25 @@ export interface FileValidationResult {
   size?: number
   type?: string
 }
+
+// ============================================================================
+// Lifecycle Operations Types
+// ============================================================================
+
+// Lifecycle management types
+export * from './lifecycle'
+
+// User segmentation types
+export * from './segments'
+
+// Workflow trigger types
+export * from './triggers'
+
+// Success metrics types
+export * from './metrics'
+
+// User profile types
+export * from './userProfile'
+
+// Event and execution types
+export * from './events'
