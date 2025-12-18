@@ -1,0 +1,310 @@
+{
+  "$schema": "./trigger-templates.schema.json",
+  "version": "1.0.0",
+  "description": "Predefined Workflow Trigger Templates",
+  "triggers": [
+    {
+      "id": "daily_engagement",
+      "name": "Daily Engagement Email (9 AM)",
+      "description": "Send daily engagement email at 9 AM in user's timezone",
+      "type": "scheduled",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "expression": "0 9 * * *",
+        "timezone": "user",
+        "description": "Every day at 9:00 AM"
+      },
+      "useCase": "Daily newsletters, activity summaries, or habit-building reminders",
+      "recommendedFor": [
+        "Retention workflows",
+        "Engagement campaigns",
+        "Habit formation"
+      ],
+      "exampleWorkflows": [
+        "Daily digest emails",
+        "Streak reminders",
+        "Daily challenges"
+      ]
+    },
+    {
+      "id": "weekly_summary",
+      "name": "Weekly Summary (Sunday 8 PM)",
+      "description": "Send weekly summary every Sunday at 8 PM",
+      "type": "scheduled",
+      "enabled": true,
+      "schedule": {
+        "type": "cron",
+        "expression": "0 20 * * 0",
+        "timezone": "user",
+        "description": "Every Sunday at 8:00 PM"
+      },
+      "useCase": "Weekly reports, progress summaries, or curated content",
+      "recommendedFor": [
+        "Retention workflows",
+        "Analytics reports",
+        "Content curation"
+      ],
+      "exampleWorkflows": [
+        "Weekly activity reports",
+        "Personalized content recommendations",
+        "Achievement summaries"
+      ]
+    },
+    {
+      "id": "new_user_signup",
+      "name": "New User Signup",
+      "description": "Trigger when a user completes signup",
+      "type": "event",
+      "enabled": true,
+      "event": "user.signup",
+      "eventFilters": [],
+      "useCase": "Welcome emails, onboarding flows, initial setup",
+      "recommendedFor": [
+        "Acquisition workflows",
+        "Onboarding sequences",
+        "Welcome campaigns"
+      ],
+      "exampleWorkflows": [
+        "Welcome email series",
+        "Account setup wizard",
+        "Initial onboarding"
+      ]
+    },
+    {
+      "id": "first_purchase",
+      "name": "First Purchase Completed",
+      "description": "Trigger when a user makes their first purchase",
+      "type": "event",
+      "enabled": true,
+      "event": "transaction.purchase_complete",
+      "eventFilters": [
+        {
+          "property": "is_first_purchase",
+          "operator": "equals",
+          "value": true
+        }
+      ],
+      "useCase": "Thank you emails, purchase confirmations, upsell opportunities",
+      "recommendedFor": [
+        "Revenue workflows",
+        "Customer satisfaction",
+        "Upsell campaigns"
+      ],
+      "exampleWorkflows": [
+        "Thank you and receipt emails",
+        "Product recommendations",
+        "Review requests",
+        "Loyalty program enrollment"
+      ]
+    },
+    {
+      "id": "high_value_purchase",
+      "name": "High-Value Purchase (>$100)",
+      "description": "Trigger when a purchase exceeds $100",
+      "type": "event",
+      "enabled": true,
+      "event": "transaction.purchase_complete",
+      "eventFilters": [
+        {
+          "property": "amount",
+          "operator": "greater_than",
+          "value": 100
+        }
+      ],
+      "useCase": "VIP treatment, premium support, special acknowledgment",
+      "recommendedFor": [
+        "Revenue workflows",
+        "VIP campaigns",
+        "Premium support"
+      ],
+      "exampleWorkflows": [
+        "VIP thank you emails",
+        "Premium support invitations",
+        "Exclusive offers",
+        "Loyalty rewards"
+      ]
+    },
+    {
+      "id": "cart_abandonment",
+      "name": "Cart Abandonment",
+      "description": "Trigger when user adds to cart but doesn't complete purchase within 24 hours",
+      "type": "event",
+      "enabled": true,
+      "event": "transaction.cart_add",
+      "eventFilters": [],
+      "schedule": {
+        "type": "delay",
+        "delay": 86400,
+        "unit": "seconds",
+        "description": "24 hours after cart add"
+      },
+      "useCase": "Cart recovery emails, reminder notifications",
+      "recommendedFor": [
+        "Revenue workflows",
+        "Conversion optimization",
+        "Cart recovery"
+      ],
+      "exampleWorkflows": [
+        "Cart abandonment emails",
+        "Limited-time discount offers",
+        "Product availability reminders"
+      ]
+    },
+    {
+      "id": "engagement_threshold",
+      "name": "High Engagement Reached",
+      "description": "Trigger when user engagement score reaches 80",
+      "type": "threshold",
+      "enabled": true,
+      "thresholds": [
+        {
+          "field": "engagement_score",
+          "operator": "gte",
+          "value": 80,
+          "description": "Engagement score >= 80"
+        }
+      ],
+      "useCase": "Referral program invitations, testimonial requests, power user benefits",
+      "recommendedFor": [
+        "Referral workflows",
+        "Advocacy campaigns",
+        "Power user programs"
+      ],
+      "exampleWorkflows": [
+        "Referral program enrollment",
+        "Review and testimonial requests",
+        "Beta feature access",
+        "Community ambassador invitations"
+      ]
+    },
+    {
+      "id": "inactivity_14days",
+      "name": "14 Days of Inactivity",
+      "description": "Trigger when user hasn't logged in for 14 days",
+      "type": "threshold",
+      "enabled": true,
+      "thresholds": [
+        {
+          "field": "days_since_last_activity",
+          "operator": "gte",
+          "value": 14,
+          "description": "No activity for 14+ days"
+        }
+      ],
+      "useCase": "Re-engagement campaigns, win-back offers, product updates",
+      "recommendedFor": [
+        "Retention workflows",
+        "Re-engagement campaigns",
+        "Churn prevention"
+      ],
+      "exampleWorkflows": [
+        "We miss you emails",
+        "Special comeback offers",
+        "Product update highlights",
+        "Re-activation incentives"
+      ]
+    }
+  ],
+  "cronPresets": {
+    "every_minute": {
+      "expression": "* * * * *",
+      "description": "Every minute (use for testing only)"
+    },
+    "every_hour": {
+      "expression": "0 * * * *",
+      "description": "Every hour at :00"
+    },
+    "every_day_9am": {
+      "expression": "0 9 * * *",
+      "description": "Every day at 9:00 AM"
+    },
+    "every_day_6pm": {
+      "expression": "0 18 * * *",
+      "description": "Every day at 6:00 PM"
+    },
+    "every_week_monday": {
+      "expression": "0 9 * * 1",
+      "description": "Every Monday at 9:00 AM"
+    },
+    "every_week_sunday": {
+      "expression": "0 20 * * 0",
+      "description": "Every Sunday at 8:00 PM"
+    },
+    "every_month_first": {
+      "expression": "0 9 1 * *",
+      "description": "First day of every month at 9:00 AM"
+    },
+    "every_quarter": {
+      "expression": "0 9 1 1,4,7,10 *",
+      "description": "First day of quarter at 9:00 AM"
+    },
+    "weekdays_9am": {
+      "expression": "0 9 * * 1-5",
+      "description": "Weekdays (Mon-Fri) at 9:00 AM"
+    },
+    "weekends_10am": {
+      "expression": "0 10 * * 0,6",
+      "description": "Weekends (Sat-Sun) at 10:00 AM"
+    }
+  },
+  "eventTypes": {
+    "user": [
+      "user.signup",
+      "user.login",
+      "user.logout",
+      "user.profile_update",
+      "user.account_created",
+      "user.account_deleted"
+    ],
+    "engagement": [
+      "engagement.page_view",
+      "engagement.feature_click",
+      "engagement.content_view",
+      "engagement.search",
+      "engagement.share",
+      "engagement.session_start",
+      "engagement.session_end"
+    ],
+    "transaction": [
+      "transaction.purchase_complete",
+      "transaction.refund",
+      "transaction.cart_add",
+      "transaction.cart_remove",
+      "transaction.checkout_start",
+      "transaction.payment_failed",
+      "transaction.subscription_start",
+      "transaction.subscription_cancel",
+      "transaction.subscription_renew"
+    ],
+    "milestone": [
+      "milestone.reached",
+      "milestone.level_up",
+      "milestone.achievement",
+      "milestone.goal_completed"
+    ]
+  },
+  "operatorDefinitions": {
+    "equals": "Equals (exact match)",
+    "not_equals": "Not equals",
+    "greater_than": "Greater than",
+    "less_than": "Less than",
+    "gte": "Greater than or equal to",
+    "lte": "Less than or equal to",
+    "between": "Between two values",
+    "contains": "Contains substring",
+    "in": "In list",
+    "not_in": "Not in list",
+    "matches": "Matches regex pattern",
+    "exists": "Field exists",
+    "not_exists": "Field does not exist"
+  },
+  "metadata": {
+    "createdAt": "2024-12-18",
+    "lastUpdated": "2024-12-18",
+    "version": "1.0.0",
+    "totalTriggers": 8,
+    "totalCronPresets": 10,
+    "totalEventTypes": 24
+  }
+}

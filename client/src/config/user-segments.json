@@ -1,0 +1,352 @@
+{
+  "$schema": "./user-segments.schema.json",
+  "version": "1.0.0",
+  "description": "Predefined User Segment Templates",
+  "segments": [
+    {
+      "id": "new_users",
+      "name": "New Users",
+      "description": "Users who signed up within the last 7 days",
+      "type": "lifecycle",
+      "conditions": [
+        {
+          "field": "signup_date",
+          "operator": "greater_than",
+          "value": "NOW-7d"
+        }
+      ],
+      "operator": "AND",
+      "tags": ["new", "onboarding"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for onboarding workflows and welcome campaigns",
+      "recommendedWorkflows": [
+        "Welcome email series",
+        "Onboarding tutorial",
+        "First-time user guidance"
+      ]
+    },
+    {
+      "id": "active_users",
+      "name": "Active Users",
+      "description": "Users with 10+ sessions in the last 30 days",
+      "type": "behavioral",
+      "conditions": [
+        {
+          "field": "session_count",
+          "operator": "gte",
+          "value": 10
+        },
+        {
+          "field": "last_session_date",
+          "operator": "greater_than",
+          "value": "NOW-30d"
+        }
+      ],
+      "operator": "AND",
+      "tags": ["active", "engaged"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for feature announcements and engagement campaigns",
+      "recommendedWorkflows": [
+        "New feature announcements",
+        "Beta program invitations",
+        "Feedback surveys"
+      ]
+    },
+    {
+      "id": "at_risk",
+      "name": "At-Risk Users",
+      "description": "Previously active users who haven't logged in for 14-30 days",
+      "type": "behavioral",
+      "conditions": [
+        {
+          "field": "last_session_date",
+          "operator": "between",
+          "value": ["NOW-30d", "NOW-14d"]
+        },
+        {
+          "field": "session_count",
+          "operator": "gte",
+          "value": 5
+        }
+      ],
+      "operator": "AND",
+      "tags": ["churn_risk", "re-engagement"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for win-back and re-engagement campaigns",
+      "recommendedWorkflows": [
+        "Re-engagement emails",
+        "Special offers",
+        "Product update highlights",
+        "We miss you campaigns"
+      ]
+    },
+    {
+      "id": "churned_users",
+      "name": "Churned Users",
+      "description": "Users who haven't logged in for more than 90 days",
+      "type": "lifecycle",
+      "conditions": [
+        {
+          "field": "last_session_date",
+          "operator": "less_than",
+          "value": "NOW-90d"
+        }
+      ],
+      "operator": "AND",
+      "tags": ["churned", "inactive"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for win-back campaigns or data cleanup",
+      "recommendedWorkflows": [
+        "Win-back campaigns",
+        "Reactivation offers",
+        "Exit surveys"
+      ]
+    },
+    {
+      "id": "high_value",
+      "name": "High-Value Customers",
+      "description": "Users with lifetime value > $1000",
+      "type": "value",
+      "conditions": [
+        {
+          "field": "customer_lifetime_value",
+          "operator": "gte",
+          "value": 1000
+        }
+      ],
+      "operator": "AND",
+      "tags": ["vip", "high_value", "revenue"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for VIP treatment, exclusive offers, and loyalty programs",
+      "recommendedWorkflows": [
+        "VIP concierge service",
+        "Exclusive feature access",
+        "Premium support",
+        "Loyalty rewards"
+      ]
+    },
+    {
+      "id": "frequent_buyers",
+      "name": "Frequent Buyers",
+      "description": "Users with 5+ purchases in the last 90 days",
+      "type": "behavioral",
+      "conditions": [
+        {
+          "field": "total_purchases",
+          "operator": "gte",
+          "value": 5
+        },
+        {
+          "field": "last_purchase_date",
+          "operator": "greater_than",
+          "value": "NOW-90d"
+        }
+      ],
+      "operator": "AND",
+      "tags": ["frequent", "loyal", "revenue"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for upsell, cross-sell, and loyalty programs",
+      "recommendedWorkflows": [
+        "Product recommendations",
+        "Subscription upgrades",
+        "Bundle offers",
+        "Loyalty program enrollment"
+      ]
+    },
+    {
+      "id": "trial_users",
+      "name": "Trial Users",
+      "description": "Users currently on a trial subscription",
+      "type": "value",
+      "conditions": [
+        {
+          "field": "subscription_tier",
+          "operator": "equals",
+          "value": "trial"
+        },
+        {
+          "field": "subscription_end_date",
+          "operator": "exists",
+          "value": true
+        }
+      ],
+      "operator": "AND",
+      "tags": ["trial", "conversion"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for conversion campaigns before trial ends",
+      "recommendedWorkflows": [
+        "Trial extension offers",
+        "Conversion incentives",
+        "Feature highlights",
+        "Trial expiration reminders"
+      ]
+    },
+    {
+      "id": "power_users",
+      "name": "Power Users",
+      "description": "Highly engaged users with engagement score > 80",
+      "type": "behavioral",
+      "conditions": [
+        {
+          "field": "engagement_score",
+          "operator": "gte",
+          "value": 80
+        },
+        {
+          "field": "session_count",
+          "operator": "gte",
+          "value": 30
+        }
+      ],
+      "operator": "AND",
+      "tags": ["power_user", "advocate", "engaged"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for referral programs, beta testing, and testimonials",
+      "recommendedWorkflows": [
+        "Referral program invitations",
+        "Beta feature access",
+        "Case study interviews",
+        "Review requests"
+      ]
+    },
+    {
+      "id": "mobile_users",
+      "name": "Mobile-Only Users",
+      "description": "Users who primarily access via mobile devices",
+      "type": "demographic",
+      "conditions": [
+        {
+          "field": "device_type",
+          "operator": "equals",
+          "value": "mobile"
+        },
+        {
+          "field": "session_count",
+          "operator": "gte",
+          "value": 5
+        }
+      ],
+      "operator": "AND",
+      "tags": ["mobile", "device"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for mobile-specific features and push notifications",
+      "recommendedWorkflows": [
+        "Mobile app feature highlights",
+        "Push notification campaigns",
+        "Mobile-first experiences"
+      ]
+    },
+    {
+      "id": "enterprise_leads",
+      "name": "Enterprise Leads",
+      "description": "Users from enterprise email domains with high engagement",
+      "type": "demographic",
+      "conditions": [
+        {
+          "field": "email",
+          "operator": "matches",
+          "value": ".*@(company|corp|enterprise)\\.(com|net|org)$"
+        },
+        {
+          "field": "engagement_score",
+          "operator": "gte",
+          "value": 60
+        }
+      ],
+      "operator": "AND",
+      "tags": ["enterprise", "b2b", "qualified"],
+      "estimatedSize": 0,
+      "isActive": true,
+      "useCase": "Target for sales outreach and enterprise upgrade offers",
+      "recommendedWorkflows": [
+        "Sales team notifications",
+        "Enterprise plan presentations",
+        "Custom demo offers",
+        "B2B feature highlights"
+      ]
+    }
+  ],
+  "fieldDefinitions": [
+    {
+      "name": "signup_date",
+      "label": "Signup Date",
+      "type": "date",
+      "description": "Date when the user created their account"
+    },
+    {
+      "name": "session_count",
+      "label": "Session Count",
+      "type": "number",
+      "description": "Total number of sessions"
+    },
+    {
+      "name": "last_session_date",
+      "label": "Last Session Date",
+      "type": "date",
+      "description": "Date of the most recent session"
+    },
+    {
+      "name": "customer_lifetime_value",
+      "label": "Customer Lifetime Value",
+      "type": "number",
+      "description": "Total revenue generated by the user"
+    },
+    {
+      "name": "total_purchases",
+      "label": "Total Purchases",
+      "type": "number",
+      "description": "Number of completed purchases"
+    },
+    {
+      "name": "last_purchase_date",
+      "label": "Last Purchase Date",
+      "type": "date",
+      "description": "Date of the most recent purchase"
+    },
+    {
+      "name": "subscription_tier",
+      "label": "Subscription Tier",
+      "type": "string",
+      "description": "Current subscription plan"
+    },
+    {
+      "name": "subscription_end_date",
+      "label": "Subscription End Date",
+      "type": "date",
+      "description": "Expiration date of current subscription"
+    },
+    {
+      "name": "engagement_score",
+      "label": "Engagement Score",
+      "type": "number",
+      "description": "Calculated engagement score (0-100)"
+    },
+    {
+      "name": "device_type",
+      "label": "Device Type",
+      "type": "string",
+      "description": "Primary device used (desktop, mobile, tablet)"
+    },
+    {
+      "name": "email",
+      "label": "Email Address",
+      "type": "string",
+      "description": "User's email address"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-12-18",
+    "lastUpdated": "2024-12-18",
+    "version": "1.0.0",
+    "totalSegments": 10
+  }
+}

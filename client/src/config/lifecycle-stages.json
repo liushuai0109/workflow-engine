@@ -1,0 +1,246 @@
+{
+  "$schema": "./lifecycle-stages.schema.json",
+  "version": "1.0.0",
+  "description": "AARRR Lifecycle Stages Configuration",
+  "stages": [
+    {
+      "stage": "Acquisition",
+      "label": "Acquisition",
+      "description": "Attracting and acquiring new users through various channels (ads, SEO, social media, referrals)",
+      "color": "#2196F3",
+      "icon": "🎯",
+      "order": 1,
+      "metrics": [
+        "visitor_count",
+        "signup_rate",
+        "cost_per_acquisition",
+        "conversion_rate",
+        "traffic_sources"
+      ],
+      "defaultActions": [
+        "Track visitor source",
+        "Show welcome banner",
+        "Offer signup incentive",
+        "Capture lead information"
+      ],
+      "exampleWorkflows": [
+        "Landing page optimization",
+        "Ad campaign tracking",
+        "Referral program enrollment",
+        "Lead capture forms"
+      ],
+      "keyQuestions": [
+        "Where are users coming from?",
+        "What channels are most effective?",
+        "What is our cost per acquisition?",
+        "How can we optimize conversion rates?"
+      ]
+    },
+    {
+      "stage": "Activation",
+      "label": "Activation",
+      "description": "Helping new users experience the core value of the product through onboarding and first-use experiences",
+      "color": "#4CAF50",
+      "icon": "✨",
+      "order": 2,
+      "metrics": [
+        "onboarding_completion_rate",
+        "time_to_first_value",
+        "activation_rate",
+        "feature_adoption",
+        "tutorial_completion"
+      ],
+      "defaultActions": [
+        "Start onboarding flow",
+        "Show product tour",
+        "Guide to first key action",
+        "Send activation email"
+      ],
+      "exampleWorkflows": [
+        "User onboarding sequence",
+        "First-time user tutorial",
+        "Welcome email series",
+        "Feature activation prompts"
+      ],
+      "keyQuestions": [
+        "What is the 'aha moment' for users?",
+        "How quickly do users reach first value?",
+        "What percentage complete onboarding?",
+        "Which features drive activation?"
+      ]
+    },
+    {
+      "stage": "Retention",
+      "label": "Retention",
+      "description": "Keeping users engaged and returning to the product through ongoing value delivery and habit formation",
+      "color": "#FFC107",
+      "icon": "🔄",
+      "order": 3,
+      "metrics": [
+        "daily_active_users",
+        "weekly_active_users",
+        "monthly_active_users",
+        "churn_rate",
+        "retention_rate",
+        "session_frequency",
+        "engagement_score"
+      ],
+      "defaultActions": [
+        "Send re-engagement email",
+        "Show new feature announcement",
+        "Trigger usage reminder",
+        "Offer personalized content"
+      ],
+      "exampleWorkflows": [
+        "Daily/weekly engagement emails",
+        "Inactivity alerts",
+        "Feature usage reminders",
+        "Content recommendation engine",
+        "Habit-building workflows"
+      ],
+      "keyQuestions": [
+        "How often do users return?",
+        "What features keep users engaged?",
+        "Why are users churning?",
+        "How can we build product habits?"
+      ]
+    },
+    {
+      "stage": "Revenue",
+      "label": "Revenue",
+      "description": "Converting engaged users into paying customers and maximizing lifetime value through upsells and cross-sells",
+      "color": "#9C27B0",
+      "icon": "💰",
+      "order": 4,
+      "metrics": [
+        "conversion_rate",
+        "average_revenue_per_user",
+        "customer_lifetime_value",
+        "purchase_frequency",
+        "average_order_value",
+        "revenue_generated",
+        "upgrade_rate"
+      ],
+      "defaultActions": [
+        "Show pricing page",
+        "Offer trial upgrade",
+        "Send payment reminder",
+        "Suggest premium features",
+        "Display limited-time offer"
+      ],
+      "exampleWorkflows": [
+        "Free to paid conversion",
+        "Upsell campaigns",
+        "Cross-sell recommendations",
+        "Subscription renewal reminders",
+        "Payment failure recovery",
+        "Discount offers for upgrades"
+      ],
+      "keyQuestions": [
+        "What drives purchase decisions?",
+        "How can we increase average order value?",
+        "What is customer lifetime value?",
+        "Which features drive upgrades?"
+      ]
+    },
+    {
+      "stage": "Referral",
+      "label": "Referral",
+      "description": "Turning satisfied customers into advocates who bring in new users through word-of-mouth and referral programs",
+      "color": "#FF5722",
+      "icon": "🚀",
+      "order": 5,
+      "metrics": [
+        "referral_rate",
+        "viral_coefficient",
+        "shares_per_user",
+        "net_promoter_score",
+        "referral_conversion_rate",
+        "viral_loop_time"
+      ],
+      "defaultActions": [
+        "Show referral program",
+        "Offer referral incentive",
+        "Request review/testimonial",
+        "Enable social sharing",
+        "Send NPS survey"
+      ],
+      "exampleWorkflows": [
+        "Referral program enrollment",
+        "Social sharing campaigns",
+        "Review request emails",
+        "Ambassador program",
+        "Incentivized sharing",
+        "NPS survey workflows"
+      ],
+      "keyQuestions": [
+        "Who are our most satisfied customers?",
+        "What motivates users to refer others?",
+        "How can we optimize referral incentives?",
+        "What is our viral coefficient?"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from": "Acquisition",
+      "to": "Activation",
+      "trigger": "User completes signup",
+      "automated": true,
+      "conditions": []
+    },
+    {
+      "from": "Activation",
+      "to": "Retention",
+      "trigger": "User completes onboarding or reaches first value",
+      "automated": true,
+      "conditions": [
+        {
+          "type": "metric",
+          "metric": "onboarding_completion_rate",
+          "operator": "equals",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "from": "Retention",
+      "to": "Revenue",
+      "trigger": "User makes first purchase or subscribes",
+      "automated": true,
+      "conditions": [
+        {
+          "type": "event",
+          "event": "purchase_complete"
+        }
+      ]
+    },
+    {
+      "from": "Revenue",
+      "to": "Referral",
+      "trigger": "User becomes highly engaged or satisfied",
+      "automated": false,
+      "conditions": [
+        {
+          "type": "metric",
+          "metric": "engagement_score",
+          "operator": "greater_than",
+          "value": 80
+        },
+        {
+          "type": "metric",
+          "metric": "customer_lifetime_value",
+          "operator": "greater_than",
+          "value": 1000
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "framework": "AARRR (Pirate Metrics)",
+    "source": "Dave McClure, 500 Startups",
+    "createdAt": "2024-12-18",
+    "lastUpdated": "2024-12-18",
+    "version": "1.0.0"
+  }
+}
