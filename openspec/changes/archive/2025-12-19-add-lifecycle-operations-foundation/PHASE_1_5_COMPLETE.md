@@ -1,15 +1,15 @@
 # Phase 1.5: UI Components - COMPLETE ✅
 
-**Completion Date**: 2024-12-18
-**Status**: ✅ 100% Complete (4/4 components + index)
-**Total Size**: 38.2 KB
-**Validation**: ✅ PASSED (zero TypeScript compilation errors)
+**完成日期**: 2024-12-18
+**状态**: ✅ 100% Complete (4/4 components + index)
+**总大小**: 38.2 KB
+**验证**: ✅ PASSED (zero TypeScript compilation errors)
 
 ---
 
-## 📦 Deliverables
+## 📦 交付成果
 
-### **All UI Components Created**
+### **所有 UI Components 已创建**
 
 | Component | Size | Description | Status |
 |-----------|------|-------------|--------|
@@ -22,20 +22,20 @@
 
 ---
 
-## 🎯 What Was Built
+## 🎯 构建内容
 
 ### **1. LifecycleStageSelector.vue**
 
-**Purpose**: Visual selector for assigning AARRR lifecycle stages to workflow elements
+**目的**: 为 workflow 元素分配 AARRR lifecycle stages 的可视化选择器
 
-**Key Features**:
-- ✅ Visual grid display of all 5 AARRR stages
-- ✅ Color-coded stage cards with icons
-- ✅ Detailed stage information (metrics, examples, use cases)
-- ✅ Real-time stage selection with visual feedback
-- ✅ Integration with `lifecycleService`
-- ✅ v-model support for two-way binding
-- ✅ Exposed methods for programmatic control
+**关键特性**:
+- ✅ 所有 5 个 AARRR 阶段的可视化网格显示
+- ✅ 带图标的彩色编码 stage cards
+- ✅ 详细的 stage 信息（metrics、示例、用例）
+- ✅ 带视觉反馈的实时 stage 选择
+- ✅ 与 `lifecycleService` 集成
+- ✅ 支持双向绑定的 v-model
+- ✅ 暴露编程控制方法
 
 **Component API**:
 ```typescript
@@ -52,28 +52,28 @@ selectStage(stage: LifecycleStage): void
 clearSelection(): void
 ```
 
-**UI Elements**:
-- Header with current selection badge
-- 5 interactive stage cards in a responsive grid
-- Each card shows: icon, name, description, key metrics
-- Expandable details section with full stage information
-- Color-coded borders matching stage colors
+**UI 元素**:
+- 带当前选择 badge 的 Header
+- 响应式网格中的 5 个交互式 stage cards
+- 每个 card 显示: 图标、名称、描述、关键指标
+- 带完整 stage 信息的可展开详情部分
+- 匹配 stage 颜色的彩色编码边框
 
 ---
 
 ### **2. UserSegmentBuilder.vue**
 
-**Purpose**: Builder interface for creating and managing user segments
+**目的**: 用于创建和管理 user segments 的 Builder 界面
 
-**Key Features**:
-- ✅ Template-based segment creation (10 pre-built templates)
-- ✅ Custom segment builder with condition editor
-- ✅ Support for all 4 segment types (demographic, behavioral, lifecycle, value)
-- ✅ 13 condition operators (equals, gt, lt, contains, in, between, etc.)
-- ✅ Multi-condition support with AND/OR logic
-- ✅ Visual segment chips for selected segments
-- ✅ Integration with `userSegmentService`
-- ✅ Field definitions from service
+**关键特性**:
+- ✅ 基于 Template 的 segment 创建（10 个预构建 templates）
+- ✅ 带条件编辑器的自定义 segment builder
+- ✅ 支持所有 4 种 segment 类型（demographic, behavioral, lifecycle, value）
+- ✅ 13 个条件操作符（equals, gt, lt, contains, in, between 等）
+- ✅ 带 AND/OR 逻辑的多条件支持
+- ✅ 选定 segments 的可视化 segment chips
+- ✅ 与 `userSegmentService` 集成
+- ✅ 来自 service 的字段定义
 
 **Component API**:
 ```typescript
@@ -89,34 +89,34 @@ disabled?: boolean
 clearSegments(): void
 ```
 
-**UI Elements**:
-- Header with "Add Segment" button
-- Selected segments displayed as removable chips
-- Tabbed interface (Templates / Custom)
-- **Templates Tab**: Grid of 10 pre-built segment cards
+**UI 元素**:
+- 带"添加 Segment"按钮的 Header
+- 选定的 segments 显示为可移除的 chips
+- 选项卡界面（Templates / Custom）
+- **Templates Tab**: 10 个预构建 segment cards 的网格
 - **Custom Tab**:
-  - Segment name and type selection
-  - Dynamic condition builder
-  - Field, operator, value inputs per condition
-  - Logical operator selector (AND/OR)
-  - Add/remove condition buttons
+  - Segment 名称和类型选择
+  - 动态条件 builder
+  - 每个条件的字段、操作符、值输入
+  - 逻辑操作符选择器（AND/OR）
+  - 添加/移除条件按钮
 
 ---
 
 ### **3. TriggerConditionEditor.vue**
 
-**Purpose**: Configuration interface for workflow triggers
+**目的**: Workflow triggers 的配置界面
 
-**Key Features**:
-- ✅ Template-based trigger creation (8 pre-built templates)
-- ✅ Custom trigger builder for all 4 trigger types
-- ✅ **Scheduled Triggers**: Cron expressions & presets (10 presets)
-- ✅ **Event Triggers**: 24 event types across 4 categories
-- ✅ **Threshold Triggers**: Multi-condition builder
-- ✅ **Manual Triggers**: Operator-initiated
-- ✅ Schedule formatting and validation
-- ✅ Integration with `triggerService`
-- ✅ Type filtering for templates
+**关键特性**:
+- ✅ 基于 Template 的 trigger 创建（8 个预构建 templates）
+- ✅ 所有 4 种 trigger 类型的自定义 trigger builder
+- ✅ **Scheduled Triggers**: Cron expressions 和 presets（10 个 presets）
+- ✅ **Event Triggers**: 4 个类别中的 24 种事件类型
+- ✅ **Threshold Triggers**: 多条件 builder
+- ✅ **Manual Triggers**: 操作员发起
+- ✅ Schedule 格式化和验证
+- ✅ 与 `triggerService` 集成
+- ✅ Templates 的类型过滤
 
 **Component API**:
 ```typescript
@@ -132,38 +132,38 @@ disabled?: boolean
 clearTriggers(): void
 ```
 
-**UI Elements**:
-- Header with "Add Trigger" button
-- Trigger cards showing name, type, and configuration
-- Tabbed interface (Templates / Custom)
+**UI 元素**:
+- 带"添加 Trigger"按钮的 Header
+- 显示名称、类型和配置的 Trigger cards
+- 选项卡界面（Templates / Custom）
 - **Templates Tab**:
-  - Type filter buttons (scheduled, event, threshold, manual, all)
-  - Grid of template cards
+  - 类型过滤按钮（scheduled, event, threshold, manual, all）
+  - Template cards 网格
 - **Custom Tab**:
-  - Trigger name and type selection
-  - Type-specific configuration sections:
-    - **Scheduled**: Cron expression or preset selector
-    - **Event**: Event type dropdown (24 options)
-    - **Threshold**: Condition builder with field/operator/value
-    - **Manual**: No additional config
+  - Trigger 名称和类型选择
+  - 特定类型的配置部分:
+    - **Scheduled**: Cron expression 或 preset 选择器
+    - **Event**: Event 类型下拉菜单（24 个选项）
+    - **Threshold**: 带 field/operator/value 的条件 builder
+    - **Manual**: 无需额外配置
   - Save/Cancel actions
 
 ---
 
 ### **4. WorkflowMetadataPanel.vue**
 
-**Purpose**: Comprehensive workflow metadata editor
+**目的**: 全面的 workflow metadata 编辑器
 
-**Key Features**:
-- ✅ Full workflow metadata management
-- ✅ Basic info: name, description, purpose, version, owner
-- ✅ Success metrics editor (add/remove/configure metrics)
-- ✅ Tag management (add/remove tags)
-- ✅ Status and publishing controls
-- ✅ Business impact assessment
-- ✅ Auto-save timestamps
-- ✅ Integration with `workflowMetadataService`
-- ✅ Create workflow from scratch
+**关键特性**:
+- ✅ 完整的 workflow metadata 管理
+- ✅ 基本信息: 名称、描述、目的、版本、所有者
+- ✅ Success metrics 编辑器（添加/移除/配置 metrics）
+- ✅ Tag 管理（添加/移除 tags）
+- ✅ 状态和发布控制
+- ✅ 业务影响评估
+- ✅ 自动保存时间戳
+- ✅ 与 `workflowMetadataService` 集成
+- ✅ 从头开始创建 workflow
 
 **Component API**:
 ```typescript
@@ -182,66 +182,66 @@ saveMetadata(): void
 resetMetadata(): void
 ```
 
-**UI Sections**:
-1. **Basic Information**:
-   - Name, description
-   - Purpose (7 options), version
-   - Owner, business impact
+**UI 部分**:
+1. **基本信息**:
+   - 名称、描述
+   - 目的（7 个选项）、版本
+   - 所有者、业务影响
 
 2. **Success Metrics**:
-   - Add/remove metrics
-   - Metric name, type, target, unit
-   - 6 pre-defined metric types
+   - 添加/移除 metrics
+   - Metric 名称、类型、目标、单位
+   - 6 个预定义 metric 类型
 
 3. **Tags**:
-   - Visual tag chips
-   - Add tags with Enter key
-   - Remove tags with click
+   - 可视化 tag chips
+   - 用 Enter 键添加 tags
+   - 点击移除 tags
 
-4. **Status & Publishing**:
-   - Status dropdown (6 statuses)
-   - Published checkbox
-   - Publish timestamp display
+4. **状态和发布**:
+   - 状态下拉菜单（6 种状态）
+   - 已发布复选框
+   - 发布时间戳显示
 
-5. **Actions**:
-   - Save metadata button
-   - Reset to original button
+5. **操作**:
+   - 保存 metadata 按钮
+   - 重置到原始按钮
 
 ---
 
-## 📊 Component Statistics
+## 📊 Component 统计数据
 
-### **Code Metrics**
-- Total Components: 4 (+ 1 index file)
-- Total Size: 43.6 KB
-- Total Lines: ~1,450
-- TypeScript Errors: 0
+### **代码指标**
+- 总 Components: 4 (+ 1 index file)
+- 总大小: 43.6 KB
+- 总行数: ~1,450
+- TypeScript 错误: 0
 - Vue 3 Composition API: 100%
 
-### **Feature Coverage**
-- ✅ Lifecycle Stages: Full AARRR support (5 stages)
-- ✅ Segment Types: All 4 types supported
-- ✅ Trigger Types: All 4 types supported
-- ✅ Workflow Metadata: Complete metadata management
-- ✅ Service Integration: All 4 Phase 1.3 services
+### **功能覆盖率**
+- ✅ Lifecycle Stages: 完整的 AARRR 支持（5 个阶段）
+- ✅ Segment Types: 支持所有 4 种类型
+- ✅ Trigger Types: 支持所有 4 种类型
+- ✅ Workflow Metadata: 完整的 metadata 管理
+- ✅ Service Integration: 所有 4 个 Phase 1.3 services
 
-### **UI/UX Features**
-- ✅ Responsive grid layouts
-- ✅ Interactive cards and buttons
-- ✅ Color-coded visual feedback
-- ✅ Form validation
-- ✅ Tab-based navigation
-- ✅ Template and custom builders
-- ✅ Add/remove dynamic lists
-- ✅ Real-time updates with v-model
+### **UI/UX 特性**
+- ✅ 响应式网格布局
+- ✅ 交互式 cards 和按钮
+- ✅ 彩色编码的视觉反馈
+- ✅ 表单验证
+- ✅ 基于选项卡的导航
+- ✅ Template 和自定义 builders
+- ✅ 添加/移除动态列表
+- ✅ 带 v-model 的实时更新
 
 ---
 
-## 🎨 Design System
+## 🎨 设计系统
 
-### **Color Palette**
+### **颜色调色板**
 
-**Lifecycle Stages** (from Phase 1.2 config):
+**Lifecycle Stages** (来自 Phase 1.2 config):
 ```css
 Acquisition: #2196F3 (Blue)
 Activation:  #4CAF50 (Green)
@@ -250,7 +250,7 @@ Revenue:     #9C27B0 (Purple)
 Referral:    #FF5722 (Deep Orange)
 ```
 
-**Status Colors**:
+**状态颜色**:
 ```css
 Draft:     #e0e0e0 (Gray)
 Review:    #fff3e0 (Orange tint)
@@ -260,7 +260,7 @@ Paused:    #f3e5f5 (Purple tint)
 Archived:  #fce4ec (Pink tint)
 ```
 
-**UI Colors**:
+**UI 颜色**:
 ```css
 Primary:   #2196F3 (Blue)
 Secondary: White with #2196F3 border
@@ -270,7 +270,7 @@ Background: #f8f9fa (Light gray)
 Border:    #e0e0e0 (Gray)
 ```
 
-### **Typography**
+### **排版**
 
 ```css
 Titles:       18-20px, font-weight: 600
@@ -280,7 +280,7 @@ Small Text:   12-13px
 Labels:       13-14px, font-weight: 600
 ```
 
-### **Spacing**
+### **间距**
 
 ```css
 Section Gap:    20px
@@ -290,7 +290,7 @@ Button Padding: 8px 16px
 Input Padding:  8px 12px
 ```
 
-### **Components**
+### **组件**
 
 ```css
 Border Radius:
@@ -308,9 +308,9 @@ Transitions:
 
 ---
 
-## ✅ Validation Results
+## ✅ 验证结果
 
-### **TypeScript Compilation**
+### **TypeScript 编译**
 ```bash
 ✅ LifecycleStageSelector.vue compiles successfully
 ✅ UserSegmentBuilder.vue compiles successfully
@@ -319,61 +319,61 @@ Transitions:
 ✅ index.ts compiles successfully
 ```
 
-### **Service Integration**
-- ✅ All components successfully import services
-- ✅ All service methods are correctly typed
-- ✅ All type definitions align with Phase 1.1
-- ✅ All configuration data loads from Phase 1.2 JSON files
+### **Service 集成**
+- ✅ 所有 components 成功 import services
+- ✅ 所有 service methods 都正确类型化
+- ✅ 所有 type definitions 与 Phase 1.1 对齐
+- ✅ 所有配置数据从 Phase 1.2 JSON 文件加载
 
-### **Component Structure**
-- ✅ All use Vue 3 Composition API (`<script setup>`)
-- ✅ All have proper TypeScript types for props/emits
-- ✅ All follow Vue 3 best practices
-- ✅ All have scoped styles
-- ✅ All expose methods via `defineExpose`
-
----
-
-## 🏆 Key Achievements
-
-✅ **Complete UI Suite** - All 4 core components implemented
-✅ **43.6 KB of Production Code** - Comprehensive functionality
-✅ **Zero TypeScript Errors** - Full type safety
-✅ **Service Integration** - Uses all Phase 1.3 services
-✅ **Responsive Design** - Grid layouts adapt to screen size
-✅ **Modern Vue 3** - Composition API with TypeScript
-✅ **Template + Custom** - Dual-mode builders for flexibility
-✅ **Visual Feedback** - Color-coded, interactive UI elements
+### **Component 结构**
+- ✅ 全部使用 Vue 3 Composition API (`<script setup>`)
+- ✅ 全部具有 props/emits 的正确 TypeScript 类型
+- ✅ 全部遵循 Vue 3 最佳实践
+- ✅ 全部具有 scoped styles
+- ✅ 全部通过 `defineExpose` 暴露方法
 
 ---
 
-## 📋 Tasks Completed (from tasks.md)
+## 🏆 关键成就
 
-### From Section 5: UI Components
+✅ **完整的 UI Suite** - 所有 4 个核心 components 已实现
+✅ **43.6 KB 的生产代码** - 全面的功能
+✅ **零 TypeScript 错误** - 完全类型安全
+✅ **Service 集成** - 使用所有 Phase 1.3 services
+✅ **响应式设计** - 网格布局适应屏幕大小
+✅ **现代 Vue 3** - 带 TypeScript 的 Composition API
+✅ **Template + Custom** - 灵活性的双模式 builders
+✅ **视觉反馈** - 彩色编码的交互式 UI 元素
+
+---
+
+## 📋 已完成的任务（来自 tasks.md）
+
+### 来自 Section 5: UI Components
 - [x] 5.1 Create LifecycleStageSelector.vue component ✅
 - [x] 5.2 Create UserSegmentBuilder.vue component ✅
 - [x] 5.3 Create TriggerConditionEditor.vue component ✅
 - [x] 5.4 Create WorkflowMetadataPanel.vue component ✅
 
-**Phase 1.5 Progress**: 100% (4/4 tasks)
-**Total Progress**: 37% (26/54 tasks from sections 1-5)
+**Phase 1.5 进度**: 100% (4/4 tasks)
+**总进度**: 37% (26/54 tasks from sections 1-5)
 
 ---
 
-## 🚀 Next Steps
+## 🚀 下一步
 
-### **Phase 1.6: Integration & Testing (Final Phase)**
-- [ ] Integrate components with BpmnEditor.vue
-- [ ] Add lifecycle property editing to BPMN elements
-- [ ] Create integration tests
-- [ ] Test XPMN ↔ BPMN conversion with lifecycle data
-- [ ] End-to-end testing
+### **Phase 1.6: Integration & Testing (最后阶段)**
+- [ ] 将 components 与 BpmnEditor.vue 集成
+- [ ] 为 BPMN elements 添加 lifecycle 属性编辑
+- [ ] 创建集成测试
+- [ ] 测试带 lifecycle 数据的 XPMN ↔ BPMN 转换
+- [ ] 端到端测试
 
-**Estimated Time**: ~90 minutes
+**预计时间**: ~90 分钟
 
 ---
 
-## 💾 Git Commit Recommendation
+## 💾 Git Commit 推荐
 
 ```bash
 git add src/components/lifecycle/
@@ -419,9 +419,9 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ---
 
-## 📚 Usage Examples
+## 📚 使用示例
 
-### **Example 1: LifecycleStageSelector**
+### **示例 1: LifecycleStageSelector**
 
 ```vue
 <template>
@@ -447,7 +447,7 @@ const onStageChange = (stage: LifecycleStage | null, config?: LifecycleStageConf
 
 ---
 
-### **Example 2: UserSegmentBuilder**
+### **示例 2: UserSegmentBuilder**
 
 ```vue
 <template>
@@ -472,7 +472,7 @@ const onSegmentsChange = (newSegments: UserSegment[]) => {
 
 ---
 
-### **Example 3: TriggerConditionEditor**
+### **示例 3: TriggerConditionEditor**
 
 ```vue
 <template>
@@ -497,7 +497,7 @@ const onTriggersChange = (newTriggers: Trigger[]) => {
 
 ---
 
-### **Example 4: WorkflowMetadataPanel**
+### **示例 4: WorkflowMetadataPanel**
 
 ```vue
 <template>
@@ -523,29 +523,29 @@ const onSave = (savedMetadata: WorkflowMetadata) => {
 
 ---
 
-## 🔗 Integration Points
+## 🔗 集成点
 
-1. **Phase 1.1 Types** - All components use TypeScript types
-2. **Phase 1.2 Configs** - Components load data from JSON configs via services
-3. **Phase 1.3 Services** - All 4 services integrated into components
-4. **Phase 1.4 BpmnAdapter** - Ready to serialize/deserialize component data
-5. **BpmnEditor** - Ready for integration (Phase 1.6)
-
----
-
-## 📱 Responsive Design
-
-All components are responsive and adapt to different screen sizes:
-
-- **Desktop (> 1024px)**: Full grid layouts, multi-column forms
-- **Tablet (768-1024px)**: Reduced columns, stacked sections
-- **Mobile (< 768px)**: Single column, full-width elements
-
-Grid layouts use `auto-fill` with `minmax()` for automatic responsiveness.
+1. **Phase 1.1 Types** - 所有 components 使用 TypeScript types
+2. **Phase 1.2 Configs** - Components 通过 services 从 JSON configs 加载数据
+3. **Phase 1.3 Services** - 所有 4 个 services 集成到 components 中
+4. **Phase 1.4 BpmnAdapter** - 准备序列化/反序列化 component 数据
+5. **BpmnEditor** - 准备集成（Phase 1.6）
 
 ---
 
-## 🎭 Component Hierarchy
+## 📱 响应式设计
+
+所有 components 都是响应式的，适应不同的屏幕尺寸:
+
+- **Desktop (> 1024px)**: 完整的网格布局、多列表单
+- **Tablet (768-1024px)**: 减少列数、堆叠部分
+- **Mobile (< 768px)**: 单列、全宽元素
+
+网格布局使用 `auto-fill` 和 `minmax()` 实现自动响应。
+
+---
+
+## 🎭 Component 层次结构
 
 ```
 LifecycleStageSelector
@@ -592,6 +592,6 @@ WorkflowMetadataPanel
 
 ---
 
-**Status**: ✅ COMPLETE
-**Quality**: A+ (zero compilation errors, full functionality, modern UI)
-**Ready**: Yes - proceed to Phase 1.6 (Integration & Testing)
+**状态**: ✅ COMPLETE
+**质量**: A+ (零编译错误，完整功能，现代 UI)
+**准备**: 是 - 继续进行 Phase 1.6 (Integration & Testing)

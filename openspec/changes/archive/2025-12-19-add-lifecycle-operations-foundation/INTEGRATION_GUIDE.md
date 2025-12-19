@@ -1,12 +1,12 @@
-# Lifecycle Operations Integration Guide
+# 生命周期运营集成指南
 
-This guide explains how to integrate the lifecycle operations components into your BPMN editor application.
+本指南说明如何将生命周期运营组件集成到您的 BPMN 编辑器应用程序中。
 
 ---
 
-## Quick Start
+## 快速开始
 
-### 1. Import the LifecyclePanel Component
+### 1. 导入 LifecyclePanel 组件
 
 ```vue
 <template>
@@ -66,11 +66,11 @@ onMounted(() => {
 
 ---
 
-## Using Individual Components
+## 使用独立组件
 
 ### LifecycleStageSelector
 
-For assigning AARRR lifecycle stages to elements:
+用于为元素分配 AARRR 生命周期阶段:
 
 ```vue
 <template>
@@ -96,7 +96,7 @@ const onStageChange = (stage: LifecycleStage | null) => {
 
 ### UserSegmentBuilder
 
-For creating target user segments:
+用于创建目标用户分段:
 
 ```vue
 <template>
@@ -122,7 +122,7 @@ const onSegmentsChange = (newSegments: UserSegment[]) => {
 
 ### TriggerConditionEditor
 
-For configuring workflow triggers:
+用于配置工作流触发器:
 
 ```vue
 <template>
@@ -148,7 +148,7 @@ const onTriggersChange = (newTriggers: Trigger[]) => {
 
 ### WorkflowMetadataPanel
 
-For managing workflow-level metadata:
+用于管理工作流级元数据:
 
 ```vue
 <template>
@@ -176,11 +176,11 @@ const onSave = (savedMetadata: WorkflowMetadata) => {
 
 ---
 
-## Using the LifecycleIntegration Helper
+## 使用 LifecycleIntegration Helper
 
-The `LifecycleIntegration` helper provides functions for working with BPMN elements:
+`LifecycleIntegration` helper 提供了处理 BPMN 元素的函数:
 
-### Setting Lifecycle Metadata on Elements
+### 在元素上设置生命周期元数据
 
 ```typescript
 import { setLifecycleMetadata, applyLifecycleStyle } from '@/extensions/xflow/LifecycleIntegration'
@@ -205,7 +205,7 @@ function assignLifecycleStage(element: any, modeler: any, stage: LifecycleStage)
 }
 ```
 
-### Getting Lifecycle Metadata from Elements
+### 从元素获取生命周期元数据
 
 ```typescript
 import { getLifecycleMetadata } from '@/extensions/xflow/LifecycleIntegration'
@@ -223,7 +223,7 @@ function loadElementLifecycle(element: any) {
 }
 ```
 
-### Setting Workflow Metadata
+### 设置工作流元数据
 
 ```typescript
 import { setWorkflowMetadata } from '@/extensions/xflow/LifecycleIntegration'
@@ -251,7 +251,7 @@ function saveWorkflowMetadata(modeler: any) {
 }
 ```
 
-### Exporting Lifecycle Data
+### 导出生命周期数据
 
 ```typescript
 import { exportLifecycleData } from '@/extensions/xflow/LifecycleIntegration'
@@ -278,9 +278,9 @@ function exportData(modeler: any) {
 
 ---
 
-## Complete Integration Example
+## 完整集成示例
 
-Here's a complete example of integrating lifecycle operations into BpmnEditor.vue:
+以下是将生命周期运营集成到 BpmnEditor.vue 的完整示例:
 
 ```vue
 <template>
@@ -430,53 +430,53 @@ const initialDiagram = `<?xml version="1.0" encoding="UTF-8"?>
 
 ---
 
-## Data Flow
+## 数据流
 
-### 1. User Interaction → Component → Service → Element
-
-```
-User selects "Activation" stage
-  ↓
-LifecycleStageSelector emits change event
-  ↓
-Parent component calls setLifecycleMetadata()
-  ↓
-LifecycleIntegration helper updates BPMN element
-  ↓
-Element now has lifecycle metadata in extensionElements
-```
-
-### 2. Element → Service → Component → Display
+### 1. 用户交互 → 组件 → Service → 元素
 
 ```
-User selects BPMN element
+用户选择 "Activation" 阶段
   ↓
-Parent component calls getLifecycleMetadata()
+LifecycleStageSelector 发出 change 事件
   ↓
-LifecycleIntegration helper reads from element
+父组件调用 setLifecycleMetadata()
   ↓
-Component displays current stage
+LifecycleIntegration helper 更新 BPMN 元素
+  ↓
+元素现在在 extensionElements 中具有生命周期元数据
 ```
 
-### 3. Save → Convert → Storage
+### 2. 元素 → Service → 组件 → 显示
 
 ```
-User saves workflow
+用户选择 BPMN 元素
+  ↓
+父组件调用 getLifecycleMetadata()
+  ↓
+LifecycleIntegration helper 从元素读取
+  ↓
+组件显示当前阶段
+```
+
+### 3. 保存 → 转换 → 存储
+
+```
+用户保存工作流
   ↓
 BpmnModeler.saveXML()
   ↓
-BpmnAdapter converts XPMN → BPMN
+BpmnAdapter 转换 XPMN → BPMN
   ↓
-Lifecycle metadata preserved in extensionElements
+生命周期元数据在 extensionElements 中保留
   ↓
-Saved to file/backend
+保存到文件/后端
 ```
 
 ---
 
-## Styling Elements by Lifecycle Stage
+## 按生命周期阶段设置元素样式
 
-You can automatically style elements based on their lifecycle stage:
+您可以根据元素的生命周期阶段自动设置其样式:
 
 ```typescript
 import { getElementsWithLifecycle, getLifecycleMetadata } from '@/extensions/xflow/LifecycleIntegration'
@@ -504,9 +504,9 @@ function styleAllLifecycleElements(modeler: any) {
 
 ---
 
-## Validation
+## 验证
 
-Validate lifecycle data before saving:
+在保存之前验证生命周期数据:
 
 ```typescript
 import { lifecycleService } from '@/services/lifecycleService'
@@ -539,9 +539,9 @@ function validateLifecycleMetadata(metadata: LifecycleMetadata) {
 
 ---
 
-## Best Practices
+## 最佳实践
 
-### 1. Always Validate Before Saving
+### 1. 始终在保存前验证
 
 ```typescript
 // Before saving workflow
@@ -551,7 +551,7 @@ if (!validateWorkflow(metadata)) {
 }
 ```
 
-### 2. Provide Visual Feedback
+### 2. 提供视觉反馈
 
 ```typescript
 // Show success message
@@ -565,7 +565,7 @@ function onError(error: Error) {
 }
 ```
 
-### 3. Auto-save Lifecycle Data
+### 3. 自动保存生命周期数据
 
 ```typescript
 // Listen for changes and auto-save
@@ -574,7 +574,7 @@ eventBus.on('commandStack.changed', debounce(() => {
 }, 1000))
 ```
 
-### 4. Load Lifecycle Data on Diagram Import
+### 4. 在图表导入时加载生命周期数据
 
 ```typescript
 async function loadDiagram(xml: string) {
@@ -593,37 +593,37 @@ async function loadDiagram(xml: string) {
 
 ---
 
-## Troubleshooting
+## 故障排除
 
-### Component not updating?
+### 组件未更新?
 
-Make sure you're passing reactive refs:
+确保您传递的是响应式 refs:
 
 ```typescript
-// ✅ Correct
+// ✅ 正确
 const modeler = ref<any>(null)
 const selectedElement = ref<any>(null)
 
-// ❌ Wrong
+// ❌ 错误
 let modeler: any = null
 let selectedElement: any = null
 ```
 
-### Metadata not persisting?
+### 元数据未持久化?
 
-Ensure XFlow extension is registered:
+确保注册了 XFlow extension:
 
 ```typescript
 new BpmnModeler({
   moddleExtensions: {
-    xflow: xflowExtension  // Must include this!
+    xflow: xflowExtension  // 必须包含这个!
   }
 })
 ```
 
-### Styles not applying?
+### 样式未应用?
 
-Check that the modeler has the 'modeling' module:
+检查 modeler 是否有 'modeling' 模块:
 
 ```typescript
 const modeling = modeler.get('modeling')
@@ -634,12 +634,12 @@ if (modeling) {
 
 ---
 
-## Next Steps
+## 后续步骤
 
-1. Add the LifecyclePanel to your BpmnEditor
-2. Test element selection and lifecycle assignment
-3. Create example workflows with lifecycle metadata
-4. Test save/load with lifecycle data
-5. Customize styling and behavior as needed
+1. 将 LifecyclePanel 添加到您的 BpmnEditor
+2. 测试元素选择和生命周期分配
+3. 使用生命周期元数据创建示例工作流
+4. 测试带生命周期数据的保存/加载
+5. 根据需要自定义样式和行为
 
-For more examples, see the `examples/` directory in the project.
+有关更多示例,请参阅项目中的 `examples/` 目录。

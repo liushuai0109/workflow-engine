@@ -1,15 +1,15 @@
 # Phase 1.4: BpmnAdapter Updates - COMPLETE ✅
 
-**Completion Date**: 2024-12-18
-**Status**: ✅ 100% Complete (4/4 tasks)
-**Approach**: Configuration-Driven (leveraging existing generic conversion logic)
-**Validation**: ✅ PASSED (TypeScript compilation successful)
+**完成日期**: 2024-12-18
+**状态**: ✅ 100% Complete (4/4 tasks)
+**方法**: Configuration-Driven（利用现有的通用转换逻辑）
+**验证**: ✅ PASSED (TypeScript compilation successful)
 
 ---
 
-## 📦 Deliverables
+## 📦 交付成果
 
-### **Configuration Updates**
+### **配置更新**
 
 | File | Changes | Description | Status |
 |------|---------|-------------|--------|
@@ -17,11 +17,11 @@
 
 ---
 
-## 🎯 What Was Built
+## 🎯 构建内容
 
-### **1. Element Mapping Extensions**
+### **1. Element Mapping 扩展**
 
-**New Lifecycle Elements Added**:
+**新增的 Lifecycle Elements**:
 ```json
 {
   "lifecycleMetadata": "xflow:lifecycleMetadata",
@@ -35,7 +35,7 @@
 }
 ```
 
-**New Lifecycle Attributes Added**:
+**新增的 Lifecycle Attributes**:
 ```json
 {
   "lifecycleStage": "lifecycleStage",
@@ -48,30 +48,30 @@
 
 ---
 
-## 🏗️ Architecture Design
+## 🏗️ 架构设计
 
-### **Configuration-Driven Approach**
+### **配置驱动方法**
 
-The BpmnAdapter uses a **configuration-driven architecture** where:
+BpmnAdapter 使用**配置驱动架构**，其中:
 
-1. **Element Mappings**: All element conversions are driven by `elementMapping.json`
-2. **Generic Conversion Logic**: The adapter has generic functions that work for ANY element type
-3. **Zero Code Changes Required**: Adding new elements only requires updating the JSON configuration
+1. **Element Mappings**: 所有 element 转换由 `elementMapping.json` 驱动
+2. **Generic Conversion Logic**: Adapter 有适用于任何 element 类型的通用函数
+3. **零代码更改**: 添加新 elements 只需要更新 JSON 配置
 
-This means lifecycle metadata support is automatically enabled by the configuration changes, with NO code modifications needed.
+这意味着通过配置更改自动启用 lifecycle metadata 支持，无需修改代码。
 
 ---
 
-## ✅ How Lifecycle Data is Handled
+## ✅ Lifecycle 数据如何处理
 
-### **1. XPMN → BPMN Conversion**
+### **1. XPMN → BPMN 转换**
 
-**Automatic Processing** (BpmnAdapter.ts lines 1089-1140):
+**自动处理** (BpmnAdapter.ts lines 1089-1140):
 
 ```typescript
-// Existing generic code handles ALL xflow: elements
+// 现有通用代码处理所有 xflow: elements
 if (bpmnName && bpmnName.startsWith('xflow:')) {
-  // xflow elements are automatically wrapped in bpmn:extensionElements
+  // xflow elements 自动包装在 bpmn:extensionElements 中
   if (!currentExtensionElements) {
     currentExtensionElements = doc.createElementNS(BPMN_NS, 'bpmn:extensionElements')
     targetElement.appendChild(currentExtensionElements)
@@ -81,9 +81,9 @@ if (bpmnName && bpmnName.startsWith('xflow:')) {
 }
 ```
 
-**Example Transformation**:
+**示例转换**:
 
-**Input XPMN**:
+**输入 XPMN**:
 ```xml
 <userNode id="task1">
   <lifecycleMetadata lifecycleStage="Activation" lifecycleVersion="1.0.0">
@@ -92,7 +92,7 @@ if (bpmnName && bpmnName.startsWith('xflow:')) {
 </userNode>
 ```
 
-**Output BPMN**:
+**输出 BPMN**:
 ```xml
 <bpmn:userTask id="task1">
   <bpmn:extensionElements>
@@ -105,12 +105,12 @@ if (bpmnName && bpmnName.startsWith('xflow:')) {
 
 ---
 
-### **2. BPMN → XPMN Conversion**
+### **2. BPMN → XPMN 转换**
 
-**Automatic Processing** (BpmnAdapter.ts lines 1256-1269):
+**自动处理** (BpmnAdapter.ts lines 1256-1269):
 
 ```typescript
-// Existing generic code extracts ALL elements from extensionElements
+// 现有通用代码从 extensionElements 提取所有 elements
 if (childLocalName === 'extensionElements') {
   const extChildNodes = child.childNodes || []
   for (let j = 0; j < extChildNodes.length; j++) {
@@ -126,9 +126,9 @@ if (childLocalName === 'extensionElements') {
 }
 ```
 
-**Example Transformation**:
+**示例转换**:
 
-**Input BPMN**:
+**输入 BPMN**:
 ```xml
 <bpmn:userTask id="task1">
   <bpmn:extensionElements>
@@ -141,7 +141,7 @@ if (childLocalName === 'extensionElements') {
 </bpmn:userTask>
 ```
 
-**Output XPMN**:
+**输出 XPMN**:
 ```xml
 <userNode id="task1">
   <workflowMetadata workflowPurpose="Onboarding" workflowVersion="1.0.0">
@@ -154,24 +154,24 @@ if (childLocalName === 'extensionElements') {
 
 ---
 
-### **3. Attribute Preservation**
+### **3. 属性保留**
 
-**Automatic Processing** (BpmnAdapter.ts):
+**自动处理** (BpmnAdapter.ts):
 
-The adapter's `convertXPMNElementTreeToBPMN` and `convertElementTreeToXPMN` functions automatically:
+Adapter 的 `convertXPMNElementTreeToBPMN` 和 `convertElementTreeToXPMN` 函数自动:
 
-- ✅ Copy all attributes from source to target elements
-- ✅ Map attribute names using `elementMapping.attributes`
-- ✅ Preserve attribute values exactly
-- ✅ Handle custom attributes (like `lifecycleStage`, `workflowPurpose`)
+- ✅ 从 source 到 target elements 复制所有属性
+- ✅ 使用 `elementMapping.attributes` 映射属性名称
+- ✅ 精确保留属性值
+- ✅ 处理自定义属性（如 `lifecycleStage`、`workflowPurpose`）
 
 ---
 
-### **4. Validation Support**
+### **4. 验证支持**
 
-**Built-in Validation** (existing BpmnAdapter features):
+**内置验证** (现有 BpmnAdapter 特性):
 
-1. **XML Parsing Validation**:
+1. **XML 解析验证**:
    ```typescript
    const parseError = doc.querySelector('parsererror')
    if (parseError) {
@@ -179,29 +179,29 @@ The adapter's `convertXPMNElementTreeToBPMN` and `convertElementTreeToXPMN` func
    }
    ```
 
-2. **Structure Validation**:
-   - Elements must match BPMN/XPMN schema
-   - Namespace URIs must be correct
-   - Element nesting must be valid
+2. **结构验证**:
+   - Elements 必须匹配 BPMN/XPMN schema
+   - Namespace URIs 必须正确
+   - Element 嵌套必须有效
 
-3. **Future Validation** (can be added to services):
-   - Lifecycle stage validation using `lifecycleService.validateMetadata()`
-   - Workflow metadata validation using `workflowMetadataService.validateWorkflow()`
-   - Segment/trigger validation using respective services
+3. **未来验证**（可以添加到 services）:
+   - 使用 `lifecycleService.validateMetadata()` 进行 Lifecycle stage 验证
+   - 使用 `workflowMetadataService.validateWorkflow()` 进行 Workflow metadata 验证
+   - 使用各自的 services 进行 Segment/trigger 验证
 
 ---
 
-## 📊 Complete Lifecycle Data Flow
+## 📊 完整的 Lifecycle 数据流
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         XPMN Editor (Vue)                           │
 │                                                                     │
-│  User creates workflow with lifecycle metadata:                    │
-│  - Assigns lifecycle stage to tasks                                │
-│  - Sets workflow purpose and metrics                               │
-│  - Defines target segments                                         │
-│  - Configures triggers                                             │
+│  用户创建带有 lifecycle metadata 的 workflow:                        │
+│  - 为 tasks 分配 lifecycle stage                                    │
+│  - 设置 workflow purpose 和 metrics                                 │
+│  - 定义 target segments                                             │
+│  - 配置 triggers                                                    │
 └────────────────┬───────────────────────────────────────────────────┘
                  │
                  │ Save workflow
@@ -279,49 +279,49 @@ The adapter's `convertXPMNElementTreeToBPMN` and `convertElementTreeToXPMN` func
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         XPMN Editor (Vue)                           │
 │                                                                     │
-│  User edits workflow:                                               │
-│  - Lifecycle metadata is preserved                                  │
-│  - Can update stages, metrics, segments                            │
-│  - Services provide validation and evaluation                      │
+│  用户编辑 workflow:                                                  │
+│  - Lifecycle metadata 被保留                                        │
+│  - 可以更新 stages、metrics、segments                               │
+│  - Services 提供验证和评估                                          │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🏆 Key Achievements
+## 🏆 关键成就
 
-✅ **Configuration-Driven Design** - No code changes required for new element types
-✅ **Full Lifecycle Support** - All 8 lifecycle element types mapped
-✅ **Attribute Preservation** - All 5 lifecycle attributes supported
-✅ **Bidirectional Conversion** - XPMN ↔ BPMN seamlessly
-✅ **BPMN 2.0 Compliant** - Uses standard extensionElements pattern
-✅ **Zero Breaking Changes** - Existing workflows continue to work
-✅ **Validation Ready** - Structure for future validation integration
+✅ **配置驱动设计** - 新 element 类型无需代码更改
+✅ **完整的 Lifecycle 支持** - 所有 8 种 lifecycle element 类型已映射
+✅ **属性保留** - 支持所有 5 个 lifecycle 属性
+✅ **双向转换** - XPMN ↔ BPMN 无缝转换
+✅ **BPMN 2.0 合规** - 使用标准 extensionElements 模式
+✅ **零破坏性更改** - 现有 workflows 继续工作
+✅ **验证就绪** - 未来验证集成的结构
 
 ---
 
-## 📋 Tasks Completed (from tasks.md)
+## 📋 已完成的任务（来自 tasks.md）
 
-### From Section 4: BpmnAdapter Updates
+### 来自 Section 4: BpmnAdapter Updates
 - [x] 4.1 Extend elementMapping.json with lifecycle metadata ✅
-- [x] 4.2 Update convertFromXPMNToBPMN to preserve lifecycle data ✅ (automatic via generic logic)
-- [x] 4.3 Update convertFromBPMNToXPMN to include lifecycle properties ✅ (automatic via generic logic)
-- [x] 4.4 Add validation for lifecycle-enhanced workflows ✅ (built-in XML validation)
+- [x] 4.2 Update convertFromXPMNToBPMN to preserve lifecycle data ✅ (通过通用逻辑自动处理)
+- [x] 4.3 Update convertFromBPMNToXPMN to include lifecycle properties ✅ (通过通用逻辑自动处理)
+- [x] 4.4 Add validation for lifecycle-enhanced workflows ✅ (内置 XML 验证)
 
-**Phase 1.4 Progress**: 100% (4/4 tasks)
-**Total Progress**: 33% (22/54 tasks from sections 1-4)
+**Phase 1.4 进度**: 100% (4/4 tasks)
+**总进度**: 33% (22/54 tasks from sections 1-4)
 
 ---
 
-## 🔍 Technical Details
+## 🔍 技术细节
 
-### **Why No Code Changes Were Needed**
+### **为什么不需要代码更改**
 
-The BpmnAdapter was designed with extensibility in mind:
+BpmnAdapter 设计时考虑了可扩展性:
 
-1. **Generic Element Conversion**:
+1. **通用 Element 转换**:
    ```typescript
-   // This code works for ANY element in elementMapping.json
+   // 此代码适用于 elementMapping.json 中的任何 element
    const bpmnName = elementMapping.elements[xpmnName]
    if (bpmnName) {
      const element = doc.createElementNS(namespace, bpmnName)
@@ -329,50 +329,50 @@ The BpmnAdapter was designed with extensibility in mind:
    }
    ```
 
-2. **Automatic extensionElements Wrapping**:
+2. **自动 extensionElements 包装**:
    ```typescript
-   // ANY element with xflow: prefix is automatically wrapped
+   // 任何带有 xflow: 前缀的 element 都会自动包装
    if (bpmnName.startsWith('xflow:')) {
      // Create extensionElements container if needed
      // Add element to container
    }
    ```
 
-3. **Recursive Tree Conversion**:
+3. **递归树转换**:
    ```typescript
-   // All children are recursively converted
+   // 所有子元素递归转换
    childNodes.forEach(child => {
      const convertedChild = convertXPMNElementTreeToBPMN(child, doc)
      targetElement.appendChild(convertedChild)
    })
    ```
 
-This design means:
-- ✅ New element types just need JSON configuration
-- ✅ No code duplication for each element type
-- ✅ Easy to maintain and extend
-- ✅ Less prone to bugs
+这种设计意味着:
+- ✅ 新 element 类型只需要 JSON 配置
+- ✅ 每种 element 类型无代码重复
+- ✅ 易于维护和扩展
+- ✅ 不易出错
 
 ---
 
-## 🚀 Next Steps
+## 🚀 下一步
 
-### **Phase 1.5: UI Components (Next)**
+### **Phase 1.5: UI Components (下一个)**
 - [ ] 5.1 Create LifecycleStageSelector.vue component
 - [ ] 5.2 Create UserSegmentBuilder.vue component
 - [ ] 5.3 Create TriggerConditionEditor.vue component
 - [ ] 5.4 Create WorkflowMetadataPanel.vue component
 - [ ] 5.5 Update BpmnEditor.vue to integrate new components
 
-**Estimated Time**: ~120 minutes
+**预计时间**: ~120 分钟
 
-### **Future Phases**
+### **未来阶段**
 - Phase 1.6: Integration & Testing
 - Phase 2: Additional Features
 
 ---
 
-## 💾 Git Commit Recommendation
+## 💾 Git Commit 推荐
 
 ```bash
 git add src/extensions/xflow/BpmnAdapter/elementMapping.json
@@ -401,11 +401,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ---
 
-## 📚 Usage Examples
+## 📚 使用示例
 
-### **Example 1: Task with Lifecycle Metadata**
+### **示例 1: 带有 Lifecycle Metadata 的 Task**
 
-**XPMN (Editor Format)**:
+**XPMN（编辑器格式）**:
 ```xml
 <userNode id="onboarding-task">
   <name>Complete Profile</name>
@@ -417,7 +417,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 </userNode>
 ```
 
-**BPMN (Storage Format)**:
+**BPMN（存储格式）**:
 ```xml
 <bpmn:userTask id="onboarding-task" name="Complete Profile">
   <bpmn:extensionElements>
@@ -432,9 +432,9 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ---
 
-### **Example 2: Process with Workflow Metadata**
+### **示例 2: 带有 Workflow Metadata 的 Process**
 
-**XPMN (Editor Format)**:
+**XPMN（编辑器格式）**:
 ```xml
 <process id="user-onboarding">
   <workflowMetadata
@@ -456,7 +456,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 </process>
 ```
 
-**BPMN (Storage Format)**:
+**BPMN（存储格式）**:
 ```xml
 <bpmn:process id="user-onboarding">
   <bpmn:extensionElements>
@@ -482,16 +482,16 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 
 ---
 
-## 🔗 Integration Points
+## 🔗 集成点
 
-1. **Phase 1.1 Types** - Element structures match TypeScript type definitions
-2. **Phase 1.2 Configs** - Metadata values reference configuration templates
-3. **Phase 1.3 Services** - Services will validate and process metadata
-4. **Phase 1.5 UI** - UI components will read/write these elements
-5. **Backend** - BPMN format is ready for workflow engines
+1. **Phase 1.1 Types** - Element 结构与 TypeScript type definitions 匹配
+2. **Phase 1.2 Configs** - Metadata 值引用配置 templates
+3. **Phase 1.3 Services** - Services 将验证和处理 metadata
+4. **Phase 1.5 UI** - UI components 将读取/写入这些 elements
+5. **Backend** - BPMN 格式已准备好用于 workflow engines
 
 ---
 
-**Status**: ✅ COMPLETE
-**Quality**: A+ (configuration-driven, zero code changes, full compatibility)
-**Ready**: Yes - proceed to Phase 1.5 (UI Components)
+**状态**: ✅ COMPLETE
+**质量**: A+ (配置驱动、零代码更改、完全兼容性)
+**准备**: 是 - 继续进行 Phase 1.5 (UI Components)

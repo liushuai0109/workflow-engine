@@ -1,18 +1,18 @@
-# Quick Reference Card
+# 快速参考卡
 
-## 📋 Change Summary
+## 📋 变更摘要
 
-| Property | Value |
+| 属性 | 值 |
 |----------|-------|
 | **Change ID** | add-lifecycle-operations-foundation |
 | **Phase** | 1 of 5 |
-| **Status** | ✅ Validated, Ready for Implementation |
-| **Estimated Effort** | 2-3 weeks |
-| **Breaking Changes** | Yes (with migration) |
+| **Status** | ✅ 已验证, 准备实现 |
+| **估计工作量** | 2-3 周 |
+| **破坏性更改** | 是 (带迁移) |
 
 ---
 
-## 🎯 Key Features
+## 🎯 关键功能
 
 ```mermaid
 mindmap
@@ -40,20 +40,20 @@ mindmap
 
 ---
 
-## 📁 Files Created (20 new files)
+## 📁 创建的文件 (20 个新文件)
 
-### Type Definitions (6 files)
-- `src/types/lifecycle.ts` - AARRR stages
-- `src/types/segments.ts` - User segments
-- `src/types/triggers.ts` - Workflow triggers
-- `src/types/metrics.ts` - Success metrics
-- `src/types/userProfile.ts` - User data model
-- `src/types/events.ts` - Event schema
+### 类型定义 (6 files)
+- `src/types/lifecycle.ts` - AARRR 阶段
+- `src/types/segments.ts` - 用户分段
+- `src/types/triggers.ts` - 工作流触发器
+- `src/types/metrics.ts` - 成功指标
+- `src/types/userProfile.ts` - 用户数据模型
+- `src/types/events.ts` - 事件架构
 
-### Configuration (3 files)
-- `src/config/lifecycle-stages.json` - 5 AARRR stages
-- `src/config/user-segments.json` - 10 segment templates
-- `src/config/trigger-templates.json` - 8 trigger templates
+### 配置 (3 files)
+- `src/config/lifecycle-stages.json` - 5 AARRR 阶段
+- `src/config/user-segments.json` - 10 分段模板
+- `src/config/trigger-templates.json` - 8 触发器模板
 
 ### Services (4 files)
 - `src/services/lifecycleService.ts`
@@ -61,84 +61,84 @@ mindmap
 - `src/services/triggerService.ts`
 - `src/services/workflowMetadataService.ts`
 
-### UI Components (4 files)
+### UI 组件 (4 files)
 - `src/components/LifecycleStageSelector.vue`
 - `src/components/UserSegmentBuilder.vue`
 - `src/components/TriggerConditionEditor.vue`
 - `src/components/WorkflowMetadataPanel.vue`
 
-### Documentation (3 files)
-- `openspec/changes/.../ARCHITECTURE.md` (this change)
+### 文档 (3 files)
+- `openspec/changes/.../ARCHITECTURE.md` (此变更)
 - `openspec/changes/.../IMPLEMENTATION_GUIDE.md`
 - `openspec/changes/.../QUICK_REFERENCE.md`
 
 ---
 
-## 🔧 Files Modified (8 files)
+## 🔧 修改的文件 (8 files)
 
-- `src/types/index.ts` - Export new types
-- `src/extensions/xflow/xflowExtension.json` - Add lifecycle fields
-- `src/extensions/xflow/XFlowPropertiesProvider.ts` - Lifecycle properties
-- `src/extensions/xflow/XFlowRenderer.ts` - Visual indicators
-- `src/extensions/xflow/BpmnAdapter/BpmnAdapter.ts` - Migration logic
-- `src/extensions/xflow/BpmnAdapter/elementMapping.json` - Lifecycle metadata
-- `src/components/BpmnEditor.vue` - Integrate new components
-- `README.md` - Document lifecycle features
+- `src/types/index.ts` - 导出新类型
+- `src/extensions/xflow/xflowExtension.json` - 添加生命周期字段
+- `src/extensions/xflow/XFlowPropertiesProvider.ts` - 生命周期属性
+- `src/extensions/xflow/XFlowRenderer.ts` - 视觉指示器
+- `src/extensions/xflow/BpmnAdapter/BpmnAdapter.ts` - 迁移逻辑
+- `src/extensions/xflow/BpmnAdapter/elementMapping.json` - 生命周期元数据
+- `src/components/BpmnEditor.vue` - 集成新组件
+- `README.md` - 记录生命周期功能
 
 ---
 
-## 🎨 AARRR Color Scheme
+## 🎨 AARRR 配色方案
 
-| Stage | Color | Icon | Hex |
+| 阶段 | 颜色 | 图标 | Hex |
 |-------|-------|------|-----|
-| **Acquisition** | Blue | 🎯 | `#2196F3` |
-| **Activation** | Green | ✨ | `#4CAF50` |
-| **Retention** | Yellow | 🔄 | `#FFC107` |
-| **Revenue** | Purple | 💰 | `#9C27B0` |
-| **Referral** | Orange | 🚀 | `#FF5722` |
+| **Acquisition** | 蓝色 | 🎯 | `#2196F3` |
+| **Activation** | 绿色 | ✨ | `#4CAF50` |
+| **Retention** | 黄色 | 🔄 | `#FFC107` |
+| **Revenue** | 紫色 | 💰 | `#9C27B0` |
+| **Referral** | 橙色 | 🚀 | `#FF5722` |
 
 ---
 
-## 📊 Segment Templates
+## 📊 分段模板
 
-| Template | Type | Icon | Use Case |
+| 模板 | 类型 | 图标 | 用途 |
 |----------|------|------|----------|
-| New Users | Lifecycle | 🆕 | Onboarding campaigns |
-| Active Users | Behavioral | ⚡ | Retention workflows |
-| At-Risk Users | Behavioral | ⚠️ | Win-back campaigns |
-| VIP Customers | Value | 👑 | Premium offers |
-| Dormant Users | Lifecycle | 😴 | Re-activation |
-| Young Professionals | Demographic | 💼 | Targeted marketing |
+| New Users | Lifecycle | 🆕 | 入职活动 |
+| Active Users | Behavioral | ⚡ | 留存工作流 |
+| At-Risk Users | Behavioral | ⚠️ | 挽回活动 |
+| VIP Customers | Value | 👑 | 高级优惠 |
+| Dormant Users | Lifecycle | 😴 | 重新激活 |
+| Young Professionals | Demographic | 💼 | 定向营销 |
 | Mobile Users | Behavioral | 📱 | Mobile-first UX |
-| Trial Users | Lifecycle | 🎫 | Conversion campaigns |
-| Power Users | Behavioral | ⚙️ | Advocacy programs |
-| Churned Users | Lifecycle | ❌ | Analysis |
+| Trial Users | Lifecycle | 🎫 | 转化活动 |
+| Power Users | Behavioral | ⚙️ | 倡导计划 |
+| Churned Users | Lifecycle | ❌ | 分析 |
 
 ---
 
-## ⚡ Trigger Types
+## ⚡ 触发器类型
 
-### Event-Based
-- `user.signup` - New user registration
-- `transaction.purchase_complete` - Purchase completed
-- `milestone.reached` - User milestone
-- `transaction.cart_add` - Item added to cart
+### 基于事件
+- `user.signup` - 新用户注册
+- `transaction.purchase_complete` - 购买完成
+- `milestone.reached` - 用户里程碑
+- `transaction.cart_add` - 添加到购物车
 
-### Time-Based
-- **Cron**: `0 9 * * *` (Daily at 9 AM)
-- **Interval**: Every N milliseconds
-- **Delay**: After N time from event
-- **Time Window**: Between start/end times
+### 基于时间
+- **Cron**: `0 9 * * *` (每天上午 9 点)
+- **Interval**: 每 N 毫秒
+- **Delay**: 事件后 N 时间
+- **Time Window**: 开始/结束时间之间
 
-### Threshold-Based
-- Engagement score < 40
-- Days inactive > 30
-- Purchase amount > 100
-- Session count < 5
+### 基于阈值
+- 参与度分数 < 40
+- 不活跃天数 > 30
+- 购买金额 > 100
+- 会话数 < 5
 
 ---
 
-## 🔑 Key TypeScript Types
+## 🔑 关键 TypeScript 类型
 
 ### Lifecycle
 ```typescript
@@ -179,14 +179,14 @@ interface Trigger {
 
 ## 🎯 XML Schema Extension
 
-### Before (Standard BPMN)
+### 之前 (Standard BPMN)
 ```xml
 <bpmn:task id="Task_1" name="Onboarding">
   <bpmn:extensionElements />
 </bpmn:task>
 ```
 
-### After (With Lifecycle)
+### 之后 (With Lifecycle)
 ```xml
 <bpmn:task id="Task_1" name="Onboarding">
   <bpmn:extensionElements>
@@ -204,60 +204,60 @@ interface Trigger {
 
 ---
 
-## 🧪 Testing Checklist
+## 🧪 测试清单
 
-### Unit Tests
-- [ ] Lifecycle type definitions
-- [ ] Segment service logic
-- [ ] Trigger validation
-- [ ] BpmnAdapter conversion
+### 单元测试
+- [ ] 生命周期类型定义
+- [ ] Segment service 逻辑
+- [ ] Trigger 验证
+- [ ] BpmnAdapter 转换
 
-### Integration Tests
-- [ ] Service layer integration
-- [ ] Properties panel data flow
+### 集成测试
+- [ ] Service 层集成
+- [ ] Properties panel 数据流
 - [ ] Adapter with lifecycle metadata
-- [ ] Component communication
+- [ ] 组件通信
 
-### E2E Tests
-- [ ] Create workflow with lifecycle stages
-- [ ] Assign segments to elements
-- [ ] Configure triggers
-- [ ] Migrate existing workflow
-- [ ] Save and reload workflow
-
----
-
-## 📈 Success Metrics
-
-### Technical
-- ✅ All existing workflows load after migration
-- ✅ XML size increase < 20%
-- ✅ Properties panel render < 100ms
-- ✅ Test coverage > 80%
-- ✅ Zero TypeScript errors
-
-### Product (Post-Launch)
-- 🎯 50%+ workflows use lifecycle tagging (30 days)
-- 🎯 30%+ workflows use segments (30 days)
-- 🎯 < 5 support tickets/month
-- 🎯 90%+ user satisfaction
+### E2E 测试
+- [ ] 使用生命周期阶段创建工作流
+- [ ] 为元素分配分段
+- [ ] 配置触发器
+- [ ] 迁移现有工作流
+- [ ] 保存和重新加载工作流
 
 ---
 
-## ⚠️ Breaking Changes & Migration
+## 📈 成功指标
 
-### What Breaks
-1. XFlow extension format (new required fields)
+### 技术
+- ✅ 迁移后所有现有工作流加载
+- ✅ XML 大小增加 < 20%
+- ✅ Properties panel 渲染 < 100ms
+- ✅ 测试覆盖率 > 80%
+- ✅ 零 TypeScript 错误
+
+### 产品 (发布后)
+- 🎯 50%+ 工作流使用生命周期标记 (30 天)
+- 🎯 30%+ 工作流使用分段 (30 天)
+- 🎯 < 5 支持工单/月
+- 🎯 90%+ 用户满意度
+
+---
+
+## ⚠️ 破坏性更改和迁移
+
+### 什么会中断
+1. XFlow extension format (新的必需字段)
 2. Workflow XML schema (lifecycle namespace)
 
-### Migration Strategy
-✅ **Automatic** - BpmnAdapter migrates on load
-- Assigns default stages based on element type
-- No user action required
-- Backward compatible
+### 迁移策略
+✅ **自动** - BpmnAdapter 在加载时迁移
+- 基于元素类型分配默认阶段
+- 无需用户操作
+- 向后兼容
 
-### Default Stage Mapping
-| Element Type | Default Stage |
+### 默认阶段映射
+| 元素类型 | 默认阶段 |
 |--------------|---------------|
 | StartEvent | Acquisition |
 | UserTask (early) | Activation |
@@ -268,104 +268,104 @@ interface Trigger {
 
 ---
 
-## 🚀 Implementation Order
+## 🚀 实现顺序
 
 ```mermaid
 gantt
-    title Implementation Timeline (2-3 weeks)
+    title 实现时间线 (2-3 周)
     dateFormat  YYYY-MM-DD
     section Week 1
-    Types & Config           :w1a, 2024-01-01, 3d
-    Services Layer          :w1b, 2024-01-04, 4d
+    类型和配置           :w1a, 2024-01-01, 3d
+    Services 层          :w1b, 2024-01-04, 4d
     section Week 2
-    BpmnAdapter Updates     :w2a, 2024-01-08, 3d
-    UI Components           :w2b, 2024-01-11, 4d
+    BpmnAdapter 更新     :w2a, 2024-01-08, 3d
+    UI 组件           :w2b, 2024-01-11, 4d
     section Week 3
-    Integration            :w3a, 2024-01-15, 3d
-    Testing & Migration    :w3b, 2024-01-18, 4d
+    集成            :w3a, 2024-01-15, 3d
+    测试和迁移    :w3b, 2024-01-18, 4d
 ```
 
 ---
 
-## 🔗 Quick Links
+## 🔗 快速链接
 
-### Documentation
-- `proposal.md` - Full proposal with rationale
-- `tasks.md` - 54 implementation tasks
-- `design.md` - Technical design decisions
-- `ARCHITECTURE.md` - System architecture diagrams
-- `IMPLEMENTATION_GUIDE.md` - Step-by-step guide
+### 文档
+- `proposal.md` - 包含理由的完整提案
+- `tasks.md` - 54 个实现任务
+- `design.md` - 技术设计决策
+- `ARCHITECTURE.md` - 系统架构图
+- `IMPLEMENTATION_GUIDE.md` - 分步指南
 
 ### Specs
-- `specs/workflow-editor/spec.md` - 7 requirements, 21 scenarios
-- `specs/user-lifecycle/spec.md` - 5 requirements, 17 scenarios
-- `specs/data-integration/spec.md` - 5 requirements, 18 scenarios
+- `specs/workflow-editor/spec.md` - 7 需求, 21 场景
+- `specs/user-lifecycle/spec.md` - 5 需求, 17 场景
+- `specs/data-integration/spec.md` - 5 需求, 18 场景
 
-### Commands
+### 命令
 ```bash
-# View change
+# 查看变更
 npx openspec show add-lifecycle-operations-foundation
 
-# Validate
+# 验证
 npx openspec validate add-lifecycle-operations-foundation --strict
 
-# Archive (after implementation)
+# 归档 (实现后)
 npx openspec archive add-lifecycle-operations-foundation --yes
 ```
 
 ---
 
-## 💡 Key Design Decisions
+## 💡 关键设计决策
 
-| Decision | Choice | Why |
+| 决策 | 选择 | 原因 |
 |----------|--------|-----|
-| **Namespace** | Extend XFlow | Minimize adapter changes |
-| **Data Model** | TypeScript-first | Type safety, IDE support |
-| **UI Config** | JSON-driven | Flexible, no code changes |
-| **Migration** | Automatic | Zero user friction |
-| **Properties** | Extend panel | Consistent UX |
+| **Namespace** | 扩展 XFlow | 最小化 adapter 更改 |
+| **Data Model** | TypeScript-first | 类型安全, IDE 支持 |
+| **UI Config** | JSON-driven | 灵活, 无代码更改 |
+| **Migration** | 自动 | 零用户摩擦 |
+| **Properties** | 扩展 panel | 一致的 UX |
 
 ---
 
-## 🎓 Learning Resources
+## 🎓 学习资源
 
 ### AARRR Framework
-- Acquisition: Getting users to the platform
-- Activation: First-time user experience
-- Retention: Ongoing engagement
-- Revenue: Monetization
-- Referral: Viral growth
+- Acquisition: 将用户引入平台
+- Activation: 首次用户体验
+- Retention: 持续参与
+- Revenue: 变现
+- Referral: 病毒式增长
 
-### User Segmentation
-- **Demographic**: Who they are (age, location)
-- **Behavioral**: What they do (sessions, features)
-- **Lifecycle**: Where they are (new, active, churned)
-- **Value**: How much they're worth (LTV, purchases)
+### 用户分段
+- **Demographic**: 他们是谁 (年龄, 位置)
+- **Behavioral**: 他们做什么 (会话, 功能)
+- **Lifecycle**: 他们在哪里 (新, 活跃, 流失)
+- **Value**: 他们值多少 (LTV, 购买)
 
-### Workflow Triggers
-- **Scheduled**: Time-based execution
-- **Event**: User action-based
-- **Threshold**: Data condition-based
-- **Manual**: Operator-initiated
-
----
-
-## 📞 Support
-
-### Getting Help
-- Review `IMPLEMENTATION_GUIDE.md` for detailed steps
-- Check `ARCHITECTURE.md` for system design
-- Refer to `design.md` for technical decisions
-- Read `tasks.md` for implementation checklist
-
-### Common Issues
-1. **TypeScript errors**: Ensure all types exported in `index.ts`
-2. **XML parsing fails**: Validate XML format with BpmnAdapter tests
-3. **Migration not working**: Check default stage mapping logic
-4. **Properties panel blank**: Verify component registration
+### 工作流触发器
+- **Scheduled**: 基于时间的执行
+- **Event**: 基于用户操作
+- **Threshold**: 基于数据条件
+- **Manual**: 操作员发起
 
 ---
 
-**Version**: 1.0
-**Last Updated**: 2024-12-18
-**Status**: ✅ Ready for Implementation
+## 📞 支持
+
+### 获取帮助
+- 查看 `IMPLEMENTATION_GUIDE.md` 了解详细步骤
+- 查看 `ARCHITECTURE.md` 了解系统设计
+- 参考 `design.md` 了解技术决策
+- 阅读 `tasks.md` 了解实现清单
+
+### 常见问题
+1. **TypeScript 错误**: 确保在 `index.ts` 中导出所有类型
+2. **XML 解析失败**: 使用 BpmnAdapter 测试验证 XML 格式
+3. **迁移不工作**: 检查默认阶段映射逻辑
+4. **Properties panel 空白**: 验证组件注册
+
+---
+
+**版本**: 1.0
+**最后更新**: 2024-12-18
+**状态**: ✅ 准备实现

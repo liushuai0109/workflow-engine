@@ -1,22 +1,22 @@
-# Architecture Documentation
+# 架构文档
 
-## System Architecture Evolution
+## 系统架构演进
 
-### Current Architecture (Before This Change)
+### 当前架构（本次变更前）
 
 ```mermaid
 graph TB
-    subgraph "Browser"
+    subgraph "浏览器"
         UI[Vue 3 SPA]
-        Editor[BPMN Editor<br/>bpmn-js]
+        Editor[BPMN 编辑器<br/>bpmn-js]
         Storage[localStorage]
 
         UI --> Editor
         Editor --> Storage
     end
 
-    subgraph "External"
-        LLM[Gemini API<br/>Optional]
+    subgraph "外部服务"
+        LLM[Gemini API<br/>可选]
     end
 
     UI -.-> LLM
@@ -26,40 +26,40 @@ graph TB
     style Storage fill:#f3e5f5
 ```
 
-**Limitations**:
-- Client-side only, no backend
-- No data persistence beyond localStorage
-- No user management or authentication
-- Limited to technical workflow modeling
-- No business context (lifecycle stages, segments, triggers)
+**局限性**:
+- 仅客户端，无后端
+- 除 localStorage 外没有数据持久化
+- 无用户管理或身份验证
+- 仅限于技术工作流建模
+- 缺少业务上下文（生命周期阶段、细分、触发器）
 
 ---
 
-### Target Architecture (After Phase 1)
+### 目标架构（第 1 阶段后）
 
 ```mermaid
 graph TB
-    subgraph "Browser - Frontend"
+    subgraph "浏览器 - 前端"
         UI[Vue 3 SPA]
 
-        subgraph "Editor Layer"
-            Editor[Enhanced BPMN Editor]
-            Props[Properties Panel<br/>+ Lifecycle Context]
-            Viz[Lifecycle Visualizer]
+        subgraph "编辑器层"
+            Editor[增强 BPMN 编辑器]
+            Props[属性面板<br/>+ 生命周期上下文]
+            Viz[生命周期可视化器]
         end
 
-        subgraph "Service Layer"
-            LS[Lifecycle Service]
-            SS[Segment Service]
-            TS[Trigger Service]
-            MS[Metadata Service]
-            EOS[Editor Operation Service]
+        subgraph "服务层"
+            LS[生命周期服务]
+            SS[细分服务]
+            TS[触发器服务]
+            MS[元数据服务]
+            EOS[编辑器操作服务]
         end
 
-        subgraph "Data Layer"
-            Adapter[BPMN Adapter<br/>+ Lifecycle Support]
-            Types[TypeScript Types]
-            Config[JSON Configs]
+        subgraph "数据层"
+            Adapter[BPMN 适配器<br/>+ 生命周期支持]
+            Types[TypeScript 类型]
+            Config[JSON 配置]
         end
 
         UI --> Editor
@@ -76,9 +76,9 @@ graph TB
         Props --> Config
     end
 
-    subgraph "External"
+    subgraph "外部服务"
         LLM[Gemini API]
-        Storage[localStorage<br/>Enhanced]
+        Storage[localStorage<br/>增强]
     end
 
     Adapter --> Storage
@@ -90,44 +90,44 @@ graph TB
     style Adapter fill:#f3e5f5
 ```
 
-**Improvements**:
-- Structured service layer for lifecycle operations
-- Rich type system with lifecycle context
-- Configuration-driven UI components
-- Enhanced data model with business metadata
-- Foundation for future backend integration
+**改进**:
+- 结构化的生命周期操作服务层
+- 具有生命周期上下文的丰富类型系统
+- 配置驱动的 UI 组件
+- 具有业务元数据的增强数据模型
+- 为未来后端集成奠定基础
 
 ---
 
-## Component Architecture
+## 组件架构
 
-### Frontend Component Hierarchy
+### 前端组件层次结构
 
 ```mermaid
 graph TD
-    App[App.vue<br/>Root Component]
+    App[App.vue<br/>根组件]
 
-    subgraph "Pages"
+    subgraph "页面"
         BpmnPage[BpmnEditorPage.vue]
     end
 
-    subgraph "Core Editor"
-        BpmnEditor[BpmnEditor.vue<br/>Enhanced]
-        Palette[Palette<br/>bpmn-js]
-        Canvas[Canvas<br/>diagram-js]
-        PropsPanel[Properties Panel<br/>Enhanced]
+    subgraph "核心编辑器"
+        BpmnEditor[BpmnEditor.vue<br/>增强]
+        Palette[调色板<br/>bpmn-js]
+        Canvas[画布<br/>diagram-js]
+        PropsPanel[属性面板<br/>增强]
     end
 
-    subgraph "Lifecycle Components (NEW)"
+    subgraph "生命周期组件（新）"
         StageSelector[LifecycleStageSelector.vue]
         SegmentBuilder[UserSegmentBuilder.vue]
         TriggerEditor[TriggerConditionEditor.vue]
         MetadataPanel[WorkflowMetadataPanel.vue]
     end
 
-    subgraph "Existing Components"
+    subgraph "现有组件"
         ChatBox[ChatBox.vue]
-        Toolbar[Toolbar]
+        Toolbar[工具栏]
     end
 
     App --> BpmnPage
@@ -153,15 +153,15 @@ graph TD
 
 ---
 
-### Service Layer Architecture
+### 服务层架构
 
 ```mermaid
 graph LR
-    subgraph "UI Components"
-        Comp[Vue Components]
+    subgraph "UI 组件"
+        Comp[Vue 组件]
     end
 
-    subgraph "Service Layer"
+    subgraph "服务层"
         direction TB
 
         LS[LifecycleService]
@@ -170,16 +170,16 @@ graph LR
         MS[WorkflowMetadataService]
         EOS[EditorOperationService]
 
-        subgraph "Existing Services"
+        subgraph "现有服务"
             LLM[LLMService]
             LocalStore[LocalStorageService]
             Figma[FigmaService]
         end
     end
 
-    subgraph "Data Access"
+    subgraph "数据访问"
         Adapter[BpmnAdapter]
-        Config[Config Loader]
+        Config[配置加载器]
     end
 
     Comp --> LS
@@ -203,39 +203,39 @@ graph LR
     style MS fill:#e8f5e9
 ```
 
-**Service Responsibilities**:
+**服务职责**:
 
-| Service | Responsibility | Key Methods |
+| 服务 | 职责 | 关键方法 |
 |---------|---------------|-------------|
-| **LifecycleService** | Manage lifecycle stages | `getStages()`, `assignStage()`, `getStageConfig()` |
-| **UserSegmentService** | Manage user segments | `createSegment()`, `evaluateSegment()`, `getTemplates()` |
-| **TriggerService** | Manage workflow triggers | `createTrigger()`, `validateTrigger()`, `getTriggerTypes()` |
-| **WorkflowMetadataService** | Manage workflow metadata | `setMetadata()`, `getMetadata()`, `updateMetrics()` |
-| **EditorOperationService** | Editor operations | `createNode()`, `createFlow()`, `updateNode()` |
+| **LifecycleService** | 管理生命周期阶段 | `getStages()`, `assignStage()`, `getStageConfig()` |
+| **UserSegmentService** | 管理用户细分 | `createSegment()`, `evaluateSegment()`, `getTemplates()` |
+| **TriggerService** | 管理工作流触发器 | `createTrigger()`, `validateTrigger()`, `getTriggerTypes()` |
+| **WorkflowMetadataService** | 管理工作流元数据 | `setMetadata()`, `getMetadata()`, `updateMetrics()` |
+| **EditorOperationService** | 编辑器操作 | `createNode()`, `createFlow()`, `updateNode()` |
 
 ---
 
-## Data Flow Architecture
+## 数据流架构
 
-### Workflow Lifecycle Data Flow
+### 工作流生命周期数据流
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant UI as Properties Panel
+    participant User as 用户
+    participant UI as 属性面板
     participant LS as LifecycleService
     participant EOS as EditorOperationService
     participant Adapter as BpmnAdapter
     participant Storage as localStorage
 
-    User->>UI: Select element
+    User->>UI: 选择元素
     UI->>LS: getCurrentStage(elementId)
     LS->>Adapter: getElementMetadata(elementId)
     Adapter-->>LS: metadata
     LS-->>UI: currentStage
-    UI->>User: Display stage selector
+    UI->>User: 显示阶段选择器
 
-    User->>UI: Change stage to "Activation"
+    User->>UI: 更改阶段为"Activation"
     UI->>LS: assignStage(elementId, "Activation")
     LS->>EOS: updateElement(elementId, metadata)
     EOS->>Adapter: updateElementMetadata(elementId, metadata)
@@ -244,47 +244,47 @@ sequenceDiagram
     Adapter-->>EOS: success
     EOS-->>LS: success
     LS-->>UI: success
-    UI->>User: Update visual indicator
+    UI->>User: 更新视觉指示器
 ```
 
 ---
 
-### Segment Evaluation Flow
+### 细分评估流程
 
 ```mermaid
 sequenceDiagram
-    participant User
+    participant User as 用户
     participant UI as SegmentBuilder
     participant SS as UserSegmentService
     participant Config as segment-config.json
 
-    User->>UI: Open segment builder
+    User->>UI: 打开细分构建器
     UI->>SS: getSegmentTemplates()
-    SS->>Config: load templates
+    SS->>Config: 加载模板
     Config-->>SS: templates
     SS-->>UI: templates
-    UI->>User: Display templates
+    UI->>User: 显示模板
 
-    User->>UI: Select "Active Users" template
+    User->>UI: 选择"Active Users"模板
     UI->>SS: loadTemplate("active_users")
-    SS->>Config: get template definition
+    SS->>Config: 获取模板定义
     Config-->>SS: conditions
     SS-->>UI: conditions
-    UI->>User: Display pre-filled conditions
+    UI->>User: 显示预填充的条件
 
-    User->>UI: Customize conditions
-    User->>UI: Save segment
+    User->>UI: 自定义条件
+    User->>UI: 保存细分
     UI->>SS: saveSegment(segment)
     SS->>SS: validateSegment(segment)
-    SS-->>UI: validation result
-    UI->>User: Confirm saved
+    SS-->>UI: 验证结果
+    UI->>User: 确认已保存
 ```
 
 ---
 
-## Data Model Architecture
+## 数据模型架构
 
-### Core Type System
+### 核心类型系统
 
 ```mermaid
 classDiagram
@@ -364,35 +364,35 @@ classDiagram
 
 ---
 
-### XML Schema Extension
+### XML 架构扩展
 
 ```mermaid
 graph TD
-    subgraph "Standard BPMN"
+    subgraph "标准 BPMN"
         Defs[definitions]
         Process[process]
         Task[task]
         ExtElem[extensionElements]
     end
 
-    subgraph "XFlow Extensions (Existing)"
+    subgraph "XFlow 扩展（现有）"
         XFlowProps[xflow:properties]
     end
 
-    subgraph "Lifecycle Extensions (NEW)"
+    subgraph "生命周期扩展（新）"
         Lifecycle[xflow:lifecycle]
         Segment[xflow:segment]
         Trigger[xflow:trigger]
         Metrics[xflow:metrics]
 
-        LStage[stage attribute]
-        LColor[color attribute]
+        LStage[stage 属性]
+        LColor[color 属性]
 
-        SType[type attribute]
+        SType[type 属性]
         SCond[xflow:condition]
 
-        TType[type attribute]
-        TEvent[event attribute]
+        TType[type 属性]
+        TEvent[event 属性]
         TSchedule[xflow:schedule]
 
         MMetric[xflow:metric]
@@ -425,7 +425,7 @@ graph TD
     style Metrics fill:#e1f5ff
 ```
 
-**Example XML**:
+**示例 XML**:
 ```xml
 <bpmn:task id="Task_1" name="Onboarding Tutorial">
   <bpmn:extensionElements>
@@ -445,39 +445,39 @@ graph TD
 
 ---
 
-## Integration Architecture (Future Phases)
+## 集成架构（未来阶段）
 
-### Phase 2: Backend Integration
+### 第 2 阶段：后端集成
 
 ```mermaid
 graph TB
-    subgraph "Frontend (Browser)"
+    subgraph "前端（浏览器）"
         UI[Vue 3 SPA]
-        Services[Service Layer]
+        Services[服务层]
     end
 
-    subgraph "Backend (Phase 2)"
-        API[REST API Gateway]
+    subgraph "后端（第 2 阶段）"
+        API[REST API 网关]
 
-        subgraph "Core Services"
-            WES[Workflow Execution<br/>Service]
-            UPS[User Profile<br/>Service]
-            ES[Event<br/>Service]
-            AS[Analytics<br/>Service]
+        subgraph "核心服务"
+            WES[工作流执行<br/>服务]
+            UPS[用户画像<br/>服务]
+            ES[事件<br/>服务]
+            AS[分析<br/>服务]
         end
 
-        subgraph "Data Layer"
-            DB[(PostgreSQL<br/>User Profiles)]
-            Cache[(Redis<br/>Cache)]
-            Stream[Kafka<br/>Event Stream]
-            DW[(Data Warehouse<br/>Analytics)]
+        subgraph "数据层"
+            DB[(PostgreSQL<br/>用户画像)]
+            Cache[(Redis<br/>缓存)]
+            Stream[Kafka<br/>事件流]
+            DW[(数据仓库<br/>分析)]
         end
     end
 
-    subgraph "External Systems"
-        CRM[CRM System]
-        Email[Email Service]
-        Analytics[Analytics Platform]
+    subgraph "外部系统"
+        CRM[CRM 系统]
+        Email[邮件服务]
+        Analytics[分析平台]
     end
 
     UI --> Services
@@ -508,87 +508,87 @@ graph TB
 
 ---
 
-### Multi-Phase Roadmap
+### 多阶段路线图
 
 ```mermaid
 gantt
-    title Implementation Roadmap
+    title 实施路线图
     dateFormat  YYYY-MM-DD
-    section Phase 1: Foundation
-    Lifecycle Context       :done, p1a, 2024-01-01, 14d
-    Type Definitions        :done, p1b, 2024-01-01, 7d
-    UI Components          :done, p1c, 2024-01-08, 14d
-    Services Layer         :active, p1d, 2024-01-15, 10d
-    Testing & Migration    :p1e, 2024-01-25, 7d
+    section 第 1 阶段：基础
+    生命周期上下文       :done, p1a, 2024-01-01, 14d
+    类型定义        :done, p1b, 2024-01-01, 7d
+    UI 组件          :done, p1c, 2024-01-08, 14d
+    服务层         :active, p1d, 2024-01-15, 10d
+    测试和迁移    :p1e, 2024-01-25, 7d
 
-    section Phase 2: Data & Analytics
-    Backend API            :p2a, 2024-02-01, 21d
-    Database Setup         :p2b, 2024-02-01, 14d
-    Event Pipeline         :p2c, 2024-02-15, 14d
-    Analytics Dashboard    :p2d, 2024-03-01, 21d
+    section 第 2 阶段：数据和分析
+    后端 API            :p2a, 2024-02-01, 21d
+    数据库设置         :p2b, 2024-02-01, 14d
+    事件管道         :p2c, 2024-02-15, 14d
+    分析仪表板    :p2d, 2024-03-01, 21d
 
-    section Phase 3: AI Automation
-    AI Agent Framework     :p3a, 2024-04-01, 21d
-    Recommendations        :p3b, 2024-04-15, 14d
-    Predictive Analytics   :p3c, 2024-05-01, 21d
+    section 第 3 阶段：AI 自动化
+    AI Agent 框架     :p3a, 2024-04-01, 21d
+    推荐        :p3b, 2024-04-15, 14d
+    预测分析   :p3c, 2024-05-01, 21d
 
-    section Phase 4: Multi-Channel
-    Channel Integration    :p4a, 2024-06-01, 21d
-    Campaign Management    :p4b, 2024-06-15, 14d
-    A/B Testing           :p4c, 2024-07-01, 14d
+    section 第 4 阶段：多渠道
+    渠道集成    :p4a, 2024-06-01, 21d
+    活动管理    :p4b, 2024-06-15, 14d
+    A/B 测试           :p4c, 2024-07-01, 14d
 
-    section Phase 5: Personalization
-    User-Facing UI        :p5a, 2024-08-01, 28d
-    Recommendation Engine :p5b, 2024-08-15, 21d
-    Dynamic Content       :p5c, 2024-09-01, 14d
+    section 第 5 阶段：个性化
+    面向用户的 UI        :p5a, 2024-08-01, 28d
+    推荐引擎 :p5b, 2024-08-15, 21d
+    动态内容       :p5c, 2024-09-01, 14d
 ```
 
 ---
 
-## Deployment Architecture (Future)
+## 部署架构（未来）
 
-### Production Deployment (Phase 2+)
+### 生产部署（第 2 阶段+）
 
 ```mermaid
 graph TB
     subgraph "CDN"
-        Static[Static Assets<br/>JS, CSS, Images]
+        Static[静态资源<br/>JS, CSS, 图片]
     end
 
-    subgraph "Load Balancer"
+    subgraph "负载均衡器"
         LB[NGINX / ALB]
     end
 
-    subgraph "Frontend Servers"
-        FE1[Frontend Server 1]
-        FE2[Frontend Server 2]
-        FE3[Frontend Server N]
+    subgraph "前端服务器"
+        FE1[前端服务器 1]
+        FE2[前端服务器 2]
+        FE3[前端服务器 N]
     end
 
-    subgraph "Backend Cluster"
-        API1[API Server 1]
-        API2[API Server 2]
-        API3[API Server N]
+    subgraph "后端集群"
+        API1[API 服务器 1]
+        API2[API 服务器 2]
+        API3[API 服务器 N]
 
         Worker1[Worker 1]
         Worker2[Worker 2]
         Worker3[Worker N]
     end
 
-    subgraph "Data Tier"
-        PG[(PostgreSQL<br/>Primary)]
-        PGR[(PostgreSQL<br/>Replica)]
-        Redis[(Redis<br/>Cluster)]
-        Kafka[Kafka<br/>Cluster]
+    subgraph "数据层"
+        PG[(PostgreSQL<br/>主)]
+        PGR[(PostgreSQL<br/>副本)]
+        Redis[(Redis<br/>集群)]
+        Kafka[Kafka<br/>集群]
     end
 
-    subgraph "Monitoring"
+    subgraph "监控"
         Prom[Prometheus]
         Graf[Grafana]
-        Log[Logging Stack]
+        Log[日志堆栈]
     end
 
-    Users[Users] --> CDN
+    Users[用户] --> CDN
     Users --> LB
 
     LB --> FE1
@@ -631,28 +631,28 @@ graph TB
 
 ---
 
-## Security Architecture (Phase 2+)
+## 安全架构（第 2 阶段+）
 
 ```mermaid
 graph TD
-    subgraph "Client"
-        Browser[Web Browser]
+    subgraph "客户端"
+        Browser[Web 浏览器]
     end
 
-    subgraph "Security Layer"
-        WAF[Web Application<br/>Firewall]
-        Auth[Auth Service<br/>JWT Tokens]
-        RBAC[Role-Based<br/>Access Control]
-        Encrypt[Encryption<br/>at Rest]
+    subgraph "安全层"
+        WAF[Web 应用<br/>防火墙]
+        Auth[认证服务<br/>JWT Tokens]
+        RBAC[基于角色的<br/>访问控制]
+        Encrypt[静态加密]
     end
 
-    subgraph "Application"
-        API[API Gateway]
-        Services[Microservices]
+    subgraph "应用"
+        API[API 网关]
+        Services[微服务]
     end
 
-    subgraph "Data"
-        DB[(Encrypted<br/>Database)]
+    subgraph "数据"
+        DB[(加密<br/>数据库)]
     end
 
     Browser --> WAF
@@ -668,51 +668,51 @@ graph TD
     style Encrypt fill:#ffebee
 ```
 
-**Security Measures**:
-- ✅ JWT-based authentication
-- ✅ Role-based access control (Admin, Operator, Analyst)
-- ✅ Data encryption at rest (AES-256)
-- ✅ TLS 1.3 for data in transit
-- ✅ API rate limiting
-- ✅ PII data masking
-- ✅ Audit logging
-- ✅ GDPR compliance (consent management, right to deletion)
+**安全措施**:
+- ✅ 基于 JWT 的身份验证
+- ✅ 基于角色的访问控制（管理员、操作员、分析师）
+- ✅ 静态数据加密（AES-256）
+- ✅ 传输中数据使用 TLS 1.3
+- ✅ API 速率限制
+- ✅ PII 数据脱敏
+- ✅ 审计日志
+- ✅ GDPR 合规（同意管理、删除权）
 
 ---
 
-## Performance Considerations
+## 性能考虑
 
-### Scalability Targets (Phase 2+)
+### 可扩展性目标（第 2 阶段+）
 
-| Metric | Target | Strategy |
+| 指标 | 目标 | 策略 |
 |--------|--------|----------|
-| **Concurrent Users** | 10,000+ | Horizontal scaling, load balancing |
-| **Workflow Executions/sec** | 1,000+ | Async processing, message queues |
-| **API Response Time** | < 200ms (p95) | Caching, CDN, database optimization |
-| **Event Ingestion** | 100,000/sec | Kafka streaming, batch processing |
-| **Dashboard Load Time** | < 2sec | Pre-aggregation, lazy loading |
-| **Workflow File Size** | < 5MB | Compression, incremental loading |
+| **并发用户** | 10,000+ | 水平扩展、负载均衡 |
+| **工作流执行/秒** | 1,000+ | 异步处理、消息队列 |
+| **API 响应时间** | < 200ms (p95) | 缓存、CDN、数据库优化 |
+| **事件摄取** | 100,000/秒 | Kafka 流、批处理 |
+| **仪表板加载时间** | < 2秒 | 预聚合、延迟加载 |
+| **工作流文件大小** | < 5MB | 压缩、增量加载 |
 
-### Optimization Strategies
+### 优化策略
 
 ```mermaid
 graph LR
-    subgraph "Frontend Optimization"
-        CodeSplit[Code Splitting]
-        LazyLoad[Lazy Loading]
-        Memoization[Memoization]
+    subgraph "前端优化"
+        CodeSplit[代码分割]
+        LazyLoad[延迟加载]
+        Memoization[记忆化]
     end
 
-    subgraph "Backend Optimization"
-        Cache[Redis Caching]
-        Queue[Message Queues]
-        Index[Database Indexes]
+    subgraph "后端优化"
+        Cache[Redis 缓存]
+        Queue[消息队列]
+        Index[数据库索引]
     end
 
-    subgraph "Data Optimization"
-        Aggregate[Pre-Aggregation]
-        Partition[Data Partitioning]
-        Archive[Data Archival]
+    subgraph "数据优化"
+        Aggregate[预聚合]
+        Partition[数据分区]
+        Archive[数据归档]
     end
 
     style CodeSplit fill:#e8f5e9
@@ -722,30 +722,30 @@ graph LR
 
 ---
 
-## Monitoring & Observability (Phase 2+)
+## 监控和可观测性（第 2 阶段+）
 
 ```mermaid
 graph TB
-    subgraph "Application"
-        FE[Frontend]
-        BE[Backend Services]
+    subgraph "应用"
+        FE[前端]
+        BE[后端服务]
     end
 
-    subgraph "Monitoring Stack"
-        Metrics[Prometheus<br/>Metrics]
-        Traces[Jaeger<br/>Distributed Tracing]
-        Logs[ELK Stack<br/>Centralized Logging]
+    subgraph "监控堆栈"
+        Metrics[Prometheus<br/>指标]
+        Traces[Jaeger<br/>分布式追踪]
+        Logs[ELK 堆栈<br/>集中式日志]
     end
 
-    subgraph "Alerting"
+    subgraph "告警"
         Alert[AlertManager]
         PD[PagerDuty]
         Slack[Slack]
     end
 
-    subgraph "Dashboards"
-        Grafana[Grafana<br/>Dashboards]
-        Kibana[Kibana<br/>Log Analysis]
+    subgraph "仪表板"
+        Grafana[Grafana<br/>仪表板]
+        Kibana[Kibana<br/>日志分析]
     end
 
     FE --> Metrics
@@ -767,12 +767,12 @@ graph TB
     style Logs fill:#fff4e6
 ```
 
-**Key Metrics to Track**:
-- Application: Request rate, error rate, latency (p50/p95/p99)
-- Business: Workflow executions, user conversions, lifecycle progression
-- Infrastructure: CPU, memory, disk I/O, network
-- User Experience: Page load time, time to interactive, Core Web Vitals
+**关键指标跟踪**:
+- 应用：请求率、错误率、延迟（p50/p95/p99）
+- 业务：工作流执行、用户转化、生命周期进展
+- 基础设施：CPU、内存、磁盘 I/O、网络
+- 用户体验：页面加载时间、交互时间、Core Web Vitals
 
 ---
 
-This architecture documentation provides a comprehensive view of the system evolution from current state through all future phases. All diagrams are in Mermaid format and can be rendered in any markdown viewer that supports Mermaid (GitHub, GitLab, VS Code, etc.).
+此架构文档提供了从当前状态到所有未来阶段的系统演进的全面视图。所有图表均使用 Mermaid 格式，可以在任何支持 Mermaid 的 markdown 查看器中渲染（GitHub、GitLab、VS Code 等）。
