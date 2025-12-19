@@ -75,8 +75,6 @@
 - **AND** Claude 应当建议优化方案（如拆分子流程、合并节点）
 - **AND** 性能分析报告应当可视化展示
 
-## MODIFIED Requirements
-
 ### Requirement: BPMN 元素创建
 
 系统 SHALL 支持 AI 驱动的 BPMN 元素创建和连线。
@@ -96,7 +94,3 @@
 - **AND** 连线应当自动布局，避开中间节点
 - **AND** 连线标签应当自动定位，不与节点重叠
 - **AND** 连线创建成功后返回确认给 Claude
-
-## REMOVED Requirements
-
-无

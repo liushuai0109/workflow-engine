@@ -1,9 +1,9 @@
 # workflow-editor 规范
 
-## 目的
-待定 - 由归档变更 add-lifecycle-operations-foundation 创建。归档后更新目的。
+## Purpose
+工作流编辑器规范定义了 BPMN 工作流编辑器的功能需求，包括生命周期阶段分配、用户分群定位、触发条件配置、工作流元数据管理和 AI 驱动的智能工作流生成能力。
 
-## 需求
+## Requirements
 
 ### Requirement: 生命周期阶段分配
 
