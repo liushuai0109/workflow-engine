@@ -25,12 +25,14 @@ test-coverage: ensure-reports-dir
 	@$(GO) tool cover -func=reports/coverage/coverage.out > reports/coverage/coverage.txt
 	@$(GO) tool cover -html=reports/coverage/coverage.out -o reports/coverage/coverage.html
 	@echo ""
-	@echo "Coverage Summary:"
-	@$(GO) tool cover -func=reports/coverage/coverage.out | tail -1
+	@echo "=========================================="
+	@echo "Coverage Report (by file):"
+	@echo "=========================================="
+	@$(GO) tool cover -func=reports/coverage/coverage.out
 	@echo ""
 	@echo "Reports generated in reports/coverage/:"
 	@echo "  - coverage.out (raw data)"
-	@echo "  - coverage.txt (text report)"
+	@echo "  - coverage.txt (text report with full details)"
 	@echo "  - coverage.html (HTML report)"
 
 # Run tests using test script
