@@ -21,6 +21,14 @@ export interface ContentBlock {
   is_error?: boolean
 }
 
+// Tool Use 专用类型
+export type ToolUseBlock = ContentBlock & {
+  type: 'tool_use'
+  id: string
+  name: string
+  input: Record<string, any>
+}
+
 // 工具定义
 export interface ClaudeTool {
   name: string
@@ -96,6 +104,14 @@ export interface GenerateOptions {
 /**
  * Claude API 客户端类
  */
+export interface ClaudeAPIClientConfig {
+  apiKey?: string
+  baseUrl?: string
+  model?: string
+  maxTokens?: number
+  temperature?: number
+}
+
 export class ClaudeAPIClient {
   private apiKey: string
   private baseUrl: string
@@ -103,13 +119,13 @@ export class ClaudeAPIClient {
   private defaultMaxTokens: number
   private defaultTemperature: number
 
-  constructor() {
-    const config = llmConfig.getConfig()
-    this.apiKey = config.apiKey
-    this.baseUrl = config.baseUrl
-    this.model = config.model
-    this.defaultMaxTokens = config.maxTokens
-    this.defaultTemperature = config.temperature
+  constructor(config?: ClaudeAPIClientConfig) {
+    const defaultConfig = llmConfig.getConfig()
+    this.apiKey = config?.apiKey ?? defaultConfig.apiKey
+    this.baseUrl = config?.baseUrl ?? defaultConfig.baseUrl
+    this.model = config?.model ?? defaultConfig.model
+    this.defaultMaxTokens = config?.maxTokens ?? defaultConfig.maxTokens
+    this.defaultTemperature = config?.temperature ?? defaultConfig.temperature
   }
 
   /**
