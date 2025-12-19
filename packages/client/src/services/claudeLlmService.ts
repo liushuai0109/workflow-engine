@@ -9,7 +9,8 @@ import { ClaudeToolExecutor, extractToolUses, hasToolUse } from './claude/toolEx
 import type { ToolExecutorConfig, ToolExecutionResult } from './claude/toolExecutor'
 import { convertGeminiToClaudeMessages } from './claude/messageAdapter'
 import { getClaudeTools } from './llmTools'
-import { LLMConfig, getLLMConfig } from '../config/llmConfig'
+import type { LLMConfig } from '../config/llmConfig'
+import { getLLMConfig } from '../config/llmConfig'
 
 /**
  * 对话上下文管理
