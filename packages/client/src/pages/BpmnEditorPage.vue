@@ -109,11 +109,19 @@ import { llmService } from '../services/llmService'
 import type { Message, FunctionCall } from '../services/llmService'
 import { BPMN_SYSTEM_PROMPT } from '../prompts/bpmnSystemPrompt'
 import { EDITOR_SYSTEM_PROMPT } from '../prompts/editorSystemPrompt'
+import { CLAUDE_BPMN_SYSTEM_PROMPT } from '../prompts/claudeBpmnSystemPrompt'
 import { availableTools } from '../services/llmTools'
 import { editorOperationService } from '../services/editorOperationService'
+import { createBpmnClaudeLLMService } from '../services/claudeLlmService'
+import { createClaudeEditorBridge, waitForEditor } from '../services/claudeEditorBridge'
 import type { FileValidationResult } from '../types'
 
-// 配置：是否使用 Function Calling 模式
+// 配置：使用 Claude 还是 Gemini
+// Claude: 使用 Claude Sonnet 4.5 + Tool Use (推荐)
+// Gemini: 使用原有的 Gemini 实现
+const USE_CLAUDE = true
+
+// 配置：是否使用 Function Calling 模式（仅 Gemini）
 // 注意：Function Calling 需要官方 Gemini API 支持
 // 中转 API (api.aicodewith.com) 可能不支持，建议使用 XML 模式
 const USE_FUNCTION_CALLING = false
@@ -789,6 +797,13 @@ const handleChatMessage = async (message: string): Promise<void> => {
   }
 
   try {
+    // 如果使用 Claude，走 Claude 处理流程
+    if (USE_CLAUDE) {
+      await handleChatWithClaude(message)
+      return
+    }
+
+    // 以下是原有的 Gemini 处理流程
     // 检测是否是流程图相关请求
     const isFlowRequest = isFlowDiagramRequest(message)
 
@@ -824,6 +839,54 @@ const handleChatMessage = async (message: string): Promise<void> => {
     if (chatBoxRef.value) {
       chatBoxRef.value.setLoading(false)
     }
+  }
+}
+
+// Claude 模式: 使用 Claude Tool Use 直接操作编辑器
+let claudeService: ReturnType<typeof createBpmnClaudeLLMService> | null = null
+
+const handleChatWithClaude = async (message: string): Promise<void> => {
+  // 初始化 Claude 服务（如果尚未初始化）
+  if (!claudeService) {
+    // 等待编辑器初始化
+    if (bpmnEditor.value) {
+      const modeler = bpmnEditor.value.getModeler()
+      if (modeler) {
+        editorOperationService.init(modeler)
+      } else {
+        // 等待编辑器准备就绪
+        const ready = await waitForEditor(3000)
+        if (!ready) {
+          throw new Error('编辑器未准备就绪，请稍后再试')
+        }
+        const retryModeler = bpmnEditor.value.getModeler()
+        if (retryModeler) {
+          editorOperationService.init(retryModeler)
+        }
+      }
+    }
+
+    // 创建 Claude 服务实例
+    const editorBridge = createClaudeEditorBridge()
+    claudeService = createBpmnClaudeLLMService(editorBridge, CLAUDE_BPMN_SYSTEM_PROMPT)
+
+    console.log('✅ Claude 服务已初始化')
+  }
+
+  try {
+    // 调用 Claude API，自动处理工具调用
+    const response = await claudeService.sendMessage(message)
+
+    // 显示响应
+    if (chatBoxRef.value && response) {
+      chatBoxRef.value.addAssistantMessage(response)
+    }
+
+    // 如果流程图发生变化，更新状态
+    showStatus('操作完成', 'success')
+  } catch (error) {
+    console.error('Claude API 调用失败:', error)
+    throw error
   }
 }
 
