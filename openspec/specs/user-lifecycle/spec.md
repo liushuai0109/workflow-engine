@@ -1,152 +1,152 @@
-# user-lifecycle Specification
+# user-lifecycle 规范
 
-## Purpose
-TBD - created by archiving change add-lifecycle-operations-foundation. Update Purpose after archive.
-## Requirements
-### Requirement: AARRR Lifecycle Stage Definition
+## 目的
+待定 - 通过归档变更 add-lifecycle-operations-foundation 创建。请在归档后更新目的。
 
-The system SHALL implement the AARRR (Pirate Metrics) user lifecycle model.
+## 需求
+### 需求：AARRR 生命周期阶段定义
 
-#### Scenario: Acquisition stage definition
+系统应实现 AARRR（海盗指标）用户生命周期模型。
 
-- **WHEN** the system processes acquisition stage workflows
-- **THEN** the stage represents user acquisition channels and campaigns
-- **AND** metrics tracked include: visitor count, signup rate, cost per acquisition, channel attribution
-- **AND** common actions include: landing page display, signup form, referral tracking
+#### 场景：获客阶段定义
 
-#### Scenario: Activation stage definition
+- **当**系统处理获客阶段工作流时
+- **则**该阶段代表用户获取渠道和活动
+- **并且**跟踪的指标包括：访客数量、注册率、获客成本、渠道归因
+- **并且**常见操作包括：着陆页展示、注册表单、推荐跟踪
 
-- **WHEN** the system processes activation stage workflows
-- **THEN** the stage represents first-time user experience and value delivery
-- **AND** metrics tracked include: onboarding completion rate, time to first value, feature adoption rate
-- **AND** common actions include: tutorial completion, profile setup, first transaction
+#### 场景：激活阶段定义
 
-#### Scenario: Retention stage definition
+- **当**系统处理激活阶段工作流时
+- **则**该阶段代表首次用户体验和价值交付
+- **并且**跟踪的指标包括：入门完成率、首次价值时间、功能采用率
+- **并且**常见操作包括：教程完成、档案设置、首次交易
 
-- **WHEN** the system processes retention stage workflows
-- **THEN** the stage represents ongoing user engagement
-- **AND** metrics tracked include: daily active users, weekly active users, churn rate, engagement score
-- **AND** common actions include: reminder notifications, re-engagement campaigns, habit formation
+#### 场景：留存阶段定义
 
-#### Scenario: Revenue stage definition
+- **当**系统处理留存阶段工作流时
+- **则**该阶段代表持续的用户参与
+- **并且**跟踪的指标包括：日活跃用户、周活跃用户、流失率、参与度分数
+- **并且**常见操作包括：提醒通知、重新参与活动、习惯养成
 
-- **WHEN** the system processes revenue stage workflows
-- **THEN** the stage represents monetization activities
-- **AND** metrics tracked include: conversion rate, average order value, customer lifetime value, revenue per user
-- **AND** common actions include: upsell offers, premium upgrades, purchase reminders
+#### 场景：变现阶段定义
 
-#### Scenario: Referral stage definition
+- **当**系统处理变现阶段工作流时
+- **则**该阶段代表货币化活动
+- **并且**跟踪的指标包括：转化率、平均订单价值、客户生命周期价值、单用户收入
+- **并且**常见操作包括：追加销售优惠、高级升级、购买提醒
 
-- **WHEN** the system processes referral stage workflows
-- **THEN** the stage represents viral growth and advocacy
-- **AND** metrics tracked include: referral rate, viral coefficient, shares per user, referral conversion rate
-- **AND** common actions include: referral program invites, social sharing prompts, incentive delivery
+#### 场景：推荐阶段定义
 
-### Requirement: User Segment Management
+- **当**系统处理推荐阶段工作流时
+- **则**该阶段代表病毒式增长和倡导
+- **并且**跟踪的指标包括：推荐率、病毒系数、单用户分享数、推荐转化率
+- **并且**常见操作包括：推荐计划邀请、社交分享提示、激励交付
 
-The system SHALL support defining and managing user segments for targeted operations.
+### 需求：用户细分管理
 
-#### Scenario: Demographic segmentation
+系统应支持定义和管理用户细分以进行定向操作。
 
-- **WHEN** an operator defines demographic segments
-- **THEN** available attributes include: age range, gender, location (country/city), language, device type
-- **AND** segments can combine multiple demographic criteria
-- **AND** segment membership is evaluated based on user profile data
+#### 场景：人口统计细分
 
-#### Scenario: Behavioral segmentation
+- **当**运营人员定义人口统计细分时
+- **则**可用属性包括：年龄范围、性别、位置（国家/城市）、语言、设备类型
+- **并且**细分可以组合多个人口统计标准
+- **并且**细分成员资格基于用户档案数据进行评估
 
-- **WHEN** an operator defines behavioral segments
-- **THEN** available attributes include: session frequency, session duration, feature usage, purchase frequency, content preferences
-- **AND** time-based behavioral patterns are supported (e.g., active in last 7 days)
-- **AND** engagement levels can be calculated (low, medium, high)
+#### 场景：行为细分
 
-#### Scenario: Lifecycle-based segmentation
+- **当**运营人员定义行为细分时
+- **则**可用属性包括：会话频率、会话持续时间、功能使用、购买频率、内容偏好
+- **并且**支持基于时间的行为模式（例如，过去 7 天活跃）
+- **并且**可以计算参与度级别（低、中、高）
 
-- **WHEN** an operator defines lifecycle segments
-- **THEN** available categories include: new users (< 7 days), active users (engaged recently), at-risk users (declining engagement), dormant users (> 30 days inactive), churned users (no activity > 90 days)
-- **AND** segments automatically update based on user behavior
-- **AND** transition rules between segments are configurable
+#### 场景：生命周期细分
 
-#### Scenario: Value-based segmentation
+- **当**运营人员定义生命周期细分时
+- **则**可用类别包括：新用户（< 7 天）、活跃用户（最近参与）、风险用户（参与度下降）、休眠用户（> 30 天不活跃）、流失用户（> 90 天无活动）
+- **并且**细分根据用户行为自动更新
+- **并且**细分之间的过渡规则可配置
 
-- **WHEN** an operator defines value segments
-- **THEN** available attributes include: customer lifetime value, purchase amount, subscription tier, loyalty points
-- **AND** value tiers can be defined (bronze, silver, gold, platinum)
-- **AND** segment thresholds are configurable
+#### 场景：价值细分
 
-### Requirement: User Journey Mapping
+- **当**运营人员定义价值细分时
+- **则**可用属性包括：客户生命周期价值、购买金额、订阅层级、忠诚度积分
+- **并且**可以定义价值层级（铜、银、金、白金）
+- **并且**细分阈值可配置
 
-The system SHALL support mapping user journeys across lifecycle stages.
+### 需求：用户旅程映射
 
-#### Scenario: Define journey path
+系统应支持跨生命周期阶段映射用户旅程。
 
-- **WHEN** an operator creates a user journey
-- **THEN** journey stages can be sequenced (Acquisition → Activation → Retention → Revenue → Referral)
-- **AND** each stage can have multiple touchpoints
-- **AND** touchpoints include: channels (email, SMS, push, in-app), timing, content
+#### 场景：定义旅程路径
 
-#### Scenario: Journey flow visualization
+- **当**运营人员创建用户旅程时
+- **则**旅程阶段可以排序（获客 → 激活 → 留存 → 变现 → 推荐）
+- **并且**每个阶段可以有多个触点
+- **并且**触点包括：渠道（电子邮件、SMS、推送、应用内）、时机、内容
 
-- **WHEN** an operator views a user journey
-- **THEN** the journey is displayed as a flow diagram
-- **AND** each stage shows conversion rates and drop-off points
-- **AND** user volume at each stage is indicated
-- **AND** bottlenecks are highlighted
+#### 场景：旅程流可视化
 
-#### Scenario: Journey optimization suggestions
+- **当**运营人员查看用户旅程时
+- **则**旅程显示为流程图
+- **并且**每个阶段显示转化率和流失点
+- **并且**指示每个阶段的用户量
+- **并且**突出显示瓶颈
 
-- **WHEN** a user journey has low conversion rates
-- **THEN** the system provides optimization suggestions
-- **AND** suggestions include: timing adjustments, channel changes, content improvements
-- **AND** A/B test recommendations are provided
+#### 场景：旅程优化建议
 
-### Requirement: Lifecycle Metrics Tracking
+- **当**用户旅程转化率较低时
+- **则**系统提供优化建议
+- **并且**建议包括：时机调整、渠道变更、内容改进
+- **并且**提供 A/B 测试建议
 
-The system SHALL track and calculate lifecycle metrics for each workflow.
+### 需求：生命周期指标跟踪
 
-#### Scenario: Conversion rate calculation
+系统应跟踪和计算每个工作流的生命周期指标。
 
-- **WHEN** a workflow executes across lifecycle stages
-- **THEN** conversion rates between stages are calculated
-- **AND** formula: (users_completed_stage / users_entered_stage) × 100
-- **AND** rates are tracked over time for trend analysis
+#### 场景：转化率计算
 
-#### Scenario: User progression tracking
+- **当**工作流跨生命周期阶段执行时
+- **则**计算阶段之间的转化率
+- **并且**公式：（完成阶段的用户数 / 进入阶段的用户数）× 100
+- **并且**随时间跟踪转化率以进行趋势分析
 
-- **WHEN** users move through lifecycle stages
-- **THEN** progression speed is tracked (time between stages)
-- **AND** average, median, and percentile values are calculated
-- **AND** slow progressions are flagged for intervention
+#### 场景：用户进展跟踪
 
-#### Scenario: Cohort analysis
+- **当**用户在生命周期阶段中移动时
+- **则**跟踪进展速度（阶段之间的时间）
+- **并且**计算平均值、中位数和百分位数
+- **并且**标记慢速进展以进行干预
 
-- **WHEN** analyzing user lifecycle performance
-- **THEN** cohort analysis is available by signup date, acquisition channel, segment
-- **AND** cohort retention curves are generated
-- **AND** cohort comparisons identify best-performing groups
+#### 场景：队列分析
 
-### Requirement: Lifecycle Stage Transitions
+- **当**分析用户生命周期表现时
+- **则**队列分析可按注册日期、获取渠道、细分进行
+- **并且**生成队列留存曲线
+- **并且**队列比较识别表现最佳的组
 
-The system SHALL manage user transitions between lifecycle stages.
+### 需求：生命周期阶段过渡
 
-#### Scenario: Automatic stage transition
+系统应管理生命周期阶段之间的用户过渡。
 
-- **WHEN** a user meets transition criteria
-- **THEN** the user automatically moves to the next lifecycle stage
-- **AND** transition events trigger associated workflows
-- **AND** transition history is recorded
+#### 场景：自动阶段过渡
 
-#### Scenario: Manual stage assignment
+- **当**用户满足过渡标准时
+- **则**用户自动移动到下一个生命周期阶段
+- **并且**过渡事件触发关联的工作流
+- **并且**记录过渡历史
 
-- **WHEN** an operator manually assigns a lifecycle stage
-- **THEN** the assignment overrides automatic transitions
-- **AND** a reason for manual assignment is required
-- **AND** manual assignments are logged for audit
+#### 场景：手动阶段分配
 
-#### Scenario: Stage regression handling
+- **当**运营人员手动分配生命周期阶段时
+- **则**分配覆盖自动过渡
+- **并且**需要手动分配的原因
+- **并且**记录手动分配以供审计
 
-- **WHEN** a user regresses to a previous stage (e.g., active → at-risk)
-- **THEN** regression is detected and flagged
-- **AND** win-back workflows are triggered
-- **AND** regression reasons are analyzed (reduced engagement, negative feedback, competitive loss)
+#### 场景：阶段回退处理
 
+- **当**用户回退到先前阶段时（例如，活跃 → 风险）
+- **则**检测并标记回退
+- **并且**触发挽回工作流
+- **并且**分析回退原因（参与度降低、负面反馈、竞争流失）

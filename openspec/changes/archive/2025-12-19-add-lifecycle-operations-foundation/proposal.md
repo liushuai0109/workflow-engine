@@ -1,76 +1,76 @@
-# Change: Add User Lifecycle Operations Foundation
+# 变更：添加用户生命周期操作基础
 
-## Why
+## 为什么
 
-The current XPMN Explorer is a basic BPMN diagram editor focused on technical workflow modeling. The business vision requires transforming it into a comprehensive **User Lifecycle Operations Management Platform** that enables:
+当前的 XPMN Explorer 是一个专注于技术工作流建模的基础 BPMN 图表编辑器。业务愿景要求将其转变为一个全面的**用户生命周期操作管理平台**，该平台能够实现：
 
-1. **Business Context**: Workflows must represent user journeys with lifecycle stages (AARRR model)
-2. **Data-Driven Operations**: Integration with user data, behavioral analytics, and real-time events
-3. **AI-Powered Automation**: Intelligent workflow orchestration and personalized user experiences
-4. **Operations Focus**: Tools for marketers/operators to manage customer lifecycle without coding
+1. **业务上下文**：工作流必须表示具有生命周期阶段（AARRR 模型）的用户旅程
+2. **数据驱动操作**：与用户数据、行为分析和实时事件集成
+3. **AI 驱动自动化**：智能工作流编排和个性化用户体验
+4. **操作聚焦**：为营销人员/运营人员提供工具，无需编码即可管理客户生命周期
 
-**Gap Analysis**: Current implementation provides ~10-15% of the envisioned platform. This change establishes the foundational architecture to support user lifecycle operations.
+**差距分析**：当前实现提供了约 10-15% 的设想平台。此变更建立了支持用户生命周期操作的基础架构。
 
-## What Changes
+## 什么变更
 
-### Phase 1: Foundation (This Change)
+### 阶段 1：基础（此变更）
 
-- **User Lifecycle Context**: Add AARRR model support to workflow elements
-  - Define lifecycle stages: Acquisition, Activation, Retention, Revenue, Referral
-  - Extend BPMN elements with user journey metadata
-  - Add lifecycle stage visualization in editor
+- **用户生命周期上下文**：向工作流元素添加 AARRR 模型支持
+  - 定义生命周期阶段：获客、激活、留存、变现、推荐
+  - 使用用户旅程元数据扩展 BPMN 元素
+  - 在编辑器中添加生命周期阶段可视化
 
-- **Enhanced Workflow Properties**:
-  - User segment targeting (demographics, behavior, engagement level)
-  - Trigger conditions (events, time-based, data thresholds)
-  - Success metrics and KPIs per workflow stage
+- **增强的工作流属性**：
+  - 用户细分定向（人口统计、行为、参与度级别）
+  - 触发条件（事件、基于时间、数据阈值）
+  - 每个工作流阶段的成功指标和 KPI
 
-- **Data Model Foundation**:
-  - Define user profile schema
-  - Event data structure
-  - Workflow execution context
+- **数据模型基础**：
+  - 定义用户档案模式
+  - 事件数据结构
+  - 工作流执行上下文
 
-- **Backend Architecture Planning**:
-  - Design API contracts for workflow execution engine
-  - Define data persistence strategy
-  - Plan real-time event integration points
+- **后端架构规划**：
+  - 设计工作流执行引擎的 API 契约
+  - 定义数据持久化策略
+  - 规划实时事件集成点
 
-### Future Phases (Not in this change)
+### 未来阶段（不在此变更中）
 
-- Phase 2: Data Visualization & Analytics Dashboard
-- Phase 3: AI Agent Workflow Automation
-- Phase 4: Multi-channel Operations Orchestration
-- Phase 5: End-user Personalization Interface
+- 阶段 2：数据可视化与分析仪表板
+- 阶段 3：AI Agent 工作流自动化
+- 阶段 4：多渠道操作编排
+- 阶段 5：终端用户个性化界面
 
-## Impact
+## 影响
 
-### Affected Specs
-- **NEW**: `workflow-editor` - Enhanced BPMN editor with lifecycle context
-- **NEW**: `user-lifecycle` - AARRR model and user journey management
-- **NEW**: `data-integration` - Data models and integration contracts
+### 受影响的规范
+- **新增**：`workflow-editor` - 具有生命周期上下文的增强 BPMN 编辑器
+- **新增**：`user-lifecycle` - AARRR 模型和用户旅程管理
+- **新增**：`data-integration` - 数据模型和集成契约
 
-### Affected Code
-- `src/extensions/xflow/` - Add lifecycle properties to XFlow extensions
-- `src/types/index.ts` - Add user lifecycle type definitions
-- `src/services/` - New services for lifecycle management
-- `src/components/BpmnEditor.vue` - Enhanced properties panel
-- New configuration files for lifecycle stages and segments
+### 受影响的代码
+- `src/extensions/xflow/` - 向 XFlow 扩展添加生命周期属性
+- `src/types/index.ts` - 添加用户生命周期类型定义
+- `src/services/` - 生命周期管理的新服务
+- `src/components/BpmnEditor.vue` - 增强的属性面板
+- 生命周期阶段和细分的新配置文件
 
-### Breaking Changes
-- **BREAKING**: XFlow extension format will include new required metadata fields
-- **BREAKING**: Workflow XML schema will be extended with lifecycle namespaces
+### 破坏性变更
+- **破坏性**：XFlow 扩展格式将包含新的必填元数据字段
+- **破坏性**：工作流 XML 模式将使用生命周期命名空间扩展
 
-### Migration Path
-- Existing workflows will be automatically migrated with default lifecycle stage "Retention"
-- Backward compatibility maintained through adapter layer
-- Migration script will be provided
+### 迁移路径
+- 现有工作流将自动迁移，默认生命周期阶段为"留存"
+- 通过适配器层维护向后兼容性
+- 将提供迁移脚本
 
-## Success Criteria
+## 成功标准
 
-- [ ] Workflow elements can be tagged with AARRR lifecycle stages
-- [ ] Properties panel supports user segment configuration
-- [ ] Workflow can define trigger conditions and success metrics
-- [ ] Data models documented and validated
-- [ ] Backend API contracts defined (OpenAPI spec)
-- [ ] Existing workflows load without errors after migration
-- [ ] All tests pass with new type definitions
+- [ ] 工作流元素可以用 AARRR 生命周期阶段标记
+- [ ] 属性面板支持用户细分配置
+- [ ] 工作流可以定义触发条件和成功指标
+- [ ] 数据模型已记录和验证
+- [ ] 后端 API 契约已定义（OpenAPI 规范）
+- [ ] 迁移后现有工作流无错误加载
+- [ ] 所有测试通过新的类型定义
