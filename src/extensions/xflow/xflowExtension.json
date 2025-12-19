@@ -23,6 +23,31 @@
           "value": "Boolean"
         }
       ]
+    },
+    {
+      "name": "LifecycleStageType",
+      "literalValues": [
+        {
+          "name": "Acquisition",
+          "value": "Acquisition"
+        },
+        {
+          "name": "Activation",
+          "value": "Activation"
+        },
+        {
+          "name": "Retention",
+          "value": "Retention"
+        },
+        {
+          "name": "Revenue",
+          "value": "Revenue"
+        },
+        {
+          "name": "Referral",
+          "value": "Referral"
+        }
+      ]
     }
   ],
   "types": [
@@ -165,6 +190,104 @@
         },
         {
           "name": "nodeName",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "Lifecycle",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "stage",
+          "type": "LifecycleStageType",
+          "isAttr": true
+        },
+        {
+          "name": "color",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "icon",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "version",
+          "type": "String",
+          "isAttr": true,
+          "default": "1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "Segments",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "segmentIds",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "Triggers",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "triggerIds",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "WorkflowMetadata",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "workflowId",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "workflowName",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "workflowPurpose",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "workflowVersion",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "workflowOwner",
+          "type": "String",
+          "isAttr": true
+        },
+        {
+          "name": "workflowTags",
           "type": "String",
           "isAttr": true
         }

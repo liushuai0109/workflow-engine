@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: Lifecycle Operations Management API
+  description: REST API for lifecycle operations management platform
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api@example.com
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://api-staging.example.com/v1
+    description: Staging server
+
+tags:
+  - name: Workflows
+    description: Workflow execution and management
+  - name: Segments
+    description: User segmentation
+  - name: Triggers
+    description: Event triggers
+  - name: Users
+    description: User profiles and lifecycle
+  - name: Metrics
+    description: Analytics and metrics
+
+paths:
+  /workflows:
+    get:
+      tags: [Workflows]
+      summary: List all workflows
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workflow'
+
+    post:
+      tags: [Workflows]
+      summary: Create new workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowCreate'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /workflows/{workflowId}/execute:
+    post:
+      tags: [Workflows]
+      summary: Execute workflow
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowExecutionRequest'
+      responses:
+        '200':
+          description: Workflow execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+
+  /segments:
+    get:
+      tags: [Segments]
+      summary: List all segments
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSegment'
+
+    post:
+      tags: [Segments]
+      summary: Create new segment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSegmentCreate'
+      responses:
+        '201':
+          description: Segment created
+
+  /segments/{segmentId}/evaluate:
+    post:
+      tags: [Segments]
+      summary: Evaluate user against segment
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Evaluation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matches:
+                    type: boolean
+                  segmentId:
+                    type: string
+                  userId:
+                    type: string
+
+  /triggers:
+    post:
+      tags: [Triggers]
+      summary: Create new trigger
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerCreate'
+      responses:
+        '201':
+          description: Trigger created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trigger'
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /users/{userId}/lifecycle:
+    get:
+      tags: [Users]
+      summary: Get user lifecycle status
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lifecycle status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLifecycleStatus'
+
+    post:
+      tags: [Users]
+      summary: Transition user lifecycle stage
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetStage:
+                  type: string
+                  enum: [Acquisition, Activation, Retention, Revenue, Referral]
+      responses:
+        '200':
+          description: Transition successful
+
+  /metrics/lifecycle/funnel:
+    get:
+      tags: [Metrics]
+      summary: Get lifecycle funnel metrics
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Funnel metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FunnelMetrics'
+
+components:
+  schemas:
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        bpmnXml:
+          type: string
+        version:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    WorkflowCreate:
+      type: object
+      required: [name, bpmnXml]
+      properties:
+        name:
+          type: string
+        bpmnXml:
+          type: string
+
+    WorkflowExecutionRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+        variables:
+          type: object
+
+    WorkflowExecution:
+      type: object
+      properties:
+        executionId:
+          type: string
+        workflowId:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+
+    UserSegment:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        conditions:
+          type: object
+
+    UserSegmentCreate:
+      type: object
+      required: [name, conditions]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        conditions:
+          type: object
+
+    Trigger:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        eventType:
+          type: string
+        conditions:
+          type: object
+
+    TriggerCreate:
+      type: object
+      required: [name, eventType]
+      properties:
+        name:
+          type: string
+        eventType:
+          type: string
+        conditions:
+          type: object
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        attributes:
+          type: object
+
+    UserLifecycleStatus:
+      type: object
+      properties:
+        userId:
+          type: string
+        currentStage:
+          type: string
+          enum: [Acquisition, Activation, Retention, Revenue, Referral]
+        stageHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              stage:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+
+    FunnelMetrics:
+      type: object
+      properties:
+        stages:
+          type: array
+          items:
+            type: object
+            properties:
+              stage:
+                type: string
+              userCount:
+                type: integer
+              conversionRate:
+                type: number
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

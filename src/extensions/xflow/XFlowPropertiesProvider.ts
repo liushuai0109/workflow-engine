@@ -118,6 +118,13 @@ export default class XFlowPropertiesProvider {
         }
       }
 
+      // Add Lifecycle Properties group for all flow elements (tasks, events, gateways)
+      if (is(element, "bpmn:FlowNode") && !is(element, "bpmn:Process")) {
+        const lifecycleGroup = this.createLifecyclePropertiesGroup(element, businessObject);
+        console.log("Created Lifecycle Properties group:", lifecycleGroup);
+        groups.push(lifecycleGroup);
+      }
+
       console.log("Final groups:", groups);
       return groups;
     };
@@ -2943,6 +2950,333 @@ export default class XFlowPropertiesProvider {
     };
   }
 
+  // Lifecycle Properties 扩展属性组
+  private createLifecyclePropertiesGroup(
+    element: BpmnElement,
+    businessObject: any
+  ): PropertiesPanelGroup {
+    return {
+      id: "lifecycleProperties",
+      label: this.translate("Lifecycle Operations"),
+      entries: [
+        // Lifecycle Stage 选择器
+        {
+          id: "lifecycleStage",
+          component: this.createCachedComponent(
+            "lifecycle-stage",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const commandStack = this.injector.get("commandStack");
+              const bpmnFactory = this.injector.get("bpmnFactory");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                const lifecycle = this.getLifecycleElement(bo);
+                return lifecycle?.stage || "";
+              };
+
+              const setValue = (value: string) => {
+                const bo = getBusinessObject(props.element);
+
+                if (!value || value.trim() === "") {
+                  // Remove lifecycle if empty
+                  this.removeLifecycleElement(props.element, bo);
+                  return;
+                }
+
+                let extensionElements = bo.extensionElements;
+                if (!extensionElements) {
+                  extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
+                    values: [],
+                  });
+                  bo.extensionElements = extensionElements;
+                  commandStack.execute("element.updateModdleProperties", {
+                    element: props.element,
+                    moddleElement: bo,
+                    properties: { extensionElements },
+                  });
+                }
+
+                if (!extensionElements.values) {
+                  extensionElements.values = [];
+                }
+
+                let lifecycle = this.getLifecycleElement(bo);
+                if (!lifecycle) {
+                  lifecycle = bpmnFactory.create("xflow:Lifecycle", {
+                    stage: value,
+                    version: "1.0.0"
+                  });
+                  lifecycle.$parent = extensionElements;
+                  extensionElements.values.push(lifecycle);
+                } else {
+                  lifecycle.stage = value;
+                }
+
+                commandStack.execute("element.updateModdleProperties", {
+                  element: props.element,
+                  moddleElement: extensionElements,
+                  properties: {
+                    values: extensionElements.values,
+                  },
+                });
+              };
+
+              const getOptions = () => {
+                return [
+                  { value: "", label: translate("None") },
+                  { value: "Acquisition", label: translate("🎯 Acquisition") },
+                  { value: "Activation", label: translate("✨ Activation") },
+                  { value: "Retention", label: translate("🔄 Retention") },
+                  { value: "Revenue", label: translate("💰 Revenue") },
+                  { value: "Referral", label: translate("🚀 Referral") },
+                ];
+              };
+
+              return SelectEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("Lifecycle Stage"),
+                getValue,
+                setValue,
+                getOptions,
+                description: translate("AARRR lifecycle stage for this element"),
+              });
+            }
+          ),
+        },
+        // User Segments
+        {
+          id: "userSegments",
+          component: this.createCachedComponent(
+            "user-segments",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const debounce = this.injector.get("debounceInput");
+              const commandStack = this.injector.get("commandStack");
+              const bpmnFactory = this.injector.get("bpmnFactory");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                const segments = this.getSegmentsElement(bo);
+                return segments?.segmentIds || "";
+              };
+
+              const setValue = (value: string) => {
+                const bo = getBusinessObject(props.element);
+
+                if (!value || value.trim() === "") {
+                  this.removeSegmentsElement(props.element, bo);
+                  return;
+                }
+
+                let extensionElements = bo.extensionElements;
+                if (!extensionElements) {
+                  extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
+                    values: [],
+                  });
+                  bo.extensionElements = extensionElements;
+                  commandStack.execute("element.updateModdleProperties", {
+                    element: props.element,
+                    moddleElement: bo,
+                    properties: { extensionElements },
+                  });
+                }
+
+                if (!extensionElements.values) {
+                  extensionElements.values = [];
+                }
+
+                let segments = this.getSegmentsElement(bo);
+                if (!segments) {
+                  segments = bpmnFactory.create("xflow:Segments", {
+                    segmentIds: value
+                  });
+                  segments.$parent = extensionElements;
+                  extensionElements.values.push(segments);
+                } else {
+                  segments.segmentIds = value;
+                }
+
+                commandStack.execute("element.updateModdleProperties", {
+                  element: props.element,
+                  moddleElement: extensionElements,
+                  properties: {
+                    values: extensionElements.values,
+                  },
+                });
+              };
+
+              return TextFieldEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("Target Segments"),
+                getValue,
+                setValue,
+                debounce,
+                description: translate("Comma-separated segment IDs"),
+                placeholder: translate("e.g., new_users, high_value"),
+              });
+            }
+          ),
+        },
+        // Triggers
+        {
+          id: "triggers",
+          component: this.createCachedComponent(
+            "triggers",
+            () => (props: { element: BpmnElement; id: string }) => {
+              const translate = this.injector.get("translate");
+              const debounce = this.injector.get("debounceInput");
+              const commandStack = this.injector.get("commandStack");
+              const bpmnFactory = this.injector.get("bpmnFactory");
+
+              const getValue = () => {
+                const bo = getBusinessObject(props.element);
+                const triggers = this.getTriggersElement(bo);
+                return triggers?.triggerIds || "";
+              };
+
+              const setValue = (value: string) => {
+                const bo = getBusinessObject(props.element);
+
+                if (!value || value.trim() === "") {
+                  this.removeTriggersElement(props.element, bo);
+                  return;
+                }
+
+                let extensionElements = bo.extensionElements;
+                if (!extensionElements) {
+                  extensionElements = bpmnFactory.create("bpmn:ExtensionElements", {
+                    values: [],
+                  });
+                  bo.extensionElements = extensionElements;
+                  commandStack.execute("element.updateModdleProperties", {
+                    element: props.element,
+                    moddleElement: bo,
+                    properties: { extensionElements },
+                  });
+                }
+
+                if (!extensionElements.values) {
+                  extensionElements.values = [];
+                }
+
+                let triggers = this.getTriggersElement(bo);
+                if (!triggers) {
+                  triggers = bpmnFactory.create("xflow:Triggers", {
+                    triggerIds: value
+                  });
+                  triggers.$parent = extensionElements;
+                  extensionElements.values.push(triggers);
+                } else {
+                  triggers.triggerIds = value;
+                }
+
+                commandStack.execute("element.updateModdleProperties", {
+                  element: props.element,
+                  moddleElement: extensionElements,
+                  properties: {
+                    values: extensionElements.values,
+                  },
+                });
+              };
+
+              return TextFieldEntry({
+                id: props.id,
+                element: props.element,
+                label: translate("Triggers"),
+                getValue,
+                setValue,
+                debounce,
+                description: translate("Comma-separated trigger IDs"),
+                placeholder: translate("e.g., user_signup, order_complete"),
+              });
+            }
+          ),
+        },
+      ],
+    };
+  }
+
+  // Helper methods for lifecycle elements
+  private getLifecycleElement(businessObject: any): any {
+    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
+      return null;
+    }
+    return businessObject.extensionElements.values.find(
+      (el: any) => el.$type === "xflow:Lifecycle"
+    );
+  }
+
+  private getSegmentsElement(businessObject: any): any {
+    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
+      return null;
+    }
+    return businessObject.extensionElements.values.find(
+      (el: any) => el.$type === "xflow:Segments"
+    );
+  }
+
+  private getTriggersElement(businessObject: any): any {
+    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
+      return null;
+    }
+    return businessObject.extensionElements.values.find(
+      (el: any) => el.$type === "xflow:Triggers"
+    );
+  }
+
+  private removeLifecycleElement(element: BpmnElement, businessObject: any): void {
+    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
+      return;
+    }
+    const commandStack = this.injector.get("commandStack");
+    businessObject.extensionElements.values = businessObject.extensionElements.values.filter(
+      (el: any) => el.$type !== "xflow:Lifecycle"
+    );
+    commandStack.execute("element.updateModdleProperties", {
+      element,
+      moddleElement: businessObject,
+      properties: {
+        extensionElements: businessObject.extensionElements,
+      },
+    });
+  }
+
+  private removeSegmentsElement(element: BpmnElement, businessObject: any): void {
+    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
+      return;
+    }
+    const commandStack = this.injector.get("commandStack");
+    businessObject.extensionElements.values = businessObject.extensionElements.values.filter(
+      (el: any) => el.$type !== "xflow:Segments"
+    );
+    commandStack.execute("element.updateModdleProperties", {
+      element,
+      moddleElement: businessObject,
+      properties: {
+        extensionElements: businessObject.extensionElements,
+      },
+    });
+  }
+
+  private removeTriggersElement(element: BpmnElement, businessObject: any): void {
+    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
+      return;
+    }
+    const commandStack = this.injector.get("commandStack");
+    businessObject.extensionElements.values = businessObject.extensionElements.values.filter(
+      (el: any) => el.$type !== "xflow:Triggers"
+    );
+    commandStack.execute("element.updateModdleProperties", {
+      element,
+      moddleElement: businessObject,
+      properties: {
+        extensionElements: businessObject.extensionElements,
+      },
+    });
+  }
 
   // 生成唯一ID
   private nextId(prefix: string): string {

@@ -1,7 +1,16 @@
 <template>
   <div class="bpmn-editor">
     <div ref="container" class="bpmn-container"></div>
-    
+
+    <!-- Lifecycle Panel (optional) -->
+    <div v-if="showLifecyclePanel" class="lifecycle-panel-container">
+      <LifecyclePanel
+        :modeler="modeler"
+        :selected-element="selectedElement"
+        @close="showLifecyclePanel = false"
+      />
+    </div>
+
     <!-- 缩放控制 -->
     <div class="io-zoom-controls">
       <button 
@@ -39,12 +48,19 @@
       >
         <span class="entry-icon">{{ isPropertiesPanelVisible ? '◄' : '►' }}</span>
       </button>
-      <button 
-        class="io-zoom-control" 
-        @click="togglePalette" 
+      <button
+        class="io-zoom-control"
+        @click="togglePalette"
         :title="isPaletteVisible ? '隐藏工具栏' : '显示工具栏'"
       >
         <span class="entry-icon">{{ isPaletteVisible ? '◄' : '►' }}</span>
+      </button>
+      <button
+        class="io-zoom-control"
+        @click="toggleLifecyclePanel"
+        :title="showLifecyclePanel ? '隐藏生命周期面板' : '显示生命周期面板'"
+      >
+        <span class="entry-icon">🎯</span>
       </button>
     </div>
   </div>
@@ -61,6 +77,7 @@ import XFlowExtensionModule from '../extensions/xflow/XFlowExtensionModule'
 import xflowExtension from '../extensions/xflow/xflowExtension.json'
 import { LocalStorageService } from '../services/localStorageService'
 import type { BpmnModelerInstance, BpmnEvent } from '../types'
+import LifecyclePanel from './lifecycle/LifecyclePanel.vue'
 
 // Props
 interface Props {
@@ -86,6 +103,8 @@ const container = ref<HTMLElement>()
 let modeler: BpmnModelerInstance;
 const isPropertiesPanelVisible = ref<boolean>(true)
 const isPaletteVisible = ref<boolean>(true)
+const showLifecyclePanel = ref<boolean>(false)
+const selectedElement = ref<any>(null)
 
 // 防抖函数
 let saveTimeout: NodeJS.Timeout | null = null
@@ -166,11 +185,24 @@ const togglePropertiesPanel = () => {
   window.dispatchEvent(event)
 }
 
+const toggleLifecyclePanel = () => {
+  showLifecyclePanel.value = !showLifecyclePanel.value
+
+  // Update selected element when panel opens
+  if (showLifecyclePanel.value && modeler) {
+    const selection = modeler.get('selection')
+    const selected = selection.get()
+    if (selected && selected.length > 0) {
+      selectedElement.value = selected[0]
+    }
+  }
+}
+
 const togglePalette = () => {
   if (!modeler) return
-  
+
   isPaletteVisible.value = !isPaletteVisible.value
-  
+
   // 使用 CSS 方式控制 palette 显示/隐藏
   const paletteElement = document.querySelector('.djs-palette') as HTMLElement
   if (paletteElement) {
@@ -266,6 +298,16 @@ const setupEventListeners = (): void => {
   modeler.on('error', (event: BpmnEvent) => {
     console.error('BPMN modeler error:', event)
     emit('error', new Error('BPMN modeler error'))
+  })
+
+  // Listen to selection changes for lifecycle panel
+  const eventBus = modeler.get('eventBus')
+  eventBus.on('selection.changed', (event: any) => {
+    if (event.newSelection && event.newSelection.length > 0) {
+      selectedElement.value = event.newSelection[0]
+    } else {
+      selectedElement.value = null
+    }
   })
 }
 
