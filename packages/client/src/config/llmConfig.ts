@@ -16,8 +16,8 @@ export interface LLMConfig {
 const DEFAULT_CONFIG: LLMConfig = {
   provider: 'claude',
   apiKey: import.meta.env.VITE_CLAUDE_API_KEY || '***REMOVED***',
-  baseUrl: import.meta.env.VITE_CLAUDE_BASE_URL || 'https://api.aicodewith.com/api',
-  model: import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4.5',
+  baseUrl: import.meta.env.VITE_CLAUDE_BASE_URL || 'https://api.aicodewith.com',
+  model: import.meta.env.VITE_CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
   maxTokens: 4096,
   temperature: 0.7,
   enableCache: true
