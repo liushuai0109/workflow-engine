@@ -3,6 +3,9 @@
  * 定义 LLM 可以调用的编辑器操作工具
  */
 
+import { convertFunctionsToTools } from './claude/toolAdapter'
+import type { ClaudeTool } from './claude/ClaudeAPIClient'
+
 export interface FunctionDeclaration {
   name: string
   description: string
@@ -153,7 +156,7 @@ export const getNodesTool: FunctionDeclaration = {
 }
 
 /**
- * 所有可用工具
+ * 所有可用工具 (Gemini 格式)
  */
 export const availableTools: FunctionDeclaration[] = [
   createNodeTool,
@@ -163,6 +166,14 @@ export const availableTools: FunctionDeclaration[] = [
   clearCanvasTool,
   getNodesTool
 ]
+
+/**
+ * 获取 Claude 格式的工具定义
+ * 将 Gemini Function Declarations 转换为 Claude Tool Use 格式
+ */
+export function getClaudeTools(): ClaudeTool[] {
+  return convertFunctionsToTools(availableTools)
+}
 
 /**
  * 工具使用示例（供系统提示词参考）
