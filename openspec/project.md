@@ -1,88 +1,88 @@
-# Project Context
+# 项目上下文
 
-## Purpose
-XPMN Explorer is a comprehensive BPMN/XPMN diagram editor built on Vue 3 and TypeScript. The project enables users to create, edit, and visualize business process diagrams with full XPMN 2.0 support. It provides a modern, intuitive interface for workflow modeling with features like custom context pads, properties panels, and real-time diagram editing.
+## 目的
+XPMN Explorer 是一个基于 Vue 3 和 TypeScript 构建的综合性 BPMN/XPMN 图表编辑器。该项目使用户能够创建、编辑和可视化业务流程图，并完全支持 XPMN 2.0。它为工作流建模提供了现代化、直观的界面，具有自定义上下文面板、属性面板和实时图表编辑等功能。
 
-## Tech Stack
-- **Frontend Framework**: Vue 3 with Composition API
-- **Language**: TypeScript (strict mode)
-- **Build Tool**: Vite
-- **BPMN Engine**: bpmn-js v11.5.0
-- **BPMN Library**: vue-bpmn v0.3.0
-- **Properties Panel**: bpmn-js-properties-panel, @bpmn-io/properties-panel
-- **Diagram Engine**: diagram-js v15.4.0
-- **Router**: Vue Router v4.6.3
-- **XML Processing**: xml2js, xml-formatter
-- **Testing**: Jest with @vue/test-utils, ts-jest
-- **Package Manager**: npm
+## 技术栈
+- **前端框架**：Vue 3 with Composition API
+- **语言**：TypeScript（严格模式）
+- **构建工具**：Vite
+- **BPMN 引擎**：bpmn-js v11.5.0
+- **BPMN 库**：vue-bpmn v0.3.0
+- **属性面板**：bpmn-js-properties-panel、@bpmn-io/properties-panel
+- **图表引擎**：diagram-js v15.4.0
+- **路由**：Vue Router v4.6.3
+- **XML 处理**：xml2js、xml-formatter
+- **测试**：Jest with @vue/test-utils、ts-jest
+- **包管理器**：npm
 
-## Project Conventions
+## 项目约定
 
-### Code Style
-- Use TypeScript strict mode with explicit types
-- Prefer Composition API over Options API for Vue components
-- Use kebab-case for component file names and element names
-- Use PascalCase for component names in imports
-- Use camelCase for variables and functions
-- File path aliases: `@/` maps to `src/`
-- Include type definitions for all function parameters and returns
-- Use async/await for asynchronous operations
-- Include JSDoc comments for complex functions
+### 代码风格
+- 使用 TypeScript 严格模式和显式类型
+- Vue 组件优先使用 Composition API 而非 Options API
+- 组件文件名和元素名称使用 kebab-case
+- 导入时组件名称使用 PascalCase
+- 变量和函数使用 camelCase
+- 文件路径别名：`@/` 映射到 `src/`
+- 为所有函数参数和返回值包含类型定义
+- 异步操作使用 async/await
+- 为复杂函数包含 JSDoc 注释
 
-### Architecture Patterns
-- **Component Structure**: Single File Components (SFC) with `<template>`, `<script setup>`, `<style scoped>`
-- **State Management**: Reactive refs and computed properties (no Vuex/Pinia currently)
-- **Service Layer**: Separate service files for business logic (e.g., `localStorageService.ts`, `llmService.ts`)
-- **Extension System**: Modular extensions under `src/extensions/` for custom BPMN features
-- **Adapter Pattern**: BpmnAdapter for converting between XPMN and BPMN formats
-- **Router**: Vue Router for navigation between views
-- **Type Safety**: Centralized type definitions in `src/types/index.ts`
-- **Separation of Concerns**: UI components in `src/components/`, business logic in `src/services/`
+### 架构模式
+- **组件结构**：单文件组件（SFC），包含 `<template>`、`<script setup>`、`<style scoped>`
+- **状态管理**：响应式 refs 和计算属性（目前不使用 Vuex/Pinia）
+- **服务层**：业务逻辑的单独服务文件（例如 `localStorageService.ts`、`llmService.ts`）
+- **扩展系统**：`src/extensions/` 下的模块化扩展，用于自定义 BPMN 功能
+- **适配器模式**：BpmnAdapter 用于在 XPMN 和 BPMN 格式之间转换
+- **路由器**：Vue Router 用于视图间导航
+- **类型安全**：集中的类型定义在 `src/types/index.ts`
+- **关注点分离**：UI 组件在 `src/components/`，业务逻辑在 `src/services/`
 
-### Testing Strategy
-- Unit tests using Jest and @vue/test-utils
-- Test files located in `__tests__/` directories alongside source files
-- Test file naming: `*.test.ts`
-- Run tests with: `npm test`
-- Watch mode: `npm run test:watch`
-- Coverage reports: `npm run test:coverage`
-- Focus on testing service layer and adapter logic
-- Component tests for complex UI interactions
+### 测试策略
+- 使用 Jest 和 @vue/test-utils 进行单元测试
+- 测试文件位于源文件旁边的 `__tests__/` 目录
+- 测试文件命名：`*.test.ts`
+- 运行测试：`npm test`
+- 监视模式：`npm run test:watch`
+- 覆盖率报告：`npm run test:coverage`
+- 专注于测试服务层和适配器逻辑
+- 复杂 UI 交互的组件测试
 
-### Git Workflow
-- **Main Branch**: `master`
-- **Feature Branches**: `feature/[feature-name]`
-- **Current Branch**: `feature/futu`
-- Commit messages should be descriptive and follow conventional format
-- Use meaningful branch names that describe the feature or fix
-- Keep commits atomic and focused on single concerns
+### Git 工作流
+- **主分支**：`master`
+- **功能分支**：`feature/[feature-name]`
+- **当前分支**：`feature/futu`
+- 提交消息应该是描述性的并遵循常规格式
+- 使用有意义的分支名称描述功能或修复
+- 保持提交原子化并专注于单一关注点
 
-## Domain Context
-- **BPMN 2.0**: Business Process Model and Notation standard for workflow diagrams
-- **XPMN**: Extended Process Modeling Notation, a variant/extension of BPMN
-- **Diagram Elements**: Start events, tasks, end events, sequence flows, gateways
-- **Context Pad**: UI element that appears when selecting diagram elements, provides quick actions
-- **Properties Panel**: Right-side panel for editing element attributes
-- **Palette**: Left-side panel with available diagram elements
-- **Modeler**: The core bpmn-js component that handles diagram rendering and editing
-- **XML Format**: BPMN diagrams are stored as XML with specific namespace conventions
-- **Format Conversion**: The project converts between XPMN (namespace-less) and BPMN (namespaced) formats
-- **BpmnAdapter**: Core component in `src/extensions/xflow/BpmnAdapter/` that handles bidirectional conversion between XPMN and BPMN formats
+## 领域上下文
+- **BPMN 2.0**：业务流程模型和符号工作流图的标准
+- **XPMN**：扩展流程建模符号，BPMN 的变体/扩展
+- **图表元素**：开始事件、任务、结束事件、序列流、网关
+- **上下文面板**：选择图表元素时出现的 UI 元素，提供快速操作
+- **属性面板**：用于编辑元素属性的右侧面板
+- **调色板**：包含可用图表元素的左侧面板
+- **建模器**：处理图表渲染和编辑的核心 bpmn-js 组件
+- **XML 格式**：BPMN 图表存储为具有特定命名空间约定的 XML
+- **格式转换**：项目在 XPMN（无命名空间）和 BPMN（带命名空间）格式之间转换
+- **BpmnAdapter**：`src/extensions/xflow/BpmnAdapter/` 中的核心组件，处理 XPMN 和 BPMN 格式之间的双向转换
 
-## Important Constraints
-- BPMN diagrams must be valid XML conforming to BPMN 2.0 specification
-- File size limit for uploads: 10MB
-- Supported file formats: .bpmn, .xml, .xpmn
-- Browser compatibility: Modern browsers with ES6+ support
-- Local storage used for auto-save functionality
-- XPMN format uses non-namespaced elements while BPMN uses `bpmn:` prefix
-- XPMN file's DTD is located at `xpmn.dtd`
-- XFlow extensions use `xflow:` prefix and must be wrapped in `bpmn:extensionElements`
+## 重要约束
+- BPMN 图表必须是符合 BPMN 2.0 规范的有效 XML
+- 文件上传大小限制：10MB
+- 支持的文件格式：.bpmn、.xml、.xpmn
+- 浏览器兼容性：支持 ES6+ 的现代浏览器
+- 本地存储用于自动保存功能
+- XPMN 格式使用非命名空间元素，而 BPMN 使用 `bpmn:` 前缀
+- XPMN 文件的 DTD 位于 `xpmn.dtd`
+- XFlow 扩展使用 `xflow:` 前缀，必须包装在 `bpmn:extensionElements` 中
 
-## External Dependencies
-- **bpmn-js**: Core BPMN rendering and modeling library from bpmn.io
-- **diagram-js**: Low-level diagramming framework used by bpmn-js
-- **vue-bpmn**: Vue 3 wrapper for bpmn-js integration
-- **Local Storage**: Browser storage for diagram persistence
-- **File System API**: For file upload/download operations
-- **No external backend**: Currently a client-side only application
+## 外部依赖
+- **bpmn-js**：来自 bpmn.io 的核心 BPMN 渲染和建模库
+- **diagram-js**：bpmn-js 使用的低级图表框架
+- **vue-bpmn**：用于 bpmn-js 集成的 Vue 3 包装器
+- **本地存储**：用于图表持久化的浏览器存储
+- **文件系统 API**：用于文件上传/下载操作
+- **无外部后端**：目前仅为客户端应用程序

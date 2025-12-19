@@ -1,148 +1,149 @@
-# workflow-editor Specification
+# workflow-editor 规范
 
-## Purpose
-TBD - created by archiving change add-lifecycle-operations-foundation. Update Purpose after archive.
-## Requirements
-### Requirement: Lifecycle Stage Assignment
+## 目的
+待定 - 由归档变更 add-lifecycle-operations-foundation 创建。归档后更新目的。
 
-The workflow editor SHALL allow operators to assign AARRR lifecycle stages to workflow elements.
+## 需求
 
-#### Scenario: Assign lifecycle stage to task
+### Requirement: 生命周期阶段分配
 
-- **WHEN** an operator selects a workflow task element
-- **THEN** the properties panel displays a lifecycle stage dropdown
-- **AND** available stages include: Acquisition, Activation, Retention, Revenue, Referral
-- **AND** the selected stage is persisted in the workflow XML
+工作流编辑器应允许操作员将 AARRR 生命周期阶段分配给工作流元素。
 
-#### Scenario: Visual indication of lifecycle stage
+#### Scenario: 为任务分配生命周期阶段
 
-- **WHEN** a workflow element has an assigned lifecycle stage
-- **THEN** the element displays a colored badge indicating the stage
-- **AND** the color scheme follows: Acquisition (blue), Activation (green), Retention (yellow), Revenue (purple), Referral (orange)
+- **WHEN** 操作员选择工作流任务元素
+- **THEN** 属性面板显示生命周期阶段下拉菜单
+- **AND** 可用阶段包括：Acquisition（获取）、Activation（激活）、Retention（留存）、Revenue（收益）、Referral（推荐）
+- **AND** 所选阶段持久化在工作流 XML 中
 
-#### Scenario: Filter elements by lifecycle stage
+#### Scenario: 生命周期阶段的视觉指示
 
-- **WHEN** an operator applies a lifecycle stage filter
-- **THEN** only elements matching the selected stage are highlighted
-- **AND** other elements are dimmed
+- **WHEN** 工作流元素已分配生命周期阶段
+- **THEN** 元素显示指示阶段的彩色徽章
+- **AND** 颜色方案遵循：Acquisition（蓝色）、Activation（绿色）、Retention（黄色）、Revenue（紫色）、Referral（橙色）
 
-### Requirement: User Segment Targeting
+#### Scenario: 按生命周期阶段筛选元素
 
-The workflow editor SHALL support configuring user segments for workflow targeting.
+- **WHEN** 操作员应用生命周期阶段筛选器
+- **THEN** 仅高亮显示与所选阶段匹配的元素
+- **AND** 其他元素变暗
 
-#### Scenario: Define target segment for workflow
+### Requirement: 用户分群定位
 
-- **WHEN** an operator opens workflow properties
-- **THEN** a user segment builder is available
-- **AND** segments can be defined by demographics (age, location, gender)
-- **AND** segments can be defined by behavior (engagement level, purchase history, session count)
-- **AND** multiple segment conditions can be combined with AND/OR logic
+工作流编辑器应支持为工作流定位配置用户分群。
 
-#### Scenario: Predefined segment templates
+#### Scenario: 为工作流定义目标分群
 
-- **WHEN** an operator opens the segment builder
-- **THEN** predefined segment templates are available
-- **AND** templates include: "New Users", "Active Users", "At-Risk Users", "VIP Customers", "Dormant Users"
-- **AND** operators can customize templates or create custom segments
+- **WHEN** 操作员打开工作流属性
+- **THEN** 提供用户分群构建器
+- **AND** 可以按人口统计信息（年龄、位置、性别）定义分群
+- **AND** 可以按行为（参与度、购买历史、会话计数）定义分群
+- **AND** 可以使用 AND/OR 逻辑组合多个分群条件
 
-#### Scenario: Segment assignment to workflow elements
+#### Scenario: 预定义分群模板
 
-- **WHEN** an operator assigns segments to a task element
-- **THEN** the task will only execute for users matching the segment criteria
-- **AND** the segment criteria is displayed in the properties panel
+- **WHEN** 操作员打开分群构建器
+- **THEN** 提供预定义的分群模板
+- **AND** 模板包括："新用户"、"活跃用户"、"流失风险用户"、"VIP 客户"、"休眠用户"
+- **AND** 操作员可以自定义模板或创建自定义分群
 
-### Requirement: Trigger Condition Configuration
+#### Scenario: 将分群分配给工作流元素
 
-The workflow editor SHALL support defining trigger conditions for workflow execution.
+- **WHEN** 操作员为任务元素分配分群
+- **THEN** 该任务将仅对符合分群条件的用户执行
+- **AND** 分群条件显示在属性面板中
 
-#### Scenario: Time-based triggers
+### Requirement: 触发条件配置
 
-- **WHEN** an operator configures a start event
-- **THEN** time-based trigger options are available
-- **AND** supported triggers include: scheduled (cron), delay (duration), time window (start/end)
-- **AND** the trigger schedule is validated for correctness
+工作流编辑器应支持定义工作流执行的触发条件。
 
-#### Scenario: Event-based triggers
+#### Scenario: 基于时间的触发器
 
-- **WHEN** an operator configures a start event
-- **THEN** event-based trigger options are available
-- **AND** supported events include: user_signup, purchase_completed, page_viewed, session_started, milestone_reached
-- **AND** event filters can be applied (e.g., purchase_completed WHERE amount > 100)
+- **WHEN** 操作员配置开始事件
+- **THEN** 提供基于时间的触发器选项
+- **AND** 支持的触发器包括：scheduled（定时，cron）、delay（延迟，持续时间）、time window（时间窗口，开始/结束）
+- **AND** 触发器时间表经过正确性验证
 
-#### Scenario: Data threshold triggers
+#### Scenario: 基于事件的触发器
 
-- **WHEN** an operator configures a gateway decision
-- **THEN** data threshold conditions are available
-- **AND** conditions can compare user attributes (e.g., engagement_score > 70)
-- **AND** multiple conditions can be combined with logical operators
+- **WHEN** 操作员配置开始事件
+- **THEN** 提供基于事件的触发器选项
+- **AND** 支持的事件包括：user_signup（用户注册）、purchase_completed（完成购买）、page_viewed（查看页面）、session_started（开始会话）、milestone_reached（达到里程碑）
+- **AND** 可以应用事件过滤器（例如，purchase_completed WHERE amount > 100）
 
-### Requirement: Workflow Metadata Management
+#### Scenario: 数据阈值触发器
 
-The workflow editor SHALL support comprehensive metadata for operations context.
+- **WHEN** 操作员配置网关决策
+- **THEN** 提供数据阈值条件
+- **AND** 条件可以比较用户属性（例如，engagement_score > 70）
+- **AND** 可以使用逻辑运算符组合多个条件
 
-#### Scenario: Define workflow purpose and goals
+### Requirement: 工作流元数据管理
 
-- **WHEN** an operator creates or edits a workflow
-- **THEN** a metadata panel is available
-- **AND** metadata fields include: name, description, purpose, owner, created_date, modified_date
-- **AND** purpose can be selected from: Onboarding, Engagement, Conversion, Retention, Win-back
+工作流编辑器应支持运营上下文的综合元数据。
 
-#### Scenario: Set success metrics
+#### Scenario: 定义工作流目的和目标
 
-- **WHEN** an operator defines workflow metadata
-- **THEN** success metrics can be configured
-- **AND** available metrics include: conversion_rate, engagement_rate, completion_rate, revenue_generated, user_activation_count
-- **AND** target values can be set for each metric
+- **WHEN** 操作员创建或编辑工作流
+- **THEN** 提供元数据面板
+- **AND** 元数据字段包括：名称、描述、目的、所有者、创建日期、修改日期
+- **AND** 目的可以从以下选择：Onboarding（入职）、Engagement（参与）、Conversion（转化）、Retention（留存）、Win-back（召回）
 
-#### Scenario: Add workflow tags
+#### Scenario: 设置成功指标
 
-- **WHEN** an operator edits workflow metadata
-- **THEN** tags can be added for categorization
-- **AND** tags support autocomplete from existing tags
-- **AND** workflows can be searched and filtered by tags
+- **WHEN** 操作员定义工作流元数据
+- **THEN** 可以配置成功指标
+- **AND** 可用指标包括：conversion_rate（转化率）、engagement_rate（参与率）、completion_rate（完成率）、revenue_generated（产生的收益）、user_activation_count（用户激活数）
+- **AND** 可以为每个指标设置目标值
 
-### Requirement: Enhanced Properties Panel
+#### Scenario: 添加工作流标签
 
-The workflow editor SHALL provide an enhanced properties panel for lifecycle operations.
+- **WHEN** 操作员编辑工作流元数据
+- **THEN** 可以添加标签进行分类
+- **AND** 标签支持从现有标签自动完成
+- **AND** 可以按标签搜索和筛选工作流
 
-#### Scenario: Contextual properties display
+### Requirement: 增强的属性面板
 
-- **WHEN** an operator selects different element types
-- **THEN** the properties panel displays contextually relevant fields
-- **AND** service tasks show: action type, API endpoint, parameters, retry policy
-- **AND** user tasks show: task type, notification settings, timeout
-- **AND** gateways show: decision logic, split ratios, fallback behavior
+工作流编辑器应为生命周期运营提供增强的属性面板。
 
-#### Scenario: Property validation
+#### Scenario: 上下文属性显示
 
-- **WHEN** an operator enters property values
-- **THEN** real-time validation is performed
-- **AND** invalid values display error messages
-- **AND** required fields are marked with indicators
-- **AND** the workflow cannot be saved with validation errors
+- **WHEN** 操作员选择不同的元素类型
+- **THEN** 属性面板显示上下文相关的字段
+- **AND** 服务任务显示：操作类型、API 端点、参数、重试策略
+- **AND** 用户任务显示：任务类型、通知设置、超时
+- **AND** 网关显示：决策逻辑、分割比率、回退行为
 
-### Requirement: Workflow Versioning Support
+#### Scenario: 属性验证
 
-The workflow editor SHALL support version tracking for workflow changes.
+- **WHEN** 操作员输入属性值
+- **THEN** 执行实时验证
+- **AND** 无效值显示错误消息
+- **AND** 必填字段用指示器标记
+- **AND** 存在验证错误时无法保存工作流
 
-#### Scenario: Create workflow version
+### Requirement: 工作流版本控制支持
 
-- **WHEN** an operator saves changes to an active workflow
-- **THEN** a new version is created
-- **AND** version number follows semantic versioning (major.minor.patch)
-- **AND** version metadata includes: timestamp, author, change description
+工作流编辑器应支持工作流变更的版本跟踪。
 
-#### Scenario: View version history
+#### Scenario: 创建工作流版本
 
-- **WHEN** an operator opens version history
-- **THEN** all previous versions are listed with metadata
-- **AND** operators can preview previous versions
-- **AND** operators can compare versions (diff view)
+- **WHEN** 操作员保存对活动工作流的更改
+- **THEN** 创建新版本
+- **AND** 版本号遵循语义版本控制（major.minor.patch）
+- **AND** 版本元数据包括：时间戳、作者、变更描述
 
-#### Scenario: Rollback to previous version
+#### Scenario: 查看版本历史
 
-- **WHEN** an operator selects a previous version
-- **THEN** a rollback option is available
-- **AND** confirmation is required before rollback
-- **AND** rollback creates a new version (not destructive)
+- **WHEN** 操作员打开版本历史
+- **THEN** 列出所有先前版本及其元数据
+- **AND** 操作员可以预览先前版本
+- **AND** 操作员可以比较版本（差异视图）
 
+#### Scenario: 回滚到先前版本
+
+- **WHEN** 操作员选择先前版本
+- **THEN** 提供回滚选项
+- **AND** 回滚前需要确认
+- **AND** 回滚创建新版本（非破坏性）

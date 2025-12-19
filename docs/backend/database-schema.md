@@ -1,14 +1,14 @@
-# Database Schema
+# 数据库结构
 
-## Overview
+## 概述
 
-This document describes the database schema for the lifecycle operations management platform.
+本文档描述了生命周期运营管理平台的数据库结构。
 
-## Database: PostgreSQL 14+
+## 数据库：PostgreSQL 14+
 
-### Table: users
+### 表：users
 
-User profile and lifecycle information.
+用户档案和生命周期信息。
 
 ```sql
 CREATE TABLE users (
@@ -29,9 +29,9 @@ CREATE INDEX idx_users_attributes ON users USING GIN (attributes);
 CREATE INDEX idx_users_created_at ON users(created_at);
 ```
 
-### Table: user_lifecycle_history
+### 表：user_lifecycle_history
 
-Historical record of lifecycle stage transitions.
+生命周期阶段转换的历史记录。
 
 ```sql
 CREATE TABLE user_lifecycle_history (
@@ -53,9 +53,9 @@ CREATE INDEX idx_lifecycle_history_user ON user_lifecycle_history(user_id, trans
 CREATE INDEX idx_lifecycle_history_stage ON user_lifecycle_history(to_stage, transitioned_at DESC);
 ```
 
-### Table: workflows
+### 表：workflows
 
-BPMN workflow definitions.
+BPMN 工作流定义。
 
 ```sql
 CREATE TABLE workflows (
@@ -79,9 +79,9 @@ CREATE INDEX idx_workflows_status ON workflows(status);
 CREATE INDEX idx_workflows_lifecycle ON workflows USING GIN (lifecycle_stages);
 ```
 
-### Table: workflow_executions
+### 表：workflow_executions
 
-Workflow execution instances.
+工作流执行实例。
 
 ```sql
 CREATE TABLE workflow_executions (
@@ -105,9 +105,9 @@ CREATE INDEX idx_executions_user ON workflow_executions(user_id, started_at DESC
 CREATE INDEX idx_executions_status ON workflow_executions(status, started_at DESC);
 ```
 
-### Table: user_segments
+### 表：user_segments
 
-User segment definitions.
+用户分群定义。
 
 ```sql
 CREATE TABLE user_segments (
@@ -123,9 +123,9 @@ CREATE TABLE user_segments (
 CREATE INDEX idx_segments_stages ON user_segments USING GIN (lifecycle_stages);
 ```
 
-### Table: user_segment_memberships
+### 表：user_segment_memberships
 
-User membership in segments (cached for performance).
+用户在分群中的成员关系（为性能缓存）。
 
 ```sql
 CREATE TABLE user_segment_memberships (
@@ -141,9 +141,9 @@ CREATE INDEX idx_memberships_segment ON user_segment_memberships(segment_id, eva
 CREATE INDEX idx_memberships_expiry ON user_segment_memberships(valid_until) WHERE valid_until IS NOT NULL;
 ```
 
-### Table: triggers
+### 表：triggers
 
-Event trigger definitions.
+事件触发器定义。
 
 ```sql
 CREATE TABLE triggers (
@@ -161,9 +161,9 @@ CREATE INDEX idx_triggers_event_type ON triggers(event_type) WHERE enabled = tru
 CREATE INDEX idx_triggers_workflow ON triggers(workflow_id) WHERE enabled = true;
 ```
 
-### Table: trigger_executions
+### 表：trigger_executions
 
-Log of trigger firings.
+触发器触发日志。
 
 ```sql
 CREATE TABLE trigger_executions (
@@ -180,9 +180,9 @@ CREATE INDEX idx_trigger_executions_trigger ON trigger_executions(trigger_id, ex
 CREATE INDEX idx_trigger_executions_user ON trigger_executions(user_id, executed_at DESC);
 ```
 
-### Table: lifecycle_events
+### 表：lifecycle_events
 
-Audit log of all lifecycle-related events.
+所有生命周期相关事件的审计日志。
 
 ```sql
 CREATE TABLE lifecycle_events (
@@ -201,9 +201,9 @@ CREATE INDEX idx_lifecycle_events_stage ON lifecycle_events(lifecycle_stage, cre
 CREATE INDEX idx_lifecycle_events_created ON lifecycle_events(created_at DESC);
 ```
 
-### Table: metrics_daily
+### 表：metrics_daily
 
-Aggregated daily metrics for reporting.
+用于报告的每日聚合指标。
 
 ```sql
 CREATE TABLE metrics_daily (
@@ -221,33 +221,33 @@ CREATE INDEX idx_metrics_date_stage ON metrics_daily(metric_date DESC, lifecycle
 CREATE INDEX idx_metrics_name ON metrics_daily(metric_name, metric_date DESC);
 ```
 
-## Data Retention Policies
+## 数据保留策略
 
-- **lifecycle_events**: Retain for 2 years, then archive to cold storage
-- **trigger_executions**: Retain for 90 days
-- **workflow_executions**: Retain for 1 year
-- **user_lifecycle_history**: Retain indefinitely
-- **metrics_daily**: Retain for 3 years
+- **lifecycle_events**：保留 2 年，然后归档到冷存储
+- **trigger_executions**：保留 90 天
+- **workflow_executions**：保留 1 年
+- **user_lifecycle_history**：无限期保留
+- **metrics_daily**：保留 3 年
 
-## Backup Strategy
+## 备份策略
 
-- Full backup: Daily at 2:00 AM UTC
-- Incremental backup: Every 6 hours
-- Point-in-time recovery: 30 days
-- Backup retention: 90 days
+- 完整备份：每日 UTC 时间 2:00
+- 增量备份：每 6 小时
+- 时间点恢复：30 天
+- 备份保留：90 天
 
-## Partitioning
+## 分区
 
-Large tables are partitioned for performance:
+大表进行分区以提高性能：
 
-- **lifecycle_events**: Partitioned by month (created_at)
-- **trigger_executions**: Partitioned by month (executed_at)
-- **metrics_daily**: Partitioned by year (metric_date)
+- **lifecycle_events**：按月分区（created_at）
+- **trigger_executions**：按月分区（executed_at）
+- **metrics_daily**：按年分区（metric_date）
 
-## Example Partition Creation
+## 分区创建示例
 
 ```sql
--- Partition lifecycle_events by month
+-- 按月分区 lifecycle_events
 CREATE TABLE lifecycle_events_2024_01 PARTITION OF lifecycle_events
   FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
 
