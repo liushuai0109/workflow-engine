@@ -1,7 +1,7 @@
 {
-  "name": "@lifecycle/server",
+  "name": "@lifecycle/server-nodejs",
   "version": "1.0.0",
-  "description": "User Lifecycle Operations Platform - Backend API",
+  "description": "User Lifecycle Operations Platform - Backend API (Node.js Implementation)",
   "main": "dist/index.js",
   "private": true,
   "scripts": {

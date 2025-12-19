@@ -12,7 +12,9 @@
     "build": "lerna run build",
     "start": "lerna run start --parallel",
     "start:client": "lerna run start --scope=@lifecycle/client",
-    "start:server": "lerna run start --scope=@lifecycle/server",
+    "start:server-nodejs": "lerna run start --scope=@lifecycle/server-nodejs",
+    "start:server-go": "cd packages/server-go && make run",
+    "start:server": "npm run start:server-nodejs",
     "test": "lerna run test",
     "lint": "lerna run lint"
   },
