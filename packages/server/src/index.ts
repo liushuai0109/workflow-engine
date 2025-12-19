@@ -13,6 +13,7 @@ import { workflowRoutes } from './routes/workflowRoutes'
 import { segmentRoutes } from './routes/segmentRoutes'
 import { triggerRoutes } from './routes/triggerRoutes'
 import { metricsRoutes } from './routes/metricsRoutes'
+import { claudeRoutes } from './routes/claudeRoutes'
 import { errorHandler } from './middleware/errorHandler'
 
 // Load environment variables
@@ -45,6 +46,7 @@ app.use('/api/workflows', workflowRoutes)
 app.use('/api/segments', segmentRoutes)
 app.use('/api/triggers', triggerRoutes)
 app.use('/api/metrics', metricsRoutes)
+app.use('/api/claude', claudeRoutes)
 
 // Error handling
 app.use(errorHandler)
