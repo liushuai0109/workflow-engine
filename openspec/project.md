@@ -72,11 +72,10 @@ XPMN Explorer 是一个基于 Vue 3 和 TypeScript 构建的综合性 BPMN/XPMN 
 ## 重要约束
 - BPMN 图表必须是符合 BPMN 2.0 规范的有效 XML
 - 文件上传大小限制：10MB
-- 支持的文件格式：.bpmn、.xml、.xpmn
+- 支持的文件格式：.bpmn、.xml
 - 浏览器兼容性：支持 ES6+ 的现代浏览器
 - 本地存储用于自动保存功能
-- XPMN 格式使用非命名空间元素，而 BPMN 使用 `bpmn:` 前缀
-- XPMN 文件的 DTD 位于 `xpmn.dtd`
+- BPMN 使用 `bpmn:` 前缀
 - XFlow 扩展使用 `xflow:` 前缀，必须包装在 `bpmn:extensionElements` 中
 
 ## 外部依赖
