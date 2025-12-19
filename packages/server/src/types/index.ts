@@ -1,35 +1,14 @@
 /**
- * Core Type Definitions for Lifecycle Operations Backend
+ * Core Type Definitions for Backend
  */
-
-// Lifecycle Stages (AARRR Model)
-export enum LifecycleStage {
-  Acquisition = 'Acquisition',
-  Activation = 'Activation',
-  Retention = 'Retention',
-  Revenue = 'Revenue',
-  Referral = 'Referral'
-}
 
 // User Profile
 export interface UserProfile {
   id: string
   email: string
-  currentLifecycleStage: LifecycleStage
   attributes: Record<string, any>
   createdAt: Date
   updatedAt: Date
-}
-
-// Lifecycle Transition
-export interface LifecycleTransition {
-  id: string
-  userId: string
-  fromStage: LifecycleStage | null
-  toStage: LifecycleStage
-  transitionedAt: Date
-  workflowExecutionId?: string
-  metadata: Record<string, any>
 }
 
 // User Segment
@@ -38,7 +17,6 @@ export interface UserSegment {
   name: string
   description?: string
   conditions: SegmentConditionGroup
-  lifecycleStages: LifecycleStage[]
   createdAt: Date
   updatedAt: Date
 }
@@ -99,7 +77,6 @@ export interface Workflow {
   description?: string
   bpmnXml: string
   version: string
-  lifecycleStages: LifecycleStage[]
   status: WorkflowStatus
   createdBy?: string
   createdAt: Date
@@ -134,17 +111,6 @@ export enum ExecutionStatus {
   Cancelled = 'cancelled'
 }
 
-// Lifecycle Event
-export interface LifecycleEvent {
-  id: string
-  eventType: string
-  userId?: string
-  workflowExecutionId?: string
-  lifecycleStage?: LifecycleStage
-  eventData: Record<string, any>
-  createdAt: Date
-}
-
 // API Response Types
 export interface ApiResponse<T> {
   success: boolean
@@ -174,28 +140,7 @@ export interface PaginationParams {
   sortOrder?: 'asc' | 'desc'
 }
 
-// Metrics
-export interface DailyMetric {
-  id: string
-  metricDate: Date
-  lifecycleStage: LifecycleStage
-  metricName: string
-  metricValue: number
-  dimensions: Record<string, any>
-}
-
-export interface FunnelMetrics {
-  stages: StageMetric[]
-  period: DateRange
-}
-
-export interface StageMetric {
-  stage: LifecycleStage
-  userCount: number
-  conversionRate: number
-  averageTimeInStage: number
-}
-
+// Date Range
 export interface DateRange {
   startDate: Date
   endDate: Date

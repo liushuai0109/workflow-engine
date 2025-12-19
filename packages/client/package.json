@@ -21,10 +21,7 @@
     "bpmn-js-properties-panel": "^1.26.0",
     "diagram-js": "^15.4.0",
     "vue": "^3.3.4",
-    "vue-bpmn": "^0.3.0",
-    "vue-router": "^4.6.3",
-    "xml-formatter": "^3.6.7",
-    "xml2js": "^0.6.2"
+    "vue-router": "^4.6.3"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.5",
@@ -32,7 +29,7 @@
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^24.7.2",
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@vitejs/plugin-vue": "^6.0.3",
     "@vue/tsconfig": "^0.8.1",
     "@xmldom/xmldom": "^0.8.11",
     "babel-jest": "^29.7.0",

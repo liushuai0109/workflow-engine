@@ -2,10 +2,8 @@
  * User Profile Types
  *
  * Defines comprehensive user profile data structures including demographics,
- * behavioral data, transaction history, and lifecycle information.
+ * behavioral data, transaction history, and user information.
  */
-
-import { LifecycleStage } from './lifecycle'
 
 /**
  * User demographics
@@ -339,15 +337,6 @@ export interface UserProfile {
   /** Account status */
   accountStatus: 'active' | 'suspended' | 'deleted' | 'pending'
 
-  /** Current lifecycle stage */
-  currentLifecycleStage: LifecycleStage
-
-  /** Previous lifecycle stage */
-  previousLifecycleStage?: LifecycleStage
-
-  /** Stage transition date */
-  stageTransitionDate?: Date
-
   // Profile data sections
   /** Demographic information */
   demographics: Demographics
@@ -407,7 +396,6 @@ export interface UserProfileSummary {
   email: string
   name?: string
   photoUrl?: string
-  currentLifecycleStage: LifecycleStage
   engagementScore: number
   totalRevenue: number
   lastActivityAt?: Date
@@ -542,7 +530,6 @@ export function createDefaultUserProfile(userId: string, email: string): UserPro
     email,
     signupDate: now,
     accountStatus: 'active',
-    currentLifecycleStage: LifecycleStage.Acquisition,
 
     demographics: {},
 

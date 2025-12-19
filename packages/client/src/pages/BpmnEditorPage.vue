@@ -382,7 +382,7 @@ const executeFunctionCall = (functionCall: FunctionCall): any => {
         return editorOperationService.createNode({
           id: args.id,
           name: args.name,
-          type: args.type,
+          type: args.type,  // 直接使用传入的 BPMN 类型
           position: { x: args.x, y: args.y },
           properties: args.properties
         })

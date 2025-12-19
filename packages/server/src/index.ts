@@ -10,9 +10,6 @@ import { database } from './utils/database'
 import { logger } from './utils/logger'
 import { userRoutes } from './routes/userRoutes'
 import { workflowRoutes } from './routes/workflowRoutes'
-import { segmentRoutes } from './routes/segmentRoutes'
-import { triggerRoutes } from './routes/triggerRoutes'
-import { metricsRoutes } from './routes/metricsRoutes'
 import { claudeRoutes } from './routes/claudeRoutes'
 import { errorHandler } from './middleware/errorHandler'
 
@@ -43,9 +40,6 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/users', userRoutes)
 app.use('/api/workflows', workflowRoutes)
-app.use('/api/segments', segmentRoutes)
-app.use('/api/triggers', triggerRoutes)
-app.use('/api/metrics', metricsRoutes)
 app.use('/api/claude/v1', claudeRoutes)
 
 // Error handling

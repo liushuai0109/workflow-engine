@@ -5,10 +5,6 @@
  */
 
 import type { BpmnModelerInstance } from '../types'
-import type { LifecycleStage, LifecycleMetadata } from '@/types/lifecycle'
-import type { UserSegment } from '@/types/segments'
-import type { Trigger } from '@/types/triggers'
-import type { WorkflowMetadata } from '@/types/metrics'
 
 export interface NodePosition {
   x: number
@@ -18,13 +14,10 @@ export interface NodePosition {
 export interface NodeConfig {
   id: string
   name?: string
-  type: 'startEvent' | 'endEvent' | 'userTask' | 'serviceTask' | 'exclusiveGateway' | 'parallelGateway'
+  type: string  // BPMN 类型，如 'bpmn:StartEvent', 'bpmn:UserTask' 等
   position: NodePosition
   properties?: Record<string, any>
   documentation?: string  // BPMN documentation 文档说明
-  lifecycle?: LifecycleMetadata
-  segments?: string[]
-  triggers?: string[]
 }
 
 export interface FlowConfig {
@@ -78,24 +71,9 @@ class EditorOperationService {
       throw new Error('找不到流程根节点')
     }
 
-    // 映射节点类型到 BPMN 类型
-    const typeMap: Record<string, string> = {
-      'startEvent': 'bpmn:StartEvent',
-      'endEvent': 'bpmn:EndEvent',
-      'userTask': 'bpmn:UserTask',
-      'serviceTask': 'bpmn:ServiceTask',
-      'exclusiveGateway': 'bpmn:ExclusiveGateway',
-      'parallelGateway': 'bpmn:ParallelGateway'
-    }
-
-    const bpmnType = typeMap[type]
-    if (!bpmnType) {
-      throw new Error(`不支持的节点类型: ${type}`)
-    }
-
     // 使用 bpmnFactory 创建 business object
     const bpmnFactory = this.modeler.get('bpmnFactory')
-    const businessObject = bpmnFactory.create(bpmnType, {
+    const businessObject = bpmnFactory.create(type, {
       id,
       name: name || '',
       ...properties
@@ -111,7 +89,7 @@ class EditorOperationService {
 
     // 创建形状 - 不需要再传 id 和 type，已经在 businessObject 中了
     const shape = this.elementFactory.createShape({
-      type: bpmnType,
+      type: type,
       businessObject
     })
 
@@ -435,201 +413,6 @@ class EditorOperationService {
   autoLayout(): void {
     // TODO: 实现自动布局算法
     console.log('📐 自动布局功能待实现')
-  }
-
-  /**
-   * 设置生命周期元数据
-   */
-  setLifecycleMetadata(nodeId: string, lifecycle: LifecycleMetadata): void {
-    this.ensureInitialized()
-
-    const element = this.elementRegistry.get(nodeId)
-    if (!element) {
-      throw new Error(`找不到节点: ${nodeId}`)
-    }
-
-    // Update business object with lifecycle metadata
-    const businessObject = element.businessObject
-    if (!businessObject.extensionElements) {
-      businessObject.extensionElements = this.modeler.get('moddle').create('bpmn:ExtensionElements')
-    }
-
-    // Store lifecycle metadata in extension elements
-    const lifecycleExt = this.modeler.get('moddle').create('xflow:lifecycle', lifecycle)
-    businessObject.extensionElements.values = businessObject.extensionElements.values || []
-
-    // Remove existing lifecycle metadata
-    businessObject.extensionElements.values = businessObject.extensionElements.values.filter(
-      (ext: any) => ext.$type !== 'xflow:lifecycle'
-    )
-
-    businessObject.extensionElements.values.push(lifecycleExt)
-
-    this.modeling.updateProperties(element, {
-      extensionElements: businessObject.extensionElements
-    })
-
-    console.log(`🏷️ 设置生命周期: ${nodeId} -> ${lifecycle.stage}`)
-  }
-
-  /**
-   * 获取生命周期元数据
-   */
-  getLifecycleMetadata(nodeId: string): LifecycleMetadata | null {
-    this.ensureInitialized()
-
-    const element = this.elementRegistry.get(nodeId)
-    if (!element || !element.businessObject?.extensionElements) {
-      return null
-    }
-
-    const lifecycleExt = element.businessObject.extensionElements.values?.find(
-      (ext: any) => ext.$type === 'xflow:lifecycle'
-    )
-
-    return lifecycleExt || null
-  }
-
-  /**
-   * 设置用户分群
-   */
-  setUserSegments(nodeId: string, segmentIds: string[]): void {
-    this.ensureInitialized()
-
-    const element = this.elementRegistry.get(nodeId)
-    if (!element) {
-      throw new Error(`找不到节点: ${nodeId}`)
-    }
-
-    const businessObject = element.businessObject
-    if (!businessObject.extensionElements) {
-      businessObject.extensionElements = this.modeler.get('moddle').create('bpmn:ExtensionElements')
-    }
-
-    // Store segments in extension elements
-    const segmentsExt = this.modeler.get('moddle').create('xflow:segments', {
-      segmentIds: segmentIds.join(',')
-    })
-
-    businessObject.extensionElements.values = businessObject.extensionElements.values || []
-    businessObject.extensionElements.values = businessObject.extensionElements.values.filter(
-      (ext: any) => ext.$type !== 'xflow:segments'
-    )
-    businessObject.extensionElements.values.push(segmentsExt)
-
-    this.modeling.updateProperties(element, {
-      extensionElements: businessObject.extensionElements
-    })
-
-    console.log(`👥 设置用户分群: ${nodeId} -> [${segmentIds.join(', ')}]`)
-  }
-
-  /**
-   * 获取用户分群
-   */
-  getUserSegments(nodeId: string): string[] {
-    this.ensureInitialized()
-
-    const element = this.elementRegistry.get(nodeId)
-    if (!element || !element.businessObject?.extensionElements) {
-      return []
-    }
-
-    const segmentsExt = element.businessObject.extensionElements.values?.find(
-      (ext: any) => ext.$type === 'xflow:segments'
-    )
-
-    if (!segmentsExt?.segmentIds) {
-      return []
-    }
-
-    return segmentsExt.segmentIds.split(',').filter((s: string) => s.trim())
-  }
-
-  /**
-   * 设置触发器
-   */
-  setTriggers(nodeId: string, triggerIds: string[]): void {
-    this.ensureInitialized()
-
-    const element = this.elementRegistry.get(nodeId)
-    if (!element) {
-      throw new Error(`找不到节点: ${nodeId}`)
-    }
-
-    const businessObject = element.businessObject
-    if (!businessObject.extensionElements) {
-      businessObject.extensionElements = this.modeler.get('moddle').create('bpmn:ExtensionElements')
-    }
-
-    const triggersExt = this.modeler.get('moddle').create('xflow:triggers', {
-      triggerIds: triggerIds.join(',')
-    })
-
-    businessObject.extensionElements.values = businessObject.extensionElements.values || []
-    businessObject.extensionElements.values = businessObject.extensionElements.values.filter(
-      (ext: any) => ext.$type !== 'xflow:triggers'
-    )
-    businessObject.extensionElements.values.push(triggersExt)
-
-    this.modeling.updateProperties(element, {
-      extensionElements: businessObject.extensionElements
-    })
-
-    console.log(`⚡ 设置触发器: ${nodeId} -> [${triggerIds.join(', ')}]`)
-  }
-
-  /**
-   * 获取触发器
-   */
-  getTriggers(nodeId: string): string[] {
-    this.ensureInitialized()
-
-    const element = this.elementRegistry.get(nodeId)
-    if (!element || !element.businessObject?.extensionElements) {
-      return []
-    }
-
-    const triggersExt = element.businessObject.extensionElements.values?.find(
-      (ext: any) => ext.$type === 'xflow:triggers'
-    )
-
-    if (!triggersExt?.triggerIds) {
-      return []
-    }
-
-    return triggersExt.triggerIds.split(',').filter((t: string) => t.trim())
-  }
-
-  /**
-   * 获取所有生命周期节点
-   */
-  getNodesByLifecycleStage(stage: LifecycleStage): any[] {
-    this.ensureInitialized()
-
-    const allNodes = this.getAllNodes()
-    return allNodes.filter(node => {
-      const lifecycle = this.getLifecycleMetadata(node.id)
-      return lifecycle?.stage === stage
-    })
-  }
-
-  /**
-   * 清除生命周期元数据
-   */
-  clearLifecycleMetadata(nodeId: string): void {
-    this.ensureInitialized()
-
-    const element = this.elementRegistry.get(nodeId)
-    if (!element || !element.businessObject?.extensionElements) {
-      return
-    }
-
-    element.businessObject.extensionElements.values = element.businessObject.extensionElements.values?.filter(
-      (ext: any) => ext.$type !== 'xflow:lifecycle'
-    )
-
-    console.log(`🗑️ 清除生命周期: ${nodeId}`)
   }
 
   /**

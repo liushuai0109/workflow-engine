@@ -15,10 +15,6 @@
           <span class="icon">🆕</span>
           New
         </button>
-        <button @click="toggleLifecyclePanel" class="btn btn-outline" :disabled="!currentDiagram">
-          <span class="icon">🔄</span>
-          Lifecycle
-        </button>
       </div>
     </div>
 
@@ -54,14 +50,6 @@
       <!-- Properties Panel -->
       <div class="properties-panel" :class="{ 'hidden': !isPropertiesPanelVisible }" id="properties-panel"></div>
 
-      <!-- Lifecycle Panel -->
-      <div class="lifecycle-panel-container" :class="{ 'hidden': !isLifecyclePanelVisible }">
-        <LifecyclePanel
-          v-if="currentDiagram && bpmnModeler"
-          :modeler="bpmnModeler"
-          :selected-element="selectedElement"
-        />
-      </div>
     </div>
 
     <!-- 状态栏 -->
@@ -107,7 +95,6 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import BpmnEditor from './components/BpmnEditor.vue'
 import ChatBox from './components/ChatBox.vue'
-import { LifecyclePanel } from './components/lifecycle'
 import { LocalStorageService } from './services/localStorageService'
 import { editorOperationService } from './services/editorOperationService'
 import { createBpmnClaudeLLMService } from './services/claudeLlmService'
@@ -124,7 +111,6 @@ const lastSaved = ref<Date | null>(null)
 const fileInput = ref<HTMLInputElement>()
 const bpmnEditor = ref<any>()
 const isPropertiesPanelVisible = ref<boolean>(true)
-const isLifecyclePanelVisible = ref<boolean>(true)
 const bpmnModeler = ref<any>(null)
 const selectedElement = ref<any>(null)
 const showChatBox = ref<boolean>(false)
@@ -328,7 +314,7 @@ const handleShown = (): void => {
   hasError.value = false
   errorMessage.value = ''
 
-  // Get modeler instance for LifecyclePanel
+  // Get modeler instance
   if (bpmnEditor.value) {
     bpmnModeler.value = bpmnEditor.value.getModeler()
 
@@ -355,11 +341,6 @@ const handleDiagramChanged = (xml: string): void => {
 // 属性面板切换事件处理
 const handleTogglePanel = (event: CustomEvent) => {
   isPropertiesPanelVisible.value = event.detail.visible
-}
-
-// 生命周期面板切换
-const toggleLifecyclePanel = () => {
-  isLifecyclePanelVisible.value = !isLifecyclePanelVisible.value
 }
 
 // 生命周期
@@ -672,29 +653,6 @@ const handleChatMessage = async (message: string): Promise<void> => {
 
 .status-saved {
   color: #10b981;
-}
-
-.lifecycle-panel-container {
-  width: 420px;
-  min-width: 420px;
-  background: white;
-  border-left: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.lifecycle-panel-container.hidden {
-  width: 0;
-  min-width: 0;
-  transform: translateX(100%);
-  opacity: 0;
-  border-left: none;
-  pointer-events: none;
-  margin: 0;
-  padding: 0;
 }
 
 /* AI助手按钮样式 */

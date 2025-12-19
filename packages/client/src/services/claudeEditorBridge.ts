@@ -18,7 +18,7 @@ export function createClaudeEditorBridge(): ToolExecutorConfig {
     createNode: async (params: {
       id: string
       name?: string
-      type: 'startEvent' | 'endEvent' | 'userTask' | 'serviceTask' | 'exclusiveGateway' | 'parallelGateway'
+      type: string  // BPMN 类型，如 'bpmn:StartEvent', 'bpmn:UserTask' 等
       x: number
       y: number
       documentation?: string

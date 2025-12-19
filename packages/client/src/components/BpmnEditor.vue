@@ -2,15 +2,6 @@
   <div class="bpmn-editor">
     <div ref="container" class="bpmn-container"></div>
 
-    <!-- Lifecycle Panel (optional) -->
-    <div v-if="showLifecyclePanel" class="lifecycle-panel-container">
-      <LifecyclePanel
-        :modeler="modeler"
-        :selected-element="selectedElement"
-        @close="showLifecyclePanel = false"
-      />
-    </div>
-
     <!-- 缩放控制 -->
     <div class="io-zoom-controls">
       <button 
@@ -55,13 +46,6 @@
       >
         <span class="entry-icon">{{ isPaletteVisible ? '◄' : '►' }}</span>
       </button>
-      <button
-        class="io-zoom-control"
-        @click="toggleLifecyclePanel"
-        :title="showLifecyclePanel ? '隐藏生命周期面板' : '显示生命周期面板'"
-      >
-        <span class="entry-icon">🎯</span>
-      </button>
     </div>
   </div>
 </template>
@@ -77,7 +61,6 @@ import XFlowExtensionModule from '../extensions/xflow/XFlowExtensionModule'
 import xflowExtension from '../extensions/xflow/xflowExtension.json'
 import { LocalStorageService } from '../services/localStorageService'
 import type { BpmnModelerInstance, BpmnEvent } from '../types'
-import LifecyclePanel from './lifecycle/LifecyclePanel.vue'
 
 // Props
 interface Props {
@@ -103,7 +86,6 @@ const container = ref<HTMLElement>()
 let modeler: BpmnModelerInstance;
 const isPropertiesPanelVisible = ref<boolean>(true)
 const isPaletteVisible = ref<boolean>(true)
-const showLifecyclePanel = ref<boolean>(false)
 const selectedElement = ref<any>(null)
 
 // 防抖函数
@@ -183,19 +165,6 @@ const togglePropertiesPanel = () => {
     detail: { visible: isPropertiesPanelVisible.value } 
   })
   window.dispatchEvent(event)
-}
-
-const toggleLifecyclePanel = () => {
-  showLifecyclePanel.value = !showLifecyclePanel.value
-
-  // Update selected element when panel opens
-  if (showLifecyclePanel.value && modeler) {
-    const selection = modeler.get('selection')
-    const selected = selection.get()
-    if (selected && selected.length > 0) {
-      selectedElement.value = selected[0]
-    }
-  }
 }
 
 const togglePalette = () => {

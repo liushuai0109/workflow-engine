@@ -27,7 +27,7 @@ export default class XFlowRenderer extends BaseRenderer {
   canRender(element: BpmnElement): boolean {
     // 检查是否是支持的任务类型且有 XFlow 扩展或生命周期扩展
     return (this.isSupportedTaskType(element) || is(element, 'bpmn:FlowNode')) &&
-           (this.hasXFlowExtension(element) || this.hasLifecycleExtension(element))
+           this.hasXFlowExtension(element)
   }
 
   drawShape(parentNode: SVGElement, element: any): SVGElement {
@@ -61,16 +61,6 @@ export default class XFlowRenderer extends BaseRenderer {
            businessObject.$instanceOf('xflow:SendTaskExtension')
   }
 
-  private hasLifecycleExtension(element: BpmnElement): boolean {
-    const businessObject = element.businessObject
-    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
-      return false
-    }
-    return businessObject.extensionElements.values.some(
-      (el: any) => el.$type === 'xflow:Lifecycle' || el.$type === 'xflow:Segments' || el.$type === 'xflow:Triggers'
-    )
-  }
-
   private drawXFlowElements(parentNode: SVGElement, element: any): void {
     const businessObject = element.businessObject
 
@@ -78,9 +68,6 @@ export default class XFlowRenderer extends BaseRenderer {
     const xflowContainer = this.createElement('g', {
       class: 'xflow-extension-elements'
     })
-
-    // Draw lifecycle stage badge if present
-    this.drawLifecycleBadge(xflowContainer, businessObject, element)
 
     // 根据任务类型绘制不同的扩展信息
     if (is(element, 'bpmn:UserTask') && businessObject.$instanceOf('xflow:UserTaskExtension')) {
@@ -228,138 +215,6 @@ export default class XFlowRenderer extends BaseRenderer {
       cmdidText.textContent = `CmdId: ${callee.cmdid}`
       parentNode.appendChild(cmdidText)
     }
-  }
-
-  // Lifecycle badge rendering
-  private drawLifecycleBadge(parentNode: SVGElement, businessObject: any, element: any): void {
-    const lifecycle = this.getLifecycleExtension(businessObject)
-    if (!lifecycle || !lifecycle.stage) {
-      return
-    }
-
-    const stageConfig = this.getLifecycleStageConfig(lifecycle.stage)
-    const width = element.width || 100
-
-    // Draw lifecycle badge in top-right corner
-    const badgeGroup = this.createElement('g', {
-      class: 'lifecycle-badge',
-      transform: `translate(${width - 35}, 5)`
-    })
-
-    // Badge background circle
-    const circle = this.createElement('circle', {
-      cx: 12,
-      cy: 12,
-      r: 12,
-      fill: stageConfig.color,
-      stroke: '#ffffff',
-      'stroke-width': 2
-    })
-    badgeGroup.appendChild(circle)
-
-    // Icon text (emoji)
-    const iconText = this.createElement('text', {
-      x: 12,
-      y: 12,
-      'text-anchor': 'middle',
-      'dominant-baseline': 'central',
-      'font-size': '14px'
-    })
-    iconText.textContent = stageConfig.icon
-    badgeGroup.appendChild(iconText)
-
-    // Tooltip title
-    const title = this.createElement('title')
-    title.textContent = `Lifecycle: ${lifecycle.stage}`
-    badgeGroup.appendChild(title)
-
-    parentNode.appendChild(badgeGroup)
-
-    // Draw segments indicator if present
-    const segments = this.getSegmentsExtension(businessObject)
-    if (segments && segments.segmentIds) {
-      const segmentBadge = this.createElement('g', {
-        class: 'segments-indicator',
-        transform: `translate(5, ${(element.height || 80) - 20})`
-      })
-
-      const segmentIcon = this.createElement('text', {
-        x: 0,
-        y: 0,
-        'font-size': '12px',
-        fill: '#6366f1'
-      })
-      segmentIcon.textContent = '👥'
-      segmentBadge.appendChild(segmentIcon)
-
-      const segmentTitle = this.createElement('title')
-      segmentTitle.textContent = `Segments: ${segments.segmentIds}`
-      segmentBadge.appendChild(segmentTitle)
-
-      parentNode.appendChild(segmentBadge)
-    }
-
-    // Draw triggers indicator if present
-    const triggers = this.getTriggersExtension(businessObject)
-    if (triggers && triggers.triggerIds) {
-      const triggerBadge = this.createElement('g', {
-        class: 'triggers-indicator',
-        transform: `translate(${width - 20}, ${(element.height || 80) - 20})`
-      })
-
-      const triggerIcon = this.createElement('text', {
-        x: 0,
-        y: 0,
-        'font-size': '12px',
-        fill: '#f59e0b'
-      })
-      triggerIcon.textContent = '⚡'
-      triggerBadge.appendChild(triggerIcon)
-
-      const triggerTitle = this.createElement('title')
-      triggerTitle.textContent = `Triggers: ${triggers.triggerIds}`
-      triggerBadge.appendChild(triggerTitle)
-
-      parentNode.appendChild(triggerBadge)
-    }
-  }
-
-  private getLifecycleExtension(businessObject: any): any {
-    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
-      return null
-    }
-    return businessObject.extensionElements.values.find(
-      (el: any) => el.$type === 'xflow:Lifecycle'
-    )
-  }
-
-  private getSegmentsExtension(businessObject: any): any {
-    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
-      return null
-    }
-    return businessObject.extensionElements.values.find(
-      (el: any) => el.$type === 'xflow:Segments'
-    )
-  }
-
-  private getTriggersExtension(businessObject: any): any {
-    if (!businessObject.extensionElements || !businessObject.extensionElements.values) {
-      return null
-    }
-    return businessObject.extensionElements.values.find(
-      (el: any) => el.$type === 'xflow:Triggers'
-    )
-  }
-
-  private getLifecycleStageConfig(stage: string): { color: string; icon: string } {
-    const configs: Record<string, { color: string; icon: string }> = {
-      'Acquisition': { color: '#2196F3', icon: '🎯' },
-      'Activation': { color: '#4CAF50', icon: '✨' },
-      'Retention': { color: '#FFC107', icon: '🔄' },
-      'Revenue': { color: '#9C27B0', icon: '💰' },
-      'Referral': { color: '#FF5722', icon: '🚀' }
-    }
-    return configs[stage] || { color: '#757575', icon: '📊' }
   }
 
   private createElement(tag: string, attrs: Record<string, string | number> = {}): SVGElement {

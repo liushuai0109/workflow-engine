@@ -65,11 +65,8 @@ export interface FileValidationResult {
 }
 
 // ============================================================================
-// Lifecycle Operations Types
+// User Operations Types
 // ============================================================================
-
-// Lifecycle management types
-export * from './lifecycle'
 
 // User segmentation types
 export * from './segments'

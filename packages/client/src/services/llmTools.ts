@@ -35,8 +35,7 @@ export const createNodeTool: FunctionDeclaration = {
       },
       type: {
         type: 'string',
-        enum: ['startEvent', 'endEvent', 'userTask', 'serviceTask', 'exclusiveGateway', 'parallelGateway'],
-        description: '节点类型：startEvent-开始, endEvent-结束, userTask-用户任务, serviceTask-服务任务, exclusiveGateway-排他网关, parallelGateway-并行网关'
+        description: 'BPMN 节点类型，如 bpmn:StartEvent（开始事件）、bpmn:EndEvent（结束事件）、bpmn:UserTask（用户任务）、bpmn:ServiceTask（服务任务）、bpmn:ExclusiveGateway（排他网关）、bpmn:ParallelGateway（并行网关）等'
       },
       x: {
         type: 'number',
