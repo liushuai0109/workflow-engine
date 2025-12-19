@@ -6,7 +6,30 @@
 
 ## 配置步骤
 
-### 方案1：使用官方 Anthropic API（推荐）
+### 方案1：使用 jiekou.ai 代理（推荐，国内可用）
+
+1. **获取 API Key**
+   - 访问 https://jiekou.ai
+   - 注册账户并充值
+   - 获取API Key
+
+2. **配置服务器**
+   编辑 `packages/server/.env`：
+   ```bash
+   CLAUDE_API_KEY=your-jiekou-api-key
+   CLAUDE_BASE_URL=https://api.jiekou.ai
+   ```
+
+3. **重启服务**
+   - 服务器会自动重启并加载新配置
+   - 或手动重启: Ctrl+C 后再 `npm start`
+
+4. **验证配置**
+   ```bash
+   curl http://localhost:3000/api/claude/health
+   ```
+
+### 方案2：使用官方 Anthropic API
 
 1. **获取 API Key**
    - 访问 https://console.anthropic.com/
@@ -33,19 +56,6 @@
    # 停止当前服务 (Ctrl+C)
    npm start
    ```
-
-### 方案2：使用国内可用的代理服务
-
-如果您有其他可用的 Claude API 代理服务（如一些第三方转发服务）：
-
-1. **配置服务器**
-   编辑 `packages/server/.env`：
-   ```bash
-   CLAUDE_API_KEY=your-proxy-api-key
-   CLAUDE_BASE_URL=https://your-proxy-url.com
-   ```
-
-2. **前端配置同上**
 
 ### 方案3：使用本地代理（需要科学上网）
 
@@ -108,12 +118,17 @@ curl -X POST http://localhost:3000/api/claude/messages \
 
 ## 推荐的API提供商
 
-1. **Anthropic 官方** (推荐)
+1. **jiekou.ai** (推荐，国内首选)
+   - URL: https://api.jiekou.ai
+   - 优点: 国内访问快、支持多种支付方式
+   - 文档: https://docs.jiekou.ai
+
+2. **Anthropic 官方** (国际用户)
    - URL: https://api.anthropic.com
    - 需要: 国际信用卡
    - 优点: 稳定、官方支持
 
-2. **国内代理服务** (备选)
+3. **其他国内代理** (备选)
    - 搜索 "Claude API 代理"
    - 选择信誉良好的服务商
    - 注意保护 API Key 安全
