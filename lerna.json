@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "version": "independent",
-  "npmClient": "npm",
+  "npmClient": "pnpm",
   "useWorkspaces": true,
   "packages": [
     "packages/*"
@@ -11,7 +11,7 @@
       "hoist": true
     },
     "run": {
-      "npmClient": "npm"
+      "npmClient": "pnpm"
     }
   }
 }
