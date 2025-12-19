@@ -72,6 +72,12 @@ export class ClaudeLLMService {
     let finalResponse = ''
 
     while (currentRound < maxToolRounds) {
+      // 调试：打印工具数量
+      console.log(`🔧 Round ${currentRound + 1}: Sending request with ${this.context.tools?.length || 0} tools`)
+      if (currentRound === 0 && this.context.tools && this.context.tools.length > 0) {
+        console.log('📋 Available tools:', this.context.tools.map(t => t.name))
+      }
+
       // 调用 Claude API
       const response = await this.client.generateWithTools(
         this.context.messages,
@@ -83,6 +89,11 @@ export class ClaudeLLMService {
           temperature: this.config.temperature
         }
       )
+
+      console.log(`📨 Response stop_reason: ${response.stop_reason}, content blocks: ${response.content.length}`)
+      if (response.content.length > 0) {
+        console.log('📦 Content types:', response.content.map(c => c.type))
+      }
 
       // 添加 Claude 响应到上下文
       this.context.messages.push({

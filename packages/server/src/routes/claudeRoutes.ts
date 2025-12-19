@@ -28,7 +28,13 @@ router.post('/messages', async (req: Request, res: Response) => {
     }
 
     // 转发请求到 Claude API
-    const claudeResponse = await fetch(`${CLAUDE_BASE_URL}/v1/messages`, {
+    // jiekou.ai 使用 /anthropic/v1/messages 路径
+    // Anthropic 官方使用 /v1/messages 路径
+    const endpoint = CLAUDE_BASE_URL.includes('jiekou.ai')
+      ? `${CLAUDE_BASE_URL}/anthropic/v1/messages`
+      : `${CLAUDE_BASE_URL}/v1/messages`
+
+    const claudeResponse = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

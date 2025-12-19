@@ -425,6 +425,15 @@ const handleChatMessage = async (message: string): Promise<void> => {
         }
       }
 
+      // 清空画布上的默认节点，避免与 Claude 创建的节点冲突
+      console.log('🧹 清空默认流程图节点...')
+      try {
+        editorOperationService.clearCanvas()
+        console.log('✅ 画布已清空，准备创建新流程')
+      } catch (error) {
+        console.warn('⚠️ 清空画布失败，将尝试处理冲突:', error)
+      }
+
       // 创建 Claude 服务实例
       const editorBridge = createClaudeEditorBridge()
       claudeService = createBpmnClaudeLLMService(editorBridge, CLAUDE_BPMN_SYSTEM_PROMPT)

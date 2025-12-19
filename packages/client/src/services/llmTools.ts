@@ -21,7 +21,7 @@ export interface FunctionDeclaration {
  */
 export const createNodeTool: FunctionDeclaration = {
   name: 'createNode',
-  description: '在流程图编辑器中创建一个新节点。支持多种节点类型：开始节点(startEvent)、结束节点(endEvent)、用户任务(userTask)、服务任务(serviceTask)、排他网关(exclusiveGateway)、并行网关(parallelGateway)。',
+  description: '在流程图编辑器中创建一个新节点。支持多种节点类型：开始节点(startEvent)、结束节点(endEvent)、用户任务(userTask)、服务任务(serviceTask)、排他网关(exclusiveGateway)、并行网关(parallelGateway)。建议为每个节点添加documentation来说明其业务含义。',
   parameters: {
     type: 'object',
     properties: {
@@ -45,6 +45,10 @@ export const createNodeTool: FunctionDeclaration = {
       y: {
         type: 'number',
         description: '节点的 Y 坐标位置，建议起始位置 100，垂直方向每个节点间隔约 150'
+      },
+      documentation: {
+        type: 'string',
+        description: '节点的文档说明，描述该节点的业务含义、作用或处理逻辑。例如："用户填写注册信息包括用户名、密码、邮箱"'
       }
     },
     required: ['id', 'type', 'x', 'y']
@@ -56,7 +60,7 @@ export const createNodeTool: FunctionDeclaration = {
  */
 export const createFlowTool: FunctionDeclaration = {
   name: 'createFlow',
-  description: '在两个节点之间创建一条顺序流连线。必须在创建节点之后调用。',
+  description: '在两个节点之间创建一条顺序流连线。必须在创建节点之后调用。可选提供waypoints参数来自定义连线路径，避免遮挡其他节点。',
   parameters: {
     type: 'object',
     properties: {
@@ -79,6 +83,24 @@ export const createFlowTool: FunctionDeclaration = {
       condition: {
         type: 'string',
         description: '条件表达式，用于网关分支判断，如"amount > 1000"'
+      },
+      waypoints: {
+        type: 'array',
+        description: '自定义路径点数组，用于创建绕过节点的连线路径。每个点包含x和y坐标。示例：[{x:100,y:200},{x:100,y:350},{x:300,y:350}]。回路连线建议使用此参数避免遮挡中间节点',
+        items: {
+          type: 'object',
+          properties: {
+            x: {
+              type: 'number',
+              description: '路径点的X坐标'
+            },
+            y: {
+              type: 'number',
+              description: '路径点的Y坐标'
+            }
+          },
+          required: ['x', 'y']
+        }
       }
     },
     required: ['id', 'sourceId', 'targetId']

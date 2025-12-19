@@ -21,22 +21,24 @@ export function createClaudeEditorBridge(): ToolExecutorConfig {
       type: 'startEvent' | 'endEvent' | 'userTask' | 'serviceTask' | 'exclusiveGateway' | 'parallelGateway'
       x: number
       y: number
+      documentation?: string
     }) => {
       try {
-        const { id, name, type, x, y } = params
+        const { id, name, type, x, y, documentation } = params
 
         // 调用编辑器操作服务
         const element = editorOperationService.createNode({
           id,
           name,
           type,
-          position: { x, y }
+          position: { x, y },
+          documentation
         })
 
         return {
           success: true,
           elementId: id,
-          message: `成功创建节点: ${name || id} (${type})`
+          message: `成功创建节点: ${name || id} (${type})${documentation ? ' [含文档]' : ''}`
         }
       } catch (error) {
         throw new Error(`创建节点失败: ${error instanceof Error ? error.message : String(error)}`)
@@ -52,9 +54,10 @@ export function createClaudeEditorBridge(): ToolExecutorConfig {
       targetId: string
       name?: string
       condition?: string
+      waypoints?: Array<{ x: number; y: number }>
     }) => {
       try {
-        const { id, sourceId, targetId, name, condition } = params
+        const { id, sourceId, targetId, name, condition, waypoints } = params
 
         // 调用编辑器操作服务
         const connection = editorOperationService.createFlow({
@@ -62,13 +65,14 @@ export function createClaudeEditorBridge(): ToolExecutorConfig {
           sourceId,
           targetId,
           name,
-          condition
+          condition,
+          waypoints
         })
 
         return {
           success: true,
           flowId: id,
-          message: `成功创建连线: ${sourceId} → ${targetId}${name ? ` (${name})` : ''}`
+          message: `成功创建连线: ${sourceId} → ${targetId}${name ? ` (${name})` : ''}${waypoints ? ' [自定义路径]' : ''}`
         }
       } catch (error) {
         throw new Error(`创建连线失败: ${error instanceof Error ? error.message : String(error)}`)
