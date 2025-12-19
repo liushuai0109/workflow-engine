@@ -75,3 +75,10 @@ class LLMConfigManager {
 
 // 导出单例
 export const llmConfig = new LLMConfigManager()
+
+/**
+ * 便捷函数：获取当前配置
+ */
+export function getLLMConfig(): LLMConfig {
+  return llmConfig.getConfig()
+}
