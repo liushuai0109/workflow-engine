@@ -3,33 +3,18 @@
 ## Purpose
 TBD - created by archiving change add-go-server. Update Purpose after archive.
 ## Requirements
-### Requirement: Multi-Language Backend Support
+### Requirement: Backend Server Implementation
 
-系统 SHALL 支持多种语言的后端实现，所有实现 MUST 提供相同的 REST API 接口。
-
-#### Scenario: Node.js 后端实现
-
-- **当** 用户选择使用 Node.js 后端时
-- **则** 系统应使用 `packages/server-nodejs` 实现
-- **并且** 后端使用 Express.js 框架
-- **并且** 使用 TypeScript 编写
-- **并且** 通过 `pnpm run start:server-nodejs` 启动
+系统 SHALL 提供基于 Go 的后端 API 服务。
 
 #### Scenario: Go 后端实现
 
-- **当** 用户选择使用 Go 后端时
-- **则** 系统应使用 `packages/server-go` 实现
-- **并且** 后端使用 Gin 或 Echo 框架
+- **当** 系统启动后端服务时
+- **则** 系统应使用 `server` 实现
+- **并且** 后端使用 Gin 框架
 - **并且** 使用 Go 1.21+ 编写
-- **并且** 通过 `pnpm run start:server-go` 或 `make run` 启动
-
-#### Scenario: API 接口兼容性
-
-- **当** 前端调用后端 API 时
-- **则** Node.js 和 Go 实现应返回相同格式的响应
-- **并且** 所有端点路径完全相同
-- **并且** 请求/响应的 JSON schema 完全一致
-- **并且** 错误码和错误消息格式一致
+- **并且** 通过 `pnpm run start:server` 或 `cd server && make run` 启动
+- **并且** Go module 名称为 `github.com/bpmn-explorer/server`
 
 ### Requirement: 统一的健康检查端点
 

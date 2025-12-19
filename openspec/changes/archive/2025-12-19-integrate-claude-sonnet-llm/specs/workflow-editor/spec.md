@@ -44,7 +44,7 @@
 #### Scenario: BPMN 编辑器提示词
 
 - **WHEN** 调用 Claude 生成工作流
-- **THEN** 系统应当使用 `packages/client/src/prompts/editorSystemPrompt.ts` 中的提示词
+- **THEN** 系统应当使用 `client/src/prompts/editorSystemPrompt.ts` 中的提示词
 - **AND** 提示词应当包含：BPMN 元素说明、布局规则、工具使用示例
 - **AND** 提示词应当强调布局质量（连线避开节点、标签不重叠）
 - **AND** 提示词应当包含 Few-shot 示例

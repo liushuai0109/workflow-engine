@@ -104,38 +104,10 @@ WHERE related_systems @> '[{"enabled": true}]'::jsonb;
 
 ## 实现细节
 
-### TypeScript 类型定义
-
-```typescript
-// packages/server-nodejs/src/types/index.ts
-export interface RelatedSystem {
-  systemId: string
-  systemName?: string
-  role?: 'source' | 'target' | 'both'
-  integrationType?: 'api' | 'webhook' | 'event' | 'database' | 'queue'
-  enabled?: boolean
-  lastSyncAt?: Date
-  metadata?: Record<string, any>
-}
-
-export interface Workflow {
-  id: string
-  name: string
-  description?: string
-  bpmnXml: string
-  version: string
-  status: WorkflowStatus
-  relatedSystems?: RelatedSystem[]  // 新增字段
-  createdBy?: string
-  createdAt: Date
-  updatedAt: Date
-}
-```
-
 ### Go 类型定义
 
 ```go
-// packages/server-go/internal/models/workflow.go
+// server/internal/models/workflow.go
 type RelatedSystem struct {
     SystemID        string                 `json:"systemId" db:"system_id"`
     SystemName      *string                 `json:"systemName,omitempty" db:"system_name"`

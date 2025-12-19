@@ -9,9 +9,9 @@
 - **流式响应**：通过 SSE 实现实时反馈
 
 代码位置：
-- `packages/client/src/services/llmService.ts` - LLM 服务核心
-- `packages/client/src/services/llmTools.ts` - Function Calling 工具定义
-- `packages/client/src/prompts/` - 系统提示词
+- `client/src/services/llmService.ts` - LLM 服务核心
+- `client/src/services/llmTools.ts` - Function Calling 工具定义
+- `client/src/prompts/` - 系统提示词
 
 ### 问题
 1. **API 格式差异**：Gemini 和 Claude 的 API 格式不同
@@ -209,7 +209,7 @@ data: {"type": "content_block_delta", "delta": {"type": "text_delta", "text": ".
 
 **实现**：
 ```typescript
-// packages/client/src/config/llmConfig.ts
+// client/src/config/llmConfig.ts
 export const LLM_CONFIG = {
   provider: 'claude',
   baseUrl: process.env.CLAUDE_BASE_URL || '/api/claude',  // 通过环境变量可切换

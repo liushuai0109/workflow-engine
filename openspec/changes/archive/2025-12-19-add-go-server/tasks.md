@@ -3,8 +3,8 @@
 ## Phase 1: 重命名 Node.js Server ✅
 
 - [x] 1.1 重命名目录和 package
-  - 将 `packages/server` 重命名为 `packages/server-nodejs`
-  - 更新 `packages/server-nodejs/package.json` 中的 name: `@lifecycle/server-nodejs`
+  - 将 `server` 重命名为 `server-nodejs`
+  - 更新 `server-nodejs/package.json` 中的 name: `@lifecycle/server-nodejs`
   - 更新 description 说明这是 Node.js 实现
 
 - [x] 1.2 更新根配置文件
@@ -25,7 +25,7 @@
 ## Phase 2: Go Server 项目搭建 ✅
 
 - [x] 2.1 创建 Go 项目结构
-  - 创建 `packages/server-go` 目录
+  - 创建 `server-go` 目录
   - 初始化 Go module: `go mod init github.com/bpmn-explorer/server-go`
   - 创建标准 Go 项目结构：
     - `cmd/server/main.go` - 入口文件 ✅
@@ -120,7 +120,7 @@
   - 正式基准测试（wrk/hey）保留为未来优化工作
 
 - [x] 5.4 更新文档
-  - 创建 `packages/server-go/README.md` ✅
+  - 创建 `server-go/README.md` ✅
   - 说明如何构建、运行、测试 ✅
   - 记录环境变量配置 ✅
   - 更新根 README.md 说明多后端支持 ✅
@@ -159,7 +159,7 @@
 ### 已完成工作
 
 **Phase 1 - 重命名 Node.js Server（100%完成）**:
-- ✅ 重命名 `packages/server` → `packages/server-nodejs`
+- ✅ 重命名 `server` → `server-nodejs`
 - ✅ 更新 package.json 名称和描述
 - ✅ 更新根 package.json 脚本
 - ✅ 更新 README.md 文档
@@ -206,7 +206,7 @@
 
 创建了 30+ 个 Go 源文件：
 ```
-packages/server-go/
+server-go/
 ├── cmd/server/main.go                      # 入口
 ├── internal/
 │   ├── handlers/                            # 4个handler文件

@@ -15,7 +15,7 @@
 
 ### Node.js Server (server-nodejs)
 ```
-packages/server-nodejs/
+server-nodejs/
 ├── src/
 │   ├── controllers/       # HTTP 请求处理
 │   ├── services/          # 业务逻辑
@@ -31,7 +31,7 @@ packages/server-nodejs/
 
 ### Go Server (server-go)
 ```
-packages/server-go/
+server-go/
 ├── cmd/
 │   └── server/
 │       └── main.go        # 入口文件
@@ -281,12 +281,12 @@ func LoadConfig() (*Config, error) {
 ### 构建
 ```bash
 # Node.js server
-cd packages/server-nodejs
+cd server-nodejs
 npm run build
 npm run start:prod
 
 # Go server
-cd packages/server-go
+cd server-go
 go build -o bin/server cmd/server/main.go
 ./bin/server
 ```

@@ -15,6 +15,15 @@ type Workflow struct {
 	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
 }
 
+type WorkflowDefinition struct {
+	StartEvents []StartEvent `json:"startEvents" db:"start_events"`
+	EndEvents   []EndEvent   `json:"endEvents" db:"end_events"`
+	Tasks       []Task       `json:"tasks" db:"tasks"`
+	Flows       []Flow       `json:"flows" db:"flows"`
+	Messages    []Message    `json:"messages" db:"messages"`
+	Ajust
+}
+
 // WorkflowStatus constants
 const (
 	StatusDraft    = "draft"

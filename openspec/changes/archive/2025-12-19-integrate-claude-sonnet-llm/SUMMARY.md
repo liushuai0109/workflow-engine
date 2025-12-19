@@ -103,7 +103,7 @@ const businessObject = bpmnFactory.create(bpmnType, { id, name })
 
 ### 关键文件
 ```
-packages/client/src/
+client/src/
 ├── services/
 │   ├── claude/
 │   │   ├── ClaudeAPIClient.ts        (323行)

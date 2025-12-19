@@ -3,45 +3,45 @@
 ## Phase 1: 前端代码移除
 
 - [x] 1.1 移除生命周期组件
-  - 已删除 `packages/client/src/components/lifecycle/` 整个目录
+  - 已删除 `client/src/components/lifecycle/` 整个目录
   - 已从 `App.vue` 中移除对生命周期组件的引用
   - 已从 `BpmnEditor.vue` 中移除对生命周期面板的引用
 
 - [x] 1.2 移除生命周期服务和配置
-  - 已删除 `packages/client/src/services/lifecycleService.ts`
-  - 已删除 `packages/client/src/config/lifecycle-stages.json`
+  - 已删除 `client/src/services/lifecycleService.ts`
+  - 已删除 `client/src/config/lifecycle-stages.json`
   - localStorageService 中无生命周期数据处理逻辑
 
 - [x] 1.3 移除生命周期类型定义
-  - 已删除 `packages/client/src/types/lifecycle.ts`
-  - 已从 `packages/client/src/types/userProfile.ts` 中移除生命周期相关类型
-  - 已更新 `packages/client/src/types/index.ts`，移除生命周期类型导出
+  - 已删除 `client/src/types/lifecycle.ts`
+  - 已从 `client/src/types/userProfile.ts` 中移除生命周期相关类型
+  - 已更新 `client/src/types/index.ts`，移除生命周期类型导出
   - triggers.ts 保持不变(仅事件名称中提到,无直接依赖)
 
 - [ ] 1.4 清理 BpmnAdapter 中的生命周期引用
-  - 已移除 `packages/client/src/adapters/BpmnAdapter.ts` 中的生命周期导入
+  - 已移除 `client/src/adapters/BpmnAdapter.ts` 中的生命周期导入
   - 需要: 完整清理生命周期元数据处理逻辑
 
 - [ ] 1.5 清理 XFlow 扩展中的生命周期属性
-  - 已删除 `packages/client/src/extensions/xflow/LifecycleIntegration.ts`
+  - 已删除 `client/src/extensions/xflow/LifecycleIntegration.ts`
   - 需要: 从 `XFlowPropertiesProvider.ts` 中移除生命周期相关属性
   - 需要: 从 `XFlowRenderer.ts` 和其他扩展文件中移除生命周期引用
 
 ## Phase 2: 后端代码移除 ✅
 
 - [x] 2.1 移除用户档案服务中的生命周期逻辑
-  - 从 `packages/server/src/services/UserProfileService.ts` 中移除生命周期阶段管理
+  - 从 `server/src/services/UserProfileService.ts` 中移除生命周期阶段管理
   - 移除用户细分和队列分析逻辑
 
 - [x] 2.2 移除用户档案控制器中的生命周期端点
-  - 从 `packages/server/src/controllers/UserProfileController.ts` 中移除生命周期相关的 API 端点
+  - 从 `server/src/controllers/UserProfileController.ts` 中移除生命周期相关的 API 端点
   - 移除细分管理和指标跟踪端点
 
 - [x] 2.3 更新路由配置
-  - 从 `packages/server/src/routes/userRoutes.ts` 中移除生命周期相关路由
+  - 从 `server/src/routes/userRoutes.ts` 中移除生命周期相关路由
 
 - [x] 2.4 更新后端类型定义
-  - 从 `packages/server/src/types/index.ts` 中移除生命周期相关类型
+  - 从 `server/src/types/index.ts` 中移除生命周期相关类型
 
 ## Phase 3: 文档和配置清理
 
@@ -58,7 +58,7 @@
   - 从 `README.md` 中移除生命周期功能说明
 
 - [ ] 3.4 更新项目配置文件
-  - 检查 `package.json`、`packages/client/package.json`、`packages/server/package.json`
+  - 检查 `package.json`、`client/package.json`、`server/package.json`
   - 移除生命周期相关的依赖包（如有）
   - 更新项目描述，移除生命周期功能说明
 
@@ -141,23 +141,23 @@
   - 移除其他生命周期相关类型
 
 **删除的文件**:
-- `packages/client/src/components/lifecycle/` (整个目录)
-- `packages/client/src/services/lifecycleService.ts`
-- `packages/client/src/config/lifecycle-stages.json`
-- `packages/client/src/types/lifecycle.ts`
-- `packages/client/src/extensions/xflow/LifecycleIntegration.ts`
-- `packages/client/src/services/__tests__/lifecycleService.test.ts`
-- `packages/client/src/migrations/add-lifecycle-metadata.ts`
-- `packages/client/src/migrations/__tests__/add-lifecycle-metadata.test.ts`
-- `packages/client/src/adapters/__tests__/BpmnAdapter.test.ts`
+- `client/src/components/lifecycle/` (整个目录)
+- `client/src/services/lifecycleService.ts`
+- `client/src/config/lifecycle-stages.json`
+- `client/src/types/lifecycle.ts`
+- `client/src/extensions/xflow/LifecycleIntegration.ts`
+- `client/src/services/__tests__/lifecycleService.test.ts`
+- `client/src/migrations/add-lifecycle-metadata.ts`
+- `client/src/migrations/__tests__/add-lifecycle-metadata.test.ts`
+- `client/src/adapters/__tests__/BpmnAdapter.test.ts`
 
 **修改的文件**:
-- `packages/client/src/App.vue` - 移除LifecyclePanel引用和相关状态
-- `packages/client/src/components/BpmnEditor.vue` - 移除生命周期面板按钮和逻辑
-- `packages/client/src/types/userProfile.ts` - 移除LifecycleStage相关字段
-- `packages/client/src/types/index.ts` - 移除lifecycle导出
-- `packages/client/src/adapters/BpmnAdapter.ts` - 移除lifecycle导入(部分)
-- `packages/client/src/services/editorOperationService.ts` - 移除lifecycle导入(部分)
+- `client/src/App.vue` - 移除LifecyclePanel引用和相关状态
+- `client/src/components/BpmnEditor.vue` - 移除生命周期面板按钮和逻辑
+- `client/src/types/userProfile.ts` - 移除LifecycleStage相关字段
+- `client/src/types/index.ts` - 移除lifecycle导出
+- `client/src/adapters/BpmnAdapter.ts` - 移除lifecycle导入(部分)
+- `client/src/services/editorOperationService.ts` - 移除lifecycle导入(部分)
 
 ### 剩余工作
 
@@ -178,14 +178,14 @@
 
 运行 `npm run build` 发现以下编译错误需要修复:
 
-**前端 (packages/client)**:
+**前端 (client)**:
 1. `BpmnAdapter.ts` - 生命周期类型引用
 2. `LifecycleIntegration.ts` - 文件仍然存在(已删除但可能有缓存)
 3. `editorOperationService.ts` - 生命周期类型引用
 4. `migrations/add-lifecycle-metadata.ts` - 文件仍然存在(已删除但可能有缓存)
 5. 其他TypeScript类型错误(与生命周期无关)
 
-**后端 (packages/server)**:
+**后端 (server)**:
 - TypeScript类型推断错误(与生命周期无关)
 
 ### 最终完成状态 (2024-12-20)

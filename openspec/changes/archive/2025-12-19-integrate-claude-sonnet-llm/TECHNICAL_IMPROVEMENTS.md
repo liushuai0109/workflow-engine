@@ -38,7 +38,7 @@
 
 ### 配置
 ```typescript
-// packages/client/src/config/llmConfig.ts
+// client/src/config/llmConfig.ts
 export const LLM_CONFIG = {
   model: 'claude-sonnet-4-5-20250929',
   maxTokens: 4096,
@@ -353,9 +353,9 @@ Claude生成的waypoints：
 
 ### 文件清单
 修改的文件：
-- `packages/client/src/services/editorOperationService.ts` - 核心修复
-- `packages/client/src/services/claude/ClaudeAPIClient.ts` - Claude集成
-- `packages/client/src/prompts/claudeBpmnSystemPrompt.ts` - 提示词优化
+- `client/src/services/editorOperationService.ts` - 核心修复
+- `client/src/services/claude/ClaudeAPIClient.ts` - Claude集成
+- `client/src/prompts/claudeBpmnSystemPrompt.ts` - 提示词优化
 - `docs/CRITICAL_BUG_FIX.md` - Bug修复文档
 
 新增代码行数：约150行（算法+注释）

@@ -9,7 +9,7 @@
 ### 当前状态
 - ✅ 平台使用 Gemini API (`gemini-3-pro-preview`) 作为 LLM 服务
 - ✅ 支持 AI 辅助生成 BPMN 工作流，通过 Function Calling 直接操作编辑器
-- ✅ 现有实现在 `packages/client/src/services/llmService.ts` 中
+- ✅ 现有实现在 `client/src/services/llmService.ts` 中
 - ✅ 支持的功能：文本生成、Function Calling、流式响应
 
 ### 核心问题
@@ -247,5 +247,5 @@
 - [AICodeWith 文档](https://docs.aicodewith.com/docs)
 - [设计文档](design.md) - 详细技术设计
 - [任务清单](tasks.md) - 35 个具体任务
-- [现有 LLM 服务代码](packages/client/src/services/llmService.ts)
-- [BPMN 编辑器提示词](packages/client/src/prompts/)
+- [现有 LLM 服务代码](client/src/services/llmService.ts)
+- [BPMN 编辑器提示词](client/src/prompts/)

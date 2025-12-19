@@ -1,38 +1,40 @@
-# backend-server 规范增量
+# 后端服务器规范（变更）
 
-## ADDED Requirements
+## REMOVED Requirements
 
 ### Requirement: Multi-Language Backend Support
 
-系统 SHALL 支持多种语言的后端实现，所有实现 MUST 提供相同的 REST API 接口。
+**原因**：项目决定统一使用 Go 作为唯一后端实现，简化架构和维护成本。
 
-#### Scenario: Node.js 后端实现
+**迁移**：所有功能已迁移到 Go 实现，Node.js 实现已删除。
 
-- **当** 用户选择使用 Node.js 后端时
-- **则** 系统应使用 `server-nodejs` 实现
-- **并且** 后端使用 Express.js 框架
-- **并且** 使用 TypeScript 编写
-- **并且** 通过 `pnpm run start:server-nodejs` 启动
+## MODIFIED Requirements
+
+### Requirement: Backend Server Implementation
+
+系统 SHALL 提供基于 Go 的后端 API 服务。
 
 #### Scenario: Go 后端实现
 
-- **当** 用户选择使用 Go 后端时
-- **则** 系统应使用 `server-go` 实现
-- **并且** 后端使用 Gin 或 Echo 框架
+- **当** 系统启动后端服务时
+- **则** 系统应使用 `server` 实现（原 `server-go`）
+- **并且** 后端使用 Gin 框架
 - **并且** 使用 Go 1.21+ 编写
-- **并且** 通过 `pnpm run start:server-go` 或 `make run` 启动
+- **并且** 通过 `pnpm run start:server` 或 `cd server && make run` 启动
+- **并且** Go module 名称为 `github.com/bpmn-explorer/server`
 
-#### Scenario: API 接口兼容性
+#### Scenario: API 接口
 
 - **当** 前端调用后端 API 时
-- **则** Node.js 和 Go 实现应返回相同格式的响应
-- **并且** 所有端点路径完全相同
-- **并且** 请求/响应的 JSON schema 完全一致
-- **并且** 错误码和错误消息格式一致
+- **则** 所有端点路径遵循 RESTful 规范
+- **并且** 请求/响应的 JSON schema 符合规范
+- **并且** 错误码和错误消息格式统一
+
+## MODIFIED Requirements
 
 ### Requirement: 统一的健康检查端点
 
-所有后端实现 MUST 提供标准的健康检查端点。
+后端服务 MUST 提供标准的健康检查端点。
 
 #### Scenario: 健康检查响应格式
 
@@ -133,6 +135,12 @@
     }
   }
   ```
+
+#### Scenario: 更新工作流
+
+- **当** 客户端发送 `PUT /api/workflows/:workflowId` 请求时
+- **则** 请求体可以包含 `name`、`description`、`bpmnXml` 字段
+- **并且** 成功返回 200 状态码和更新后的工作流数据
 
 ### Requirement: Claude AI API 代理
 
@@ -246,3 +254,4 @@
   - `INVALID_REQUEST`: 请求格式无效
   - `INTERNAL_ERROR`: 内部服务器错误
   - `DATABASE_ERROR`: 数据库错误
+

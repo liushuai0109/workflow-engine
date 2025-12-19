@@ -7,50 +7,50 @@
 
 ### 1.1 Claude API 客户端
 - [x] **Task 1.1.1**：创建 `ClaudeAPIClient` 类实现基本 HTTP 请求
-  - 文件：`packages/client/src/services/claude/ClaudeAPIClient.ts`
+  - 文件：`client/src/services/claude/ClaudeAPIClient.ts`
   - 功能：封装 fetch 调用，处理认证、错误、超时
   - 验证：单元测试覆盖率 > 80%
 
 - [x] **Task 1.1.2**：实现消息格式转换（Gemini → Claude）
-  - 文件：`packages/client/src/services/claude/messageAdapter.ts`
+  - 文件：`client/src/services/claude/messageAdapter.ts`
   - 功能：将现有 Gemini 消息格式转换为 Claude 格式
   - 验证：所有消息类型转换正确
 
 - [x] **Task 1.1.3**：添加 API 配置管理
-  - 文件：`packages/client/src/config/llmConfig.ts`
+  - 文件：`client/src/config/llmConfig.ts`
   - 功能：管理 API Key、Base URL、Model 等配置
   - 验证：支持环境变量和运行时配置
 
 - [x] **Task 1.1.4**：实现基本文本生成功能
-  - 文件：`packages/client/src/services/claude/ClaudeAPIClient.ts`
+  - 文件：`client/src/services/claude/ClaudeAPIClient.ts`
   - 功能：`generateContent()` 方法，支持单轮对话
   - 验证：成功返回文本响应
 
 ### 1.2 流式响应
 - [x] **Task 1.2.1**：实现 SSE 流式解析器
-  - 文件：`packages/client/src/services/claude/streamParser.ts`
+  - 文件：`client/src/services/claude/streamParser.ts`
   - 功能：解析 Claude SSE 事件流（`content_block_delta`）
   - 验证：正确处理所有事件类型
 
 - [x] **Task 1.2.2**：实现 `generateContentStream()` 方法
-  - 文件：`packages/client/src/services/claude/ClaudeAPIClient.ts`
+  - 文件：`client/src/services/claude/ClaudeAPIClient.ts`
   - 功能：返回 AsyncGenerator，逐步 yield 文本块
   - 验证：流式响应延迟 < 500ms
 
 ### 1.3 错误处理和重试
 - [x] **Task 1.3.1**：实现错误分类和处理
-  - 文件：`packages/client/src/services/claude/errorHandler.ts`
+  - 文件：`client/src/services/claude/errorHandler.ts`
   - 功能：区分网络、API、模型错误，提供友好提示
   - 验证：所有错误类型都有对应处理逻辑
 
 - [x] **Task 1.3.2**：实现指数退避重试机制
-  - 文件：`packages/client/src/services/claude/retryPolicy.ts`
+  - 文件：`client/src/services/claude/retryPolicy.ts`
   - 功能：429 和 500 错误自动重试，最多 3 次
   - 验证：重试逻辑正确，不造成死循环
 
 ### 1.4 单元测试
 - [ ] **Task 1.4.1**：编写 `ClaudeAPIClient` 单元测试
-  - 文件：`packages/client/src/services/claude/__tests__/ClaudeAPIClient.test.ts`
+  - 文件：`client/src/services/claude/__tests__/ClaudeAPIClient.test.ts`
   - 覆盖：正常流程、错误处理、流式响应
   - 验证：覆盖率 > 85%
 
@@ -60,29 +60,29 @@
 
 ### 2.1 工具定义转换
 - [x] **Task 2.1.1**：创建工具转换器
-  - 文件：`packages/client/src/services/claude/toolAdapter.ts`
+  - 文件：`client/src/services/claude/toolAdapter.ts`
   - 功能：将现有 `llmTools.ts` 的 Function Declarations 转换为 Claude Tool Use 格式
   - 验证：所有工具定义正确转换
 
 - [x] **Task 2.1.2**：更新 `llmTools.ts` 导出 Claude 格式
-  - 文件：`packages/client/src/services/llmTools.ts`
+  - 文件：`client/src/services/llmTools.ts`
   - 功能：添加 `getClaudeTools()` 方法返回 Claude 格式工具
   - 验证：6 个 BPMN 编辑器工具全部支持
 
 ### 2.2 Tool Use 响应处理
 - [x] **Task 2.2.1**：实现 Tool Use 响应解析
-  - 文件：`packages/client/src/services/claude/toolUseParser.ts`
+  - 文件：`client/src/services/claude/toolUseParser.ts`
   - 功能：解析 Claude 返回的 `tool_use` 内容块
   - 验证：正确提取工具名称和参数
 
 - [x] **Task 2.2.2**：实现工具执行循环
-  - 文件：`packages/client/src/services/claude/toolExecutor.ts`
+  - 文件：`client/src/services/claude/toolExecutor.ts`
   - 功能：执行工具 → 返回结果 → 继续对话（多轮工具调用）
   - 验证：支持连续 5+ 轮工具调用
 
 ### 2.3 BPMN 编辑器集成
 - [x] **Task 2.3.1**：更新 `BpmnEditorPage.vue` 使用新 API
-  - 文件：`packages/client/src/pages/BpmnEditorPage.vue`
+  - 文件：`client/src/pages/BpmnEditorPage.vue`
   - 功能：调用 Claude 服务替代 Gemini
   - 验证：所有现有功能正常工作
 
@@ -92,12 +92,12 @@
 
 ### 2.4 提示词优化
 - [x] **Task 2.4.1**：优化 `editorSystemPrompt.ts` 适配 Claude
-  - 文件：`packages/client/src/prompts/editorSystemPrompt.ts`
+  - 文件：`client/src/prompts/editorSystemPrompt.ts`
   - 功能：调整提示词风格和结构以适配 Claude 特性
   - 验证：生成质量主观评分 > 4.0/5.0
 
 - [x] **Task 2.4.2**：优化 `bpmnSystemPrompt.ts` 和 `xpmnSystemPrompt.ts`
-  - 文件：`packages/client/src/prompts/bpmnSystemPrompt.ts`, `xpmnSystemPrompt.ts`
+  - 文件：`client/src/prompts/bpmnSystemPrompt.ts`, `xpmnSystemPrompt.ts`
   - 功能：优化 XML 生成提示词
   - 验证：生成的 BPMN/XPMN 格式正确
 
@@ -107,39 +107,39 @@
 
 ### 3.1 对话历史管理
 - [x] **Task 3.1.1**：创建对话管理器
-  - 文件：`packages/client/src/services/claude/conversationManager.ts`
+  - 文件：`client/src/services/claude/conversationManager.ts`
   - 功能：存储和管理多轮对话历史
   - 验证：支持至少 20 轮对话
 
 - [x] **Task 3.1.2**：实现对话上下文裁剪
-  - 文件：`packages/client/src/services/claude/contextTrimmer.ts`
+  - 文件：`client/src/services/claude/contextTrimmer.ts`
   - 功能：当对话过长时智能裁剪，保留重要信息
   - 验证：裁剪后仍保持对话连贯性
 
 ### 3.2 Prompt Caching
 - [x] **Task 3.2.1**：为 System Prompt 添加缓存标记
-  - 文件：`packages/client/src/services/claude/ClaudeAPIClient.ts`
+  - 文件：`client/src/services/claude/ClaudeAPIClient.ts`
   - 功能：在 System 消息中添加 `cache_control: { type: "ephemeral" }`
   - 验证：API 响应显示缓存命中
 
 - [x] **Task 3.2.2**：为 Tools 定义添加缓存标记
-  - 文件：`packages/client/src/services/claude/toolAdapter.ts`
+  - 文件：`client/src/services/claude/toolAdapter.ts`
   - 功能：Tools 数组整体标记为可缓存
   - 验证：缓存命中率 > 60%
 
 - [x] **Task 3.2.3**：实现缓存监控和日志
-  - 文件：`packages/client/src/services/claude/cacheMonitor.ts`
+  - 文件：`client/src/services/claude/cacheMonitor.ts`
   - 功能：记录缓存命中/未命中次数和成本节省
   - 验证：控制台显示缓存统计
 
 ### 3.3 性能优化
 - [ ] **Task 3.3.1**：实现请求防抖（debounce）
-  - 文件：`packages/client/src/services/claude/requestDebouncer.ts`
+  - 文件：`client/src/services/claude/requestDebouncer.ts`
   - 功能：短时间内多次请求合并为一次
   - 验证：减少不必要的 API 调用
 
 - [ ] **Task 3.3.2**：添加请求队列和并发限制
-  - 文件：`packages/client/src/services/claude/requestQueue.ts`
+  - 文件：`client/src/services/claude/requestQueue.ts`
   - 功能：控制同时发送的请求数（最多 3 个）
   - 验证：避免 429 错误
 
@@ -159,12 +159,12 @@
 
 ### 4.2 成本和监控
 - [ ] **Task 4.2.1**：实现用量监控
-  - 文件：`packages/client/src/services/claude/usageMonitor.ts`
+  - 文件：`client/src/services/claude/usageMonitor.ts`
   - 功能：记录 tokens 使用量、API 成本、缓存命中率
   - 验证：Dashboard 显示实时统计
 
 - [ ] **Task 4.2.2**：添加成本告警
-  - 文件：`packages/client/src/services/claude/costAlerts.ts`
+  - 文件：`client/src/services/claude/costAlerts.ts`
   - 功能：当日成本超过阈值时弹窗提醒
   - 验证：告警正常触发
 

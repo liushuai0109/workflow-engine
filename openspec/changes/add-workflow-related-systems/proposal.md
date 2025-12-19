@@ -32,9 +32,8 @@
   - `workflow-editor` - 添加关联系统管理需求
   - `backend-server` - 扩展工作流 API 支持关联系统字段
 - **受影响的代码**：
-  - `packages/server-nodejs/src/types/index.ts` - 添加 `RelatedSystem` 接口
-  - `packages/server-nodejs/src/services/WorkflowService.ts` - 支持关联系统字段
-  - `packages/server-go/internal/models/workflow.go` - Go 实现对应类型
+  - `server/internal/models/workflow.go` - 添加 `RelatedSystem` 类型定义
+  - `server/internal/services/workflow.go` - 支持关联系统字段
   - 数据库迁移脚本 - 添加 `related_systems` 字段
 - **数据影响**：
   - 现有工作流的 `related_systems` 字段默认为空数组 `[]`

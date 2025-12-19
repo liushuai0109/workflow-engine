@@ -4,12 +4,12 @@
 
 ## TL;DR 快速检查清单
 
-- 搜索现有工作：`openspec spec list --long`、`openspec list`（仅用于全文搜索时使用 `rg`）
+- 搜索现有工作：`npx openspec spec list --long`、`npx openspec list`（仅用于全文搜索时使用 `rg`）
 - 确定范围：新功能 vs 修改现有功能
 - 选择唯一的 `change-id`：kebab-case，动词开头（`add-`、`update-`、`remove-`、`refactor-`）
 - 搭建结构：`proposal.md`、`tasks.md`、`design.md`（仅在需要时），以及每个受影响能力的增量规范
 - 编写增量：使用 `## ADDED|MODIFIED|REMOVED|RENAMED Requirements`；每个需求至少包含一个 `#### Scenario:`
-- 验证：`openspec validate [change-id] --strict` 并修复问题
+- 验证：`npx openspec validate [change-id] --strict` 并修复问题
 - 请求批准：在提案获得批准之前不要开始实施
 
 ## 三阶段工作流
@@ -42,10 +42,10 @@
 - 现有行为的测试
 
 **工作流**
-1. 查看 `openspec/project.md`、`openspec list` 和 `openspec list --specs` 以了解当前上下文。
+1. 查看 `openspec/project.md`、`npx openspec list` 和 `npx openspec list --specs` 以了解当前上下文。
 2. 选择唯一的动词开头的 `change-id`，并在 `openspec/changes/<id>/` 下搭建 `proposal.md`、`tasks.md`、可选的 `design.md` 和规范增量。
 3. 使用 `## ADDED|MODIFIED|REMOVED Requirements` 起草规范增量，每个需求至少包含一个 `#### Scenario:`。
-4. 运行 `openspec validate <id> --strict` 并在分享提案前解决任何问题。
+4. 运行 `npx openspec validate <id> --strict` 并在分享提案前解决任何问题。
 
 ### 阶段 2：实施变更
 
@@ -76,8 +76,8 @@
 部署后，创建单独的 PR 以：
 - 移动 `changes/[name]/` → `changes/archive/YYYY-MM-DD-[name]/`
 - 如果功能发生变化，更新 `specs/`
-- 对于仅工具变更使用 `openspec archive <change-id> --skip-specs --yes`（始终明确传递 change ID）
-- 运行 `openspec validate --strict` 以确认归档的变更通过检查
+- 对于仅工具变更使用 `npx openspec archive <change-id> --skip-specs --yes`（始终明确传递 change ID）
+- 运行 `npx openspec validate --strict` 以确认归档的变更通过检查
 
 ## 任何任务之前
 
@@ -85,21 +85,21 @@
 - [ ] 阅读 `specs/[capability]/spec.md` 中的相关规范
 - [ ] 检查 `changes/` 中的待处理变更是否存在冲突
 - [ ] 阅读 `openspec/project.md` 了解约定
-- [ ] 运行 `openspec list` 查看活跃的变更
-- [ ] 运行 `openspec list --specs` 查看现有功能
+- [ ] 运行 `npx openspec list` 查看活跃的变更
+- [ ] 运行 `npx openspec list --specs` 查看现有功能
 
 **创建规范之前：**
 - 始终检查功能是否已存在
 - 优先修改现有规范而不是创建重复项
-- 使用 `openspec show [spec]` 查看当前状态
+- 使用 `npx openspec show [spec]` 查看当前状态
 - 如果请求不明确，在搭建结构之前提出 1-2 个澄清问题
 
 ### 搜索指南
-- 列举规范：`openspec spec list --long`（或用于脚本的 `--json`）
-- 列举变更：`openspec list`（或 `openspec change list --json` - 已弃用但可用）
+- 列举规范：`npx openspec spec list --long`（或用于脚本的 `--json`）
+- 列举变更：`npx openspec list`（或 `npx openspec change list --json` - 已弃用但可用）
 - 显示详情：
-  - 规范：`openspec show <spec-id> --type spec`（使用 `--json` 进行过滤）
-  - 变更：`openspec show <change-id> --json --deltas-only`
+  - 规范：`npx openspec show <spec-id> --type spec`（使用 `--json` 进行过滤）
+  - 变更：`npx openspec show <change-id> --json --deltas-only`
 - 全文搜索（使用 ripgrep）：`rg -n "Requirement:|Scenario:" openspec/specs`
 
 ## 快速入门
@@ -316,7 +316,7 @@ RENAMED 示例：
 
 **场景解析失败无提示**
 - 需要精确格式：`#### Scenario: 名称`
-- 调试：`openspec show [change] --json --deltas-only`
+- 调试：`npx openspec show [change] --json --deltas-only`
 
 ### 验证技巧
 
@@ -431,7 +431,7 @@ notifications/spec.md
 ## 错误恢复
 
 ### 变更冲突
-1. 运行 `openspec list` 查看活跃的变更
+1. 运行 `npx openspec list` 查看活跃的变更
 2. 检查重叠的规范
 3. 与变更所有者协调
 4. 考虑合并提案
