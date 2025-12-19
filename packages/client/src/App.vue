@@ -81,14 +81,38 @@
 
     <!-- 隐藏的文件输入 -->
     <input ref="fileInput" type="file" accept=".bpmn,.xml" @change="handleFileSelect" style="display: none" />
+
+    <!-- AI助手按钮 -->
+    <div
+      v-if="!showChatBox"
+      class="chat-toggle-btn"
+      @click="toggleChatBox"
+      title="打开AI助手"
+    >
+      <span class="avatar-icon">👤</span>
+      <div class="pulse-ring"></div>
+    </div>
+
+    <!-- 聊天对话框 -->
+    <ChatBox
+      v-if="showChatBox"
+      ref="chatBoxRef"
+      @sendMessage="handleChatMessage"
+      @close="handleCloseChatBox"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import BpmnEditor from './components/BpmnEditor.vue'
+import ChatBox from './components/ChatBox.vue'
 import { LifecyclePanel } from './components/lifecycle'
 import { LocalStorageService } from './services/localStorageService'
+import { editorOperationService } from './services/editorOperationService'
+import { createBpmnClaudeLLMService } from './services/claudeLlmService'
+import { createClaudeEditorBridge, waitForEditor } from './services/claudeEditorBridge'
+import { CLAUDE_BPMN_SYSTEM_PROMPT } from './prompts/claudeBpmnSystemPrompt'
 import type { BpmnOptions, FileOperationResult, FileValidationResult } from './types'
 
 // 响应式数据
@@ -103,6 +127,8 @@ const isPropertiesPanelVisible = ref<boolean>(true)
 const isLifecyclePanelVisible = ref<boolean>(true)
 const bpmnModeler = ref<any>(null)
 const selectedElement = ref<any>(null)
+const showChatBox = ref<boolean>(false)
+const chatBoxRef = ref<any>()
 
 // 文件操作
 const openFile = (): void => {
@@ -358,6 +384,81 @@ onBeforeUnmount(() => {
   // 清理事件监听器
   window.removeEventListener('toggle-properties-panel', handleTogglePanel as EventListener)
 })
+
+// AI聊天功能
+let claudeService: ReturnType<typeof createBpmnClaudeLLMService> | null = null
+
+const toggleChatBox = (): void => {
+  showChatBox.value = !showChatBox.value
+}
+
+const handleCloseChatBox = (): void => {
+  showChatBox.value = false
+}
+
+const handleChatMessage = async (message: string): Promise<void> => {
+  console.log('User message:', message)
+
+  // 设置加载状态
+  if (chatBoxRef.value) {
+    chatBoxRef.value.setLoading(true)
+  }
+
+  try {
+    // 初始化 Claude 服务（如果尚未初始化）
+    if (!claudeService) {
+      // 等待编辑器初始化
+      if (bpmnEditor.value) {
+        const modeler = bpmnEditor.value.getModeler()
+        if (modeler) {
+          editorOperationService.init(modeler)
+        } else {
+          // 等待编辑器准备就绪
+          const ready = await waitForEditor(3000)
+          if (!ready) {
+            throw new Error('编辑器未准备就绪，请先创建或打开一个流程图')
+          }
+          const retryModeler = bpmnEditor.value.getModeler()
+          if (retryModeler) {
+            editorOperationService.init(retryModeler)
+          }
+        }
+      }
+
+      // 创建 Claude 服务实例
+      const editorBridge = createClaudeEditorBridge()
+      claudeService = createBpmnClaudeLLMService(editorBridge, CLAUDE_BPMN_SYSTEM_PROMPT)
+
+      console.log('✅ Claude 服务已初始化')
+    }
+
+    // 调用 Claude API，自动处理工具调用
+    const response = await claudeService.sendMessage(message)
+
+    // 显示响应
+    if (chatBoxRef.value && response) {
+      chatBoxRef.value.addAssistantMessage(response)
+    }
+
+    // 操作完成提示
+    hasError.value = false
+  } catch (error) {
+    console.error('Claude API 调用失败:', error)
+
+    // 显示错误消息
+    if (chatBoxRef.value) {
+      const errorMsg = error instanceof Error
+        ? `抱歉，发生错误：${error.message}`
+        : '抱歉，发生了未知错误，请稍后重试。'
+      chatBoxRef.value.addAssistantMessage(errorMsg)
+    }
+  } finally {
+    // 取消加载状态
+    if (chatBoxRef.value) {
+      chatBoxRef.value.setLoading(false)
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -585,5 +686,59 @@ onBeforeUnmount(() => {
   pointer-events: none;
   margin: 0;
   padding: 0;
+}
+
+/* AI助手按钮样式 */
+.chat-toggle-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  z-index: 9998;
+  transition: all 0.3s ease;
+}
+
+.chat-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.6);
+}
+
+.chat-toggle-btn:active {
+  transform: scale(1.05);
+}
+
+.avatar-icon {
+  font-size: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+/* 脉冲动画 */
+.pulse-ring {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.3);
+  animation: pulse 2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 </style>
