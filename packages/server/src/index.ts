@@ -46,7 +46,7 @@ app.use('/api/workflows', workflowRoutes)
 app.use('/api/segments', segmentRoutes)
 app.use('/api/triggers', triggerRoutes)
 app.use('/api/metrics', metricsRoutes)
-app.use('/api/claude', claudeRoutes)
+app.use('/api/claude/v1', claudeRoutes)
 
 // Error handling
 app.use(errorHandler)

@@ -58,7 +58,7 @@ router.post('/messages', async (req: Request, res: Response) => {
 })
 
 /**
- * GET /api/claude/health
+ * GET /api/claude/v1/health
  * 检查 Claude API 配置状态
  */
 router.get('/health', (req: Request, res: Response) => {
