@@ -32,7 +32,11 @@ app.use(express.urlencoded({ extended: true }))
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    database: database.isAvailable() ? 'connected' : 'unavailable'
+  })
 })
 
 // API Routes
@@ -48,7 +52,7 @@ app.use(errorHandler)
 // Start server
 async function startServer() {
   try {
-    // Connect to database
+    // Try to connect to database (non-fatal)
     await database.connect()
 
     // Start listening
@@ -56,6 +60,14 @@ async function startServer() {
       logger.info(`🚀 Server running on port ${PORT}`)
       logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
       logger.info(`🔗 CORS origin: ${process.env.CORS_ORIGIN || 'http://localhost:8000'}`)
+
+      if (database.isAvailable()) {
+        logger.info(`✅ Database: connected`)
+      } else {
+        logger.warn(`⚠️  Database: unavailable (server running without database)`)
+        logger.warn(`   To enable database: configure PostgreSQL and restart`)
+        logger.warn(`   Or set DB_DISABLED=true to suppress warnings`)
+      }
     })
   } catch (error) {
     logger.error('Failed to start server', error)

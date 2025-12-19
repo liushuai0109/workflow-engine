@@ -12,6 +12,12 @@ class Database {
    * Initialize database connection pool
    */
   async connect(): Promise<void> {
+    // Check if database is disabled
+    if (process.env.DB_DISABLED === 'true') {
+      logger.warn('Database is disabled (DB_DISABLED=true). Server will run without database.')
+      return
+    }
+
     try {
       this.pool = new Pool({
         host: process.env.DB_HOST || 'localhost',
@@ -35,7 +41,9 @@ class Database {
       })
     } catch (error) {
       logger.error('Failed to connect to database', error)
-      throw error
+      logger.warn('Server will continue without database. Set DB_DISABLED=true to suppress this warning.')
+      // Don't throw - allow server to start without database
+      this.pool = null
     }
   }
 
@@ -44,9 +52,16 @@ class Database {
    */
   getPool(): Pool {
     if (!this.pool) {
-      throw new Error('Database not initialized. Call connect() first.')
+      throw new Error('Database not available. Please configure database connection or set DB_DISABLED=true.')
     }
     return this.pool
+  }
+
+  /**
+   * Check if database is available
+   */
+  isAvailable(): boolean {
+    return this.pool !== null
   }
 
   /**
