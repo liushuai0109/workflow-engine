@@ -35,6 +35,7 @@ const (
 	ErrInternalError             = "INTERNAL_ERROR"
 	ErrDatabaseError             = "DATABASE_ERROR"
 	ErrInvalidNodeId             = "INVALID_NODE_ID"
+	ErrConversationNotFound      = "CONVERSATION_NOT_FOUND"
 )
 
 // NewSuccessResponse creates a success response

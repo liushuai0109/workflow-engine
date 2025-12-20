@@ -3,6 +3,8 @@ package config
 import (
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 // Config holds all configuration for the application
@@ -32,9 +34,12 @@ type ClaudeConfig struct {
 
 // LoadConfig loads configuration from environment variables
 func LoadConfig() (*Config, error) {
+	// Load .env file if it exists (ignore error if file doesn't exist)
+	_ = godotenv.Load()
+
 	cfg := &Config{
 		Port:        getEnvAsInt("PORT", 3000),
-		CORSOrigin:  getEnv("CORS_ORIGIN", "http://localhost:8000"),
+		CORSOrigin:  getEnv("CORS_ORIGIN", "http://editor.workflow.com,http://editor.workflow.com:8000,http://localhost:8000"),
 		Environment: getEnv("GO_ENV", "development"),
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),

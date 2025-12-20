@@ -36,7 +36,7 @@ CLAUDE_BASE_URL=https://api.jiekou.ai
 
 ```bash
 # API Base URL - 指向本地后端代理
-VITE_CLAUDE_BASE_URL=http://dev.simonsliu.woa.com:3000/api/claude
+VITE_CLAUDE_BASE_URL=http://api.workflow.com:3000/api/claude
 
 # Claude Model - 使用最新的 Sonnet 4.5
 VITE_CLAUDE_MODEL=claude-sonnet-4-5-20250929
@@ -55,7 +55,7 @@ VITE_CLAUDE_API_KEY=
 
 **请求示例:**
 ```bash
-curl -X POST http://dev.simonsliu.woa.com:3000/api/claude/v1/messages \
+curl -X POST http://api.workflow.com:3000/api/claude/v1/messages \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude-sonnet-4-5-20250929",
@@ -345,7 +345,7 @@ curl https://api.jiekou.ai/anthropic/v1/messages \
 ### 1. 健康检查
 
 ```bash
-curl http://dev.simonsliu.woa.com:3000/api/claude/v1/health
+curl http://api.workflow.com:3000/api/claude/v1/health
 ```
 
 预期响应:
@@ -361,7 +361,7 @@ curl http://dev.simonsliu.woa.com:3000/api/claude/v1/health
 ### 2. 发送测试消息
 
 ```bash
-curl -X POST http://dev.simonsliu.woa.com:3000/api/claude/v1/messages \
+curl -X POST http://api.workflow.com:3000/api/claude/v1/messages \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude-sonnet-4-5-20250929",
@@ -390,7 +390,7 @@ curl -X POST http://dev.simonsliu.woa.com:3000/api/claude/v1/messages \
 
 **原因**: 前端直接调用了 Claude API
 
-**解决**: 确保前端使用后端代理地址 `http://dev.simonsliu.woa.com:3000/api/claude`
+**解决**: 确保前端使用后端代理地址 `http://api.workflow.com:3000/api/claude`
 
 ### 问题 2: 404 Not Found
 
@@ -400,7 +400,7 @@ curl -X POST http://dev.simonsliu.woa.com:3000/api/claude/v1/messages \
 
 **检查**:
 - 后端路由: `app.use('/api/claude/v1', claudeRoutes)`
-- 前端配置: `VITE_CLAUDE_BASE_URL=http://dev.simonsliu.woa.com:3000/api/claude`
+- 前端配置: `VITE_CLAUDE_BASE_URL=http://api.workflow.com:3000/api/claude`
 - 完整路径: `/api/claude` + `/v1` + `/messages`
 
 ### 问题 3: API Key 未配置

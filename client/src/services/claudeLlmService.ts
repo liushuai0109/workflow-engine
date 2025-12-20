@@ -10,6 +10,12 @@ import type { ToolExecutorConfig, ToolExecutionResult } from './claude/toolExecu
 import { getClaudeTools } from './llmTools'
 import type { LLMConfig } from '../config/llmConfig'
 import { getLLMConfig } from '../config/llmConfig'
+import { chatApiService, type ChatMessage } from './chatApiService'
+
+/**
+ * JavaScript 最大安全整数值
+ */
+export const DEFAULT_MAX_TOOL_ROUNDS = Number.MAX_SAFE_INTEGER
 
 /**
  * 对话上下文管理
@@ -29,6 +35,8 @@ export class ClaudeLLMService {
   private executor: ClaudeToolExecutor
   private context: ConversationContext
   private config: LLMConfig
+  private conversationId: string | null = null
+  private useDatabase: boolean = true
 
   constructor(
     executorConfig: ToolExecutorConfig,
@@ -58,15 +66,111 @@ export class ClaudeLLMService {
   }
 
   /**
+   * 创建新会话
+   */
+  async createConversation(title?: string): Promise<string> {
+    if (!this.useDatabase) {
+      return ''
+    }
+
+    try {
+      const conv = await chatApiService.createConversation(title)
+      this.conversationId = conv.id
+      return conv.id
+    } catch (error) {
+      console.warn('Failed to create conversation, falling back to LocalStorage:', error)
+      this.useDatabase = false
+      return ''
+    }
+  }
+
+  /**
+   * 从数据库加载会话
+   */
+  async loadConversation(conversationId: string): Promise<ConversationContext> {
+    if (!this.useDatabase) {
+      throw new Error('Database not available')
+    }
+
+    try {
+      const response = await chatApiService.getConversation(conversationId)
+      this.conversationId = conversationId
+
+      // 转换消息格式
+      const messages: ClaudeMessage[] = response.data.messages.map(msg => {
+        const claudeMsg: ClaudeMessage = {
+          role: msg.role === 'assistant' ? 'assistant' : 'user',
+          content: msg.content
+        }
+
+        // 如果有 metadata 且包含 tool_use 信息，需要恢复
+        if (msg.metadata && Object.keys(msg.metadata).length > 0) {
+          // 这里可以根据 metadata 恢复 tool_use 等复杂内容
+          // 暂时只保存 content
+        }
+
+        return claudeMsg
+      })
+
+      this.context = {
+        messages,
+        systemPrompt: this.context.systemPrompt,
+        tools: this.context.tools,
+        enableCache: this.context.enableCache
+      }
+
+      return this.exportContext()
+    } catch (error) {
+      console.error('Failed to load conversation:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 保存消息到数据库
+   */
+  private async saveMessage(role: 'user' | 'assistant', content: string, metadata?: Record<string, any>): Promise<void> {
+    if (!this.useDatabase || !this.conversationId) {
+      return
+    }
+
+    try {
+      await chatApiService.addMessage(this.conversationId, {
+        role,
+        content,
+        metadata
+      })
+    } catch (error) {
+      console.warn('Failed to save message to database:', error)
+      // 不抛出错误，允许继续执行
+    }
+  }
+
+  /**
    * 发送消息并处理 Tool Use (Function Calling)
    * 自动处理工具调用循环，直到获得最终响应
    */
-  async sendMessage(userMessage: string, maxToolRounds: number = 5): Promise<string> {
+  async sendMessage(userMessage: string, maxToolRounds: number = DEFAULT_MAX_TOOL_ROUNDS): Promise<string> {
+    // 如果没有会话 ID，创建新会话
+    if (!this.conversationId && this.useDatabase) {
+      try {
+        // 使用第一条消息的前 50 字符作为标题
+        const title = userMessage.length > 50 ? userMessage.substring(0, 50) + '...' : userMessage
+        await this.createConversation(title)
+      } catch (error) {
+        console.warn('Failed to create conversation, continuing without database:', error)
+        this.useDatabase = false
+      }
+    }
+
     // 添加用户消息到上下文
     this.context.messages.push({
       role: 'user',
       content: userMessage
     })
+
+    // 保存用户消息到数据库
+    await this.saveMessage('user', userMessage)
 
     let currentRound = 0
     let finalResponse = ''
@@ -105,6 +209,13 @@ export class ClaudeLLMService {
       if (!hasToolUse(response.content)) {
         // 没有工具调用，提取文本响应
         finalResponse = this.extractTextFromContent(response.content)
+        
+        // 保存助手响应到数据库
+        const assistantContent = typeof response.content === 'string' 
+          ? response.content 
+          : JSON.stringify(response.content)
+        await this.saveMessage('assistant', assistantContent)
+        
         break
       }
 
@@ -117,6 +228,17 @@ export class ClaudeLLMService {
       this.context.messages.push({
         role: 'user',
         content: toolResults as any
+      })
+
+      // 保存工具执行结果到数据库（作为用户消息，包含 metadata）
+      const toolResultsContent = JSON.stringify(toolResults)
+      await this.saveMessage('user', toolResultsContent, {
+        type: 'tool_results',
+        toolUses: toolUses.map(tu => ({ id: tu.id, name: tu.name })),
+        executionResults: executionResults.map(er => ({ 
+          toolName: er.toolName, 
+          success: er.success 
+        }))
       })
 
       currentRound++

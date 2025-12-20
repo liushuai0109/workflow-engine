@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bpmn-explorer/server/internal/routes"
+	"github.com/bpmn-explorer/server/internal/services"
 	"github.com/bpmn-explorer/server/pkg/config"
 	"github.com/bpmn-explorer/server/pkg/database"
 	"github.com/bpmn-explorer/server/pkg/logger"
@@ -48,6 +49,16 @@ func main() {
 		Handler: router,
 	}
 
+	// Start cleanup service if database is available
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if db.IsAvailable() {
+		cleanupService := services.NewChatCleanupService(db, log)
+		go cleanupService.StartPeriodicCleanup(ctx)
+		log.Info().Msg("✅ Chat cleanup service started")
+	}
+
 	// Start server in a goroutine
 	go func() {
 		log.Info().
@@ -74,11 +85,14 @@ func main() {
 
 	log.Info().Msg("Shutting down server...")
 
-	// Graceful shutdown with 5 second timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	// Cancel cleanup service context
+	cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	// Graceful shutdown with 5 second timeout
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Fatal().Err(err).Msg("Server forced to shutdown")
 	}
 

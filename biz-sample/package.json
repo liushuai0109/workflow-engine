@@ -1,0 +1,25 @@
+{
+  "name": "biz-sample",
+  "version": "1.0.0",
+  "description": "证券业务示例应用 - Monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start": "lerna run start --parallel",
+    "start:client": "lerna run start --scope=@biz-sample/client",
+    "start:server": "lerna run start --scope=@biz-sample/server",
+    "build": "lerna run build",
+    "bootstrap": "lerna bootstrap",
+    "clean": "lerna clean"
+  },
+  "devDependencies": {
+    "lerna": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
+

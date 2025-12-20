@@ -14,7 +14,9 @@ export default defineConfig({
     port: 8000,
     cors: true,
     allowedHosts: [
-      'dev.simonsliu.woa.com'
+      'api.workflow.com',
+      'editor.workflow.com',
+      'localhost'
     ]
   },
   build: {

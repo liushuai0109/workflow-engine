@@ -29,7 +29,13 @@ func NewClaudeHandler(cfg config.ClaudeConfig, logger *zerolog.Logger) *ClaudeHa
 
 // ProxyMessages proxies requests to Claude API
 func (h *ClaudeHandler) ProxyMessages(c *gin.Context) {
+	h.logger.Info().
+		Str("apiKey", maskAPIKey(h.config.APIKey)).
+		Str("baseURL", h.config.BaseURL).
+		Msg("Received Claude API request")
+
 	if h.config.APIKey == "" {
+		h.logger.Error().Msg("Claude API key is empty")
 		c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
 			"CLAUDE_API_NOT_CONFIGURED",
 			"Claude API is not configured",
@@ -49,7 +55,14 @@ func (h *ClaudeHandler) ProxyMessages(c *gin.Context) {
 	}
 
 	// Create proxy request
-	proxyURL := h.config.BaseURL + "/v1/messages"
+	// jiekou.ai uses /anthropic/v1/messages instead of /v1/messages
+	endpoint := "/v1/messages"
+	if h.config.BaseURL == "https://api.jiekou.ai" {
+		endpoint = "/anthropic/v1/messages"
+	}
+	proxyURL := h.config.BaseURL + endpoint
+	h.logger.Info().Str("proxyURL", proxyURL).Msg("Sending request to Claude API")
+
 	proxyReq, err := http.NewRequest("POST", proxyURL, bytes.NewReader(body))
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to create proxy request")
@@ -88,6 +101,27 @@ func (h *ClaudeHandler) ProxyMessages(c *gin.Context) {
 		return
 	}
 
+	h.logger.Info().
+		Int("statusCode", resp.StatusCode).
+		Str("responsePreview", string(respBody[:min(200, len(respBody))])).
+		Msg("Received response from Claude API")
+
 	// Forward response
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// maskAPIKey masks the API key for logging
+func maskAPIKey(key string) string {
+	if len(key) <= 8 {
+		return "****"
+	}
+	return key[:4] + "****" + key[len(key)-4:]
 }

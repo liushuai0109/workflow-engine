@@ -33,10 +33,27 @@ func (db *Database) Connect(cfg config.DatabaseConfig) error {
 		return nil
 	}
 
-	connStr := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName,
-	)
+	// Log connection parameters (without password)
+	db.logger.Info().
+		Str("host", cfg.Host).
+		Int("port", cfg.Port).
+		Str("user", cfg.User).
+		Str("dbname", cfg.DBName).
+		Msg("Connecting to database")
+
+	// Build connection string, handling empty password
+	var connStr string
+	if cfg.Password == "" {
+		connStr = fmt.Sprintf(
+			"host=%s port=%d user=%s dbname=%s sslmode=disable search_path=public",
+			cfg.Host, cfg.Port, cfg.User, cfg.DBName,
+		)
+	} else {
+		connStr = fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable search_path=public",
+			cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName,
+		)
+	}
 
 	sqlDB, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -55,6 +72,32 @@ func (db *Database) Connect(cfg config.DatabaseConfig) error {
 	if err := sqlDB.PingContext(ctx); err != nil {
 		sqlDB.Close()
 		return fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	// Set search_path to ensure we use the public schema
+	if _, err := sqlDB.Exec("SET search_path TO public"); err != nil {
+		sqlDB.Close()
+		return fmt.Errorf("failed to set search_path: %w", err)
+	}
+
+	// Test query to verify table exists
+	var dbName, schemaName string
+	if err := sqlDB.QueryRow("SELECT current_database(), current_schema()").Scan(&dbName, &schemaName); err != nil {
+		sqlDB.Close()
+		return fmt.Errorf("failed to query database info: %w", err)
+	}
+	db.logger.Info().Str("database", dbName).Str("schema", schemaName).Msg("Connected to database")
+
+	// Verify chat_conversations table exists
+	var tableExists bool
+	if err := sqlDB.QueryRow("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'chat_conversations')").Scan(&tableExists); err != nil {
+		sqlDB.Close()
+		return fmt.Errorf("failed to check table existence: %w", err)
+	}
+	if !tableExists {
+		db.logger.Warn().Msg("chat_conversations table not found in public schema")
+	} else {
+		db.logger.Info().Msg("✅ chat_conversations table found")
 	}
 
 	db.DB = sqlDB

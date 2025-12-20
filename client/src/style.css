@@ -1,4 +1,95 @@
-.djs-direct-editing-parent {
-  border: none !important;
-  background: none !important;
+/* 全局样式 - 包含可视化相关的样式 */
+
+/* 确保 html 和 body 占满全屏 */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+/* 节点状态高亮样式 */
+:deep(.node-status-running) {
+  stroke: #1890ff !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(24, 144, 255, 0.6));
+}
+
+:deep(.node-status-completed) {
+  stroke: #52c41a !important;
+  stroke-width: 2px !important;
+  opacity: 0.8;
+}
+
+:deep(.node-status-failed) {
+  stroke: #ff4d4f !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(255, 77, 79, 0.6));
+}
+
+:deep(.node-status-pending) {
+  stroke: #999 !important;
+  stroke-width: 1px !important;
+  opacity: 0.6;
+}
+
+:deep(.node-status-breakpoint) {
+  stroke: #faad14 !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: 5, 5;
+  filter: drop-shadow(0 0 4px rgba(250, 173, 20, 0.6));
+}
+
+/* 断点标记 */
+:deep(.node-breakpoint) {
+  stroke: #faad14 !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: 5, 5;
+}
+
+/* 路径高亮样式 */
+:deep(.path-active) {
+  stroke: #1890ff !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(24, 144, 255, 0.6));
+  animation: pathPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pathPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Context Pad 自定义按钮样式 */
+:deep(.custom-set-breakpoint),
+:deep(.custom-remove-breakpoint),
+:deep(.custom-view-details) {
+  background: white !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+:deep(.custom-set-breakpoint:hover),
+:deep(.custom-remove-breakpoint:hover),
+:deep(.custom-view-details:hover) {
+  background: #f5f5f5 !important;
+  border-color: #1890ff !important;
+}
+
+:deep(.custom-remove-breakpoint) {
+  background: #fff2f0 !important;
+  border-color: #ff4d4f !important;
 }

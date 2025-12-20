@@ -126,7 +126,7 @@ npm run dev
 
 无需修改，前端配置保持不变:
 ```bash
-VITE_CLAUDE_BASE_URL=http://dev.simonsliu.woa.com:3000/api/claude
+VITE_CLAUDE_BASE_URL=http://api.workflow.com:3000/api/claude
 VITE_CLAUDE_MODEL=claude-sonnet-4-5-20250929
 ```
 
@@ -138,7 +138,7 @@ curl http://localhost:3000/api/claude/v1/health
 ```
 
 2. 功能测试:
-- 访问 `http://dev.simonsliu.woa.com:8000`
+- 访问 `http://api.workflow.com:8000`
 - 点击 AI 助手按钮
 - 发送测试消息: "创建一个简单的任务节点"
 

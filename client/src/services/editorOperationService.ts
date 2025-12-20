@@ -107,6 +107,15 @@ class EditorOperationService {
 
   /**
    * 创建连线
+   *
+   * 修复说明：
+   * 之前的实现手动创建 businessObject 并传入 modeling.createConnection()，
+   * 导致 bpmn-js 不会自动更新源节点和目标节点的 incoming/outgoing 引用，
+   * 造成 BPMN XML 缺少必需的 <bpmn:incoming> 和 <bpmn:outgoing> 元素。
+   *
+   * 新实现遵循 bpmn-js 官方推荐的模式：
+   * 1. 先让 bpmn-js 创建连接和 businessObject（自动维护引用）
+   * 2. 再通过 modeling API 更新属性（名称、条件表达式等）
    */
   createFlow(config: FlowConfig): any {
     this.ensureInitialized()
@@ -124,35 +133,38 @@ class EditorOperationService {
       throw new Error(`找不到目标节点: ${targetId}`)
     }
 
-    // 使用 bpmnFactory 创建 business object
-    const bpmnFactory = this.modeler.get('bpmnFactory')
-    const businessObject = bpmnFactory.create('bpmn:SequenceFlow', {
-      id,
-      name: name || '',
-      sourceRef: sourceElement.businessObject,
-      targetRef: targetElement.businessObject
-    })
-
-    // 添加条件表达式（如果提供）
-    if (condition) {
-      const conditionExpression = bpmnFactory.create('bpmn:FormalExpression', {
-        body: condition
-      })
-      businessObject.conditionExpression = conditionExpression
-    }
-
-    // 创建连接（不传waypoints，让bpmn-js先自动计算）
+    // 步骤 1: 让 bpmn-js 创建连接（自动创建 businessObject 并维护 incoming/outgoing 引用）
     const connection = this.modeling.createConnection(
       sourceElement,
       targetElement,
       {
-        type: 'bpmn:SequenceFlow',
-        businessObject
+        type: 'bpmn:SequenceFlow'
+        // ✅ 不传入手动创建的 businessObject，让 bpmn-js 自己管理
       },
       sourceElement.parent
     )
 
-    // 如果提供了自定义路径点，验证并更新连线的路径
+    // 步骤 2: 更新基本属性（名称）
+    if (name) {
+      this.modeling.updateProperties(connection, { name })
+    }
+
+    // 步骤 3: 添加条件表达式（如果提供）
+    if (condition) {
+      const bpmnFactory = this.modeler.get('bpmnFactory')
+      const conditionExpression = bpmnFactory.create('bpmn:FormalExpression', {
+        body: condition
+      })
+
+      // 使用 updateModdleProperties 更新嵌套的 BPMN 对象
+      this.modeling.updateModdleProperties(
+        connection,
+        connection.businessObject,
+        { conditionExpression }
+      )
+    }
+
+    // 步骤 4: 更新自定义路径点（如果提供）
     if (waypoints && waypoints.length > 0) {
       // 验证并修正 waypoints
       const validatedWaypoints = this.validateAndFixWaypoints(

@@ -12,7 +12,7 @@
 ### 前置要求
 
 - **Node.js**: >= 18.0.0
-- **pnpm**: >= 8.0.0
+- **npm**: >= 9.0.0（前端使用）
 - **Go**: >= 1.21（仅后端需要）
 
 ### 安装步骤
@@ -20,15 +20,66 @@
 ```bash
 # 安装前端依赖
 cd client
-pnpm install
+npm install
+npm run install:deps  # 自动安装 Playwright 浏览器
 
 # 启动前端
-pnpm run start
+npm run start
 
 # 启动后端（需要 Go 环境）
 cd ../server
 make run
 ```
+
+### 测试和验证
+
+#### 前端测试
+
+```bash
+cd client
+
+# 运行单元测试
+npm run test
+
+# 运行 E2E 测试
+npm run test:e2e:headless  # 快速验证（< 1分钟）
+npm run test:e2e:quick      # 快速测试（< 2分钟）
+npm run test:e2e:full       # 完整测试（< 10分钟）
+npm run test:e2e:all        # 完整测试套件（< 30分钟）
+
+# 运行验证脚本
+npm run verify:start         # 验证服务启动
+bash ../../scripts/verify-frontend.sh  # 完整前端验证
+```
+
+#### 后端测试
+
+```bash
+cd server
+
+# 运行单元测试
+make test
+
+# 运行测试覆盖率
+make test-coverage
+
+# 运行集成测试（需要测试数据库）
+INTEGRATION_TEST=true make test-integration
+
+# 运行验证脚本
+make verify:build    # 验证编译
+make verify:start    # 验证服务启动
+make verify:all      # 完整后端验证
+```
+
+#### 完整验证
+
+```bash
+# 运行所有验证脚本（前端 + 后端）
+bash scripts/verify-all.sh
+```
+
+更多测试信息请参见 [测试文档](docs/TESTING_AND_VALIDATION_STRATEGY.md) 和 [E2E 测试指南](tests/e2e/README.md)。
 
 ### 安装 Go（如果未安装）
 

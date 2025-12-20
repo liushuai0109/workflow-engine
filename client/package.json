@@ -11,7 +11,17 @@
     "type-check": "vue-tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:headless": "playwright test --project=headless-verification",
+    "test:e2e:quick": "playwright test --project=quick",
+    "test:e2e:full": "playwright test --project=full",
+    "test:e2e:all": "playwright test --project=e2e",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report ../reports/playwright-report",
+    "install:deps": "bash scripts/install-deps.sh",
+    "verify:start": "bash scripts/verify-start.sh",
+    "verify:all": "bash ../../scripts/verify-all.sh"
   },
   "dependencies": {
     "@bpmn-io/properties-panel": "^3.33.0",
@@ -27,6 +37,7 @@
     "@babel/preset-env": "^7.28.5",
     "@fission-ai/openspec": "^0.16.0",
     "@jest/globals": "^29.7.0",
+    "@playwright/test": "^1.40.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^24.7.2",
     "@vitejs/plugin-vue": "^6.0.3",

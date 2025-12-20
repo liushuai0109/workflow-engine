@@ -31,6 +31,11 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 	workflowHandler := handlers.NewWorkflowHandler(db, logger)
 	claudeHandler := handlers.NewClaudeHandler(cfg.Claude, logger)
 	executionHandler := handlers.NewWorkflowExecutionHandler(db, logger, workflowSvc, instanceSvc, executionSvc)
+	mockHandler := handlers.NewMockHandler(db, logger, workflowSvc)
+	mockConfigHandler := handlers.NewMockConfigHandler(db, logger)
+	debugHandler := handlers.NewDebugHandler(db, logger)
+	executionHistoryHandler := handlers.NewExecutionHistoryHandler(db, logger)
+	chatHandler := handlers.NewChatConversationHandler(db, logger)
 
 	// Health check
 	router.GET("/health", handlers.HealthCheck(db))
@@ -63,6 +68,55 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 
 		// Workflow execution
 		api.POST("/execute/:workflowInstanceId", executionHandler.ExecuteWorkflow)
+
+		// Mock execution
+		mock := api.Group("/workflows/:workflowId/mock")
+		{
+			mock.POST("/execute", mockHandler.ExecuteMock)
+		}
+		// Mock execution operations (不需要 workflowId)
+		api.GET("/workflows/mock/executions/:executionId", mockHandler.GetMockExecution)
+		api.POST("/workflows/mock/executions/:executionId/step", mockHandler.StepMockExecution)
+		api.POST("/workflows/mock/executions/:executionId/continue", mockHandler.ContinueMockExecution)
+		api.POST("/workflows/mock/executions/:executionId/stop", mockHandler.StopMockExecution)
+
+		// Mock configuration
+		mockConfig := api.Group("/workflows/:workflowId/mock/configs")
+		{
+			mockConfig.POST("", mockConfigHandler.CreateMockConfig)
+			mockConfig.GET("", mockConfigHandler.GetMockConfigs)
+		}
+		api.GET("/workflows/mock/configs/:configId", mockConfigHandler.GetMockConfig)
+		api.PUT("/workflows/mock/configs/:configId", mockConfigHandler.UpdateMockConfig)
+		api.DELETE("/workflows/mock/configs/:configId", mockConfigHandler.DeleteMockConfig)
+
+		// Debug sessions
+		debug := api.Group("/workflows/:workflowId/debug")
+		{
+			debug.POST("/start", debugHandler.StartDebug)
+		}
+		api.GET("/workflows/debug/sessions/:sessionId", debugHandler.GetDebugSession)
+		api.POST("/workflows/debug/sessions/:sessionId/step", debugHandler.StepDebug)
+		api.POST("/workflows/debug/sessions/:sessionId/continue", debugHandler.ContinueDebug)
+		api.GET("/workflows/debug/sessions/:sessionId/variables", debugHandler.GetDebugVariables)
+		api.GET("/workflows/debug/sessions/:sessionId/nodes/:nodeId", debugHandler.GetDebugNode)
+		api.POST("/workflows/debug/sessions/:sessionId/breakpoints", debugHandler.SetBreakpoints)
+		api.POST("/workflows/debug/sessions/:sessionId/stop", debugHandler.StopDebug)
+
+		// Execution history
+		api.GET("/executions/:executionId/histories", executionHistoryHandler.GetExecutionHistories)
+
+		// Chat conversations
+		chat := api.Group("/chat/conversations")
+		{
+			chat.POST("", chatHandler.CreateConversation)
+			chat.GET("", chatHandler.GetConversations)
+			chat.GET("/:id", chatHandler.GetConversation)
+			chat.PUT("/:id", chatHandler.UpdateConversation)
+			chat.DELETE("/:id", chatHandler.DeleteConversation)
+			chat.POST("/:id/messages", chatHandler.AddMessage)
+			chat.POST("/:id/messages/batch", chatHandler.BatchAddMessages)
+		}
 	}
 
 	return router

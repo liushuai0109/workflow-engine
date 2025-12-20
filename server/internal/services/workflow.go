@@ -15,15 +15,20 @@ import (
 
 // WorkflowService handles workflow business logic
 type WorkflowService struct {
-	db     *database.Database
-	logger *zerolog.Logger
+	db      *database.Database
+	logger  *zerolog.Logger
+	store   *WorkflowStore
+	useStore bool
 }
 
 // NewWorkflowService creates a new WorkflowService
 func NewWorkflowService(db *database.Database, logger *zerolog.Logger) *WorkflowService {
+	useStore := db == nil || db.DB == nil
 	return &WorkflowService{
-		db:     db,
-		logger: logger,
+		db:       db,
+		logger:   logger,
+		store:    NewWorkflowStore(logger),
+		useStore: useStore,
 	}
 }
 
@@ -82,8 +87,9 @@ func (s *WorkflowService) CreateWorkflow(ctx context.Context, name, description,
 
 // GetWorkflowByID retrieves a workflow by ID
 func (s *WorkflowService) GetWorkflowByID(ctx context.Context, workflowID string) (*models.Workflow, error) {
-	if s.db.DB == nil {
-		return nil, fmt.Errorf("database not available")
+	// Use in-memory store if database is not available
+	if s.useStore || s.db == nil || s.db.DB == nil {
+		return s.store.GetWorkflow(workflowID)
 	}
 
 	query := `
@@ -274,4 +280,9 @@ func (s *WorkflowService) ListWorkflows(ctx context.Context, page, pageSize int)
 	}
 
 	return workflows, metadata, nil
+}
+
+// SetWorkflowInMemory saves a workflow to memory store (for use when database is unavailable)
+func (s *WorkflowService) SetWorkflowInMemory(workflow *models.Workflow) {
+	s.store.SaveWorkflow(workflow)
 }

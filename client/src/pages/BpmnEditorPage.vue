@@ -25,6 +25,26 @@
           <span class="icon">📊</span>
           {{ isFlowVisualizationEnabled ? '关闭流量' : '显示流量' }}
         </button>
+        <button
+          v-if="currentDiagram"
+          @click="toggleMockPanel"
+          class="btn"
+          :class="{ 'btn-flow-active': showMockPanel }"
+          title="Mock 执行"
+        >
+          <span class="icon">🎭</span>
+          Mock
+        </button>
+        <button
+          v-if="currentDiagram"
+          @click="toggleDebugPanel"
+          class="btn"
+          :class="{ 'btn-flow-active': showDebugPanel }"
+          title="Debug 调试"
+        >
+          <span class="icon">🐛</span>
+          Debug
+        </button>
       </div>
     </div>
 
@@ -97,14 +117,93 @@
       @sendMessage="handleChatMessage"
       @close="handleCloseChatBox"
     />
+
+    <!-- Mock 和 Debug 控制按钮 - 始终显示 -->
+    <div 
+      class="mock-debug-controls" 
+      style="position: fixed !important; bottom: 100px !important; right: 20px !important; z-index: 10000 !important; display: flex !important; flex-direction: column !important; gap: 12px !important; background: rgba(255, 255, 255, 0.95) !important; padding: 8px !important; border-radius: 8px !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;"
+    >
+      <button
+        class="control-btn mock-btn"
+        @click="toggleMockPanel"
+        :class="{ active: showMockPanel }"
+        :disabled="!currentDiagram"
+        title="Mock 执行（需要先加载流程图）"
+        style="padding: 12px 20px !important; border: 2px solid #52c41a !important; border-radius: 8px !important; background: #52c41a !important; color: white !important; font-size: 14px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important; min-width: 100px !important; opacity: 1 !important;"
+      >
+        <span style="margin-right: 4px;">🎭</span> Mock
+      </button>
+      <button
+        class="control-btn debug-btn"
+        @click="toggleDebugPanel"
+        :class="{ active: showDebugPanel }"
+        :disabled="!currentDiagram"
+        title="Debug 调试（需要先加载流程图）"
+        style="padding: 12px 20px !important; border: 2px solid #faad14 !important; border-radius: 8px !important; background: #faad14 !important; color: white !important; font-size: 14px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important; min-width: 100px !important; opacity: 1 !important;"
+      >
+        <span style="margin-right: 4px;">🐛</span> Debug
+      </button>
+    </div>
+
+    <!-- Mock 控制面板 -->
+    <MockControlPanel
+      :bpmnXml="currentDiagram"
+      v-if="showMockPanel && currentDiagram"
+      :workflow-id="getWorkflowId || ''"
+      :config-id="selectedMockConfigId"
+      @close="showMockPanel = false"
+      @execution-update="handleMockExecutionUpdate"
+    />
+
+    <!-- Mock 配置面板 -->
+    <MockConfigPanel
+      v-if="showMockConfigPanel && currentDiagram"
+      :workflow-id="getWorkflowId || ''"
+      @close="showMockConfigPanel = false"
+      @config-selected="handleMockConfigSelected"
+    />
+
+    <!-- Debug 控制面板 -->
+    <DebugControlPanel
+      v-if="showDebugPanel && currentDiagram"
+      :workflow-id="getWorkflowId || ''"
+      @close="showDebugPanel = false"
+      @session-update="handleDebugSessionUpdate"
+    />
+
+    <!-- 变量监视面板 -->
+      <VariableWatchPanel
+        v-if="showVariablePanel && currentDiagram"
+        :variables="debugVariables"
+        :previous-variables="previousDebugVariables"
+        @close="showVariablePanel = false"
+      />
+
+    <!-- 执行历史时间线 -->
+    <ExecutionTimeline
+      v-if="showTimelinePanel && currentDiagram"
+      :histories="executionHistories"
+      @close="showTimelinePanel = false"
+      @history-selected="handleHistorySelected"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import BpmnEditor from '../components/BpmnEditor.vue'
 import ChatBox from '../components/ChatBox.vue'
+import MockControlPanel from '../components/MockControlPanel.vue'
+import MockConfigPanel from '../components/MockConfigPanel.vue'
+import DebugControlPanel from '../components/DebugControlPanel.vue'
+import VariableWatchPanel from '../components/VariableWatchPanel.vue'
+import ExecutionTimeline from '../components/ExecutionTimeline.vue'
 import { LocalStorageService } from '../services/localStorageService'
+import { visualizationService } from '../services/visualizationService'
+import { contextMenuService } from '../services/contextMenuService'
+import type { MockExecution } from '../services/mockService'
+import { debugService, type DebugSession } from '../services/debugService'
+import type { ExecutionHistory } from '../components/ExecutionTimeline.vue'
 import { llmService } from '../services/llmService'
 import type { Message, FunctionCall } from '../services/llmService'
 import { BPMN_SYSTEM_PROMPT } from '../prompts/bpmnSystemPrompt'
@@ -137,6 +236,43 @@ const bpmnEditor = ref<any>()
 const isFlowVisualizationEnabled = ref<boolean>(false)
 const showChatBox = ref<boolean>(false)
 const chatBoxRef = ref<any>()
+
+// Mock 和 Debug 相关状态
+const showMockPanel = ref<boolean>(false)
+const showMockConfigPanel = ref<boolean>(false)
+const showDebugPanel = ref<boolean>(false)
+const showVariablePanel = ref<boolean>(false)
+const showTimelinePanel = ref<boolean>(false)
+const selectedMockConfigId = ref<string | undefined>()
+const currentWorkflowId = ref<string>('')
+
+// 当图表改变时，更新工作流 ID
+watch(() => currentDiagram.value, () => {
+  if (currentDiagram.value) {
+    const match = currentDiagram.value.match(/<bpmn:process[^>]+id="([^"]+)"/)
+    if (match && match[1]) {
+      currentWorkflowId.value = match[1]
+    }
+  }
+}, { immediate: true })
+const debugVariables = ref<Record<string, any>>({})
+const executionHistories = ref<ExecutionHistory[]>([])
+
+// 计算当前工作流 ID（从 BPMN XML 中提取或使用默认值）
+const getWorkflowId = computed((): string => {
+  // TODO: 从 BPMN XML 中提取 workflow ID
+  // 暂时使用时间戳作为临时 ID
+  if (!currentWorkflowId.value && currentDiagram.value) {
+    // 尝试从 XML 中提取 process ID
+    const match = currentDiagram.value.match(/<bpmn:process[^>]+id="([^"]+)"/)
+    if (match && match[1]) {
+      currentWorkflowId.value = match[1]
+    } else {
+      currentWorkflowId.value = `workflow-${Date.now()}`
+    }
+  }
+  return currentWorkflowId.value || `workflow-${Date.now()}`
+})
 
 // 文件操作
 const openFile = (): void => {
@@ -330,11 +466,129 @@ const handleError = (err: Error): void => {
   isLoading.value = false
 }
 
+// Mock 和 Debug 控制函数
+const toggleMockPanel = () => {
+  console.log('Toggle Mock Panel, current state:', showMockPanel.value)
+  showMockPanel.value = !showMockPanel.value
+  if (showMockPanel.value) {
+    showDebugPanel.value = false
+  }
+  console.log('Mock Panel state after toggle:', showMockPanel.value)
+}
+
+const toggleDebugPanel = () => {
+  console.log('Toggle Debug Panel, current state:', showDebugPanel.value)
+  showDebugPanel.value = !showDebugPanel.value
+  if (showDebugPanel.value) {
+    showMockPanel.value = false
+    showVariablePanel.value = true
+    showTimelinePanel.value = true
+    console.log('Debug Panel opened, showing variable and timeline panels')
+  }
+  console.log('Debug Panel state after toggle:', showDebugPanel.value)
+}
+
+const handleMockExecutionUpdate = (execution: MockExecution) => {
+  // 更新可视化
+  if (bpmnEditor.value) {
+    const modeler = bpmnEditor.value.getModeler()
+    if (modeler) {
+      visualizationService.init(modeler)
+      visualizationService.updateVisualization(
+        execution.executedNodes,
+        execution.currentNodeId,
+        execution.status === 'failed' ? [execution.currentNodeId] : []
+      )
+    }
+  }
+}
+
+const handleMockConfigSelected = (config: any) => {
+  selectedMockConfigId.value = config.id
+  showMockConfigPanel.value = false
+}
+
+const handleDebugSessionUpdate = async (session: DebugSession) => {
+  // 保存之前的变量值用于变化检测
+  previousDebugVariables.value = { ...debugVariables.value }
+  // 更新变量
+  debugVariables.value = session.variables || {}
+
+  // 更新可视化
+  if (bpmnEditor.value) {
+    const modeler = bpmnEditor.value.getModeler()
+    if (modeler) {
+      visualizationService.init(modeler)
+      if (session.currentNodeId) {
+        visualizationService.highlightNode(session.currentNodeId, 'running')
+      }
+    }
+  }
+
+  // 更新断点
+  if (bpmnEditor.value) {
+    const modeler = bpmnEditor.value.getModeler()
+    if (modeler) {
+      contextMenuService.setBreakpoints(session.breakpoints || [])
+    }
+  }
+
+  // 如果有 executionId，获取执行历史
+  if (session.executionId) {
+    try {
+      const result = await debugService.getExecutionHistories(session.executionId)
+      executionHistories.value = result.histories
+    } catch (error) {
+      console.error('Failed to get execution histories:', error)
+    }
+  }
+}
+
+const handleHistorySelected = (history: ExecutionHistory) => {
+  // 高亮选中的历史节点
+  if (bpmnEditor.value) {
+    const modeler = bpmnEditor.value.getModeler()
+    if (modeler) {
+      visualizationService.init(modeler)
+      visualizationService.clearAllHighlights()
+      visualizationService.highlightNode(history.nodeId, 'completed')
+    }
+  }
+}
+
 const handleShown = (): void => {
-  console.log('BPMN diagram shown')
+  console.log('=== BPMN diagram shown ===')
+  console.log('currentDiagram value:', currentDiagram.value ? `exists (${currentDiagram.value.length} chars)` : 'empty')
+  console.log('Button should be visible:', !!currentDiagram.value)
+  console.log('Mock button disabled:', !currentDiagram.value)
+  console.log('Debug button disabled:', !currentDiagram.value)
   isLoading.value = false
   hasError.value = false
   errorMessage.value = ''
+
+  // 初始化可视化服务和右键菜单服务
+  setTimeout(() => {
+    if (bpmnEditor.value) {
+      const modeler = bpmnEditor.value.getModeler()
+      if (modeler) {
+        visualizationService.init(modeler)
+        contextMenuService.init(modeler, {
+          onSetBreakpoint: (nodeId: string) => {
+            console.log('Set breakpoint:', nodeId)
+            // TODO: 调用 Debug API 设置断点
+          },
+          onRemoveBreakpoint: (nodeId: string) => {
+            console.log('Remove breakpoint:', nodeId)
+            // TODO: 调用 Debug API 移除断点
+          },
+          onViewDetails: (nodeId: string) => {
+            console.log('View details:', nodeId)
+            // TODO: 显示节点详情
+          },
+        })
+      }
+    }
+  }, 100)
 }
 
 const handleLoading = (): void => {
@@ -347,6 +601,8 @@ const handleLoading = (): void => {
 const handleDiagramChanged = (xml: string): void => {
   currentDiagram.value = xml
   console.log('Diagram changed')
+  console.log('currentDiagram updated, length:', xml.length)
+  console.log('Buttons should now be visible:', !!currentDiagram.value)
 }
 
 // 流量可视化
@@ -1091,6 +1347,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   console.log('BPMN Explorer cleanup')
+  visualizationService.clearAllHighlights()
 })
 </script>
 
@@ -1098,8 +1355,13 @@ onBeforeUnmount(() => {
 .app {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
   background: #f8f9fa;
+  overflow: hidden;
 }
 
 .toolbar {
@@ -1292,6 +1554,58 @@ onBeforeUnmount(() => {
 }
 
 /* 客服按钮 */
+/* Mock 和 Debug 控制按钮 */
+.mock-debug-controls {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 10000;
+}
+
+.control-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+}
+
+.control-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5 !important;
+}
+
+.control-btn.active {
+  background: #1890ff;
+  color: white;
+}
+
+.mock-btn.active {
+  background: #52c41a;
+}
+
+.debug-btn.active {
+  background: #faad14;
+}
+
 .chat-toggle-btn {
   position: fixed;
   right: 24px;

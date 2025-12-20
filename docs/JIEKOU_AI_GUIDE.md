@@ -30,7 +30,7 @@ CLAUDE_BASE_URL=https://api.jiekou.ai
 
 ```bash
 # API Base URL - 指向本地后端代理
-VITE_CLAUDE_BASE_URL=http://dev.simonsliu.woa.com:3000/api/claude
+VITE_CLAUDE_BASE_URL=http://api.workflow.com:3000/api/claude
 
 # Claude Model - 使用最新的 Sonnet 4.5
 VITE_CLAUDE_MODEL=claude-sonnet-4-5-20250929
@@ -245,7 +245,7 @@ curl -X POST http://localhost:3000/api/claude/v1/messages \
 
 ### BPMN 工具调用测试
 
-在浏览器中打开 `http://dev.simonsliu.woa.com:8000`，点击右下角的 AI 助手按钮，输入：
+在浏览器中打开 `http://api.workflow.com:8000`，点击右下角的 AI 助手按钮，输入：
 
 ```
 创建一个简单的请假流程，包含：
@@ -282,7 +282,7 @@ Claude 应该会自动调用工具创建这些节点。
 **原因**: 前端直接调用 Claude API
 
 **解决**:
-1. 确认前端配置指向后端代理: `VITE_CLAUDE_BASE_URL=http://dev.simonsliu.woa.com:3000/api/claude`
+1. 确认前端配置指向后端代理: `VITE_CLAUDE_BASE_URL=http://api.workflow.com:3000/api/claude`
 2. 不要在前端配置中填写 API Key
 3. 所有请求必须通过后端代理
 
@@ -355,7 +355,7 @@ const systemMessage = {
 1. 获取 jiekou.ai API Key
 2. 配置 `packages/server/.env`
 3. 重启后端: `cd packages/server && npm run dev`
-4. 访问 `http://dev.simonsliu.woa.com:8000`
+4. 访问 `http://api.workflow.com:8000`
 5. 点击 AI 助手按钮开始使用！
 
 ---

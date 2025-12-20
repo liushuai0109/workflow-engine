@@ -480,6 +480,7 @@ export default class XFlowPropertiesProvider {
   ) {
     // 获取所有从该 gateway 出发的 sequence flows
     const outgoingFlows = businessObject.outgoing || [];
+    console.log(`Gateway ${element.id} has ${outgoingFlows.length} outgoing flows:`, outgoingFlows);
 
     // 获取每个条件的优先级并排序（从大到小）
     const flowsWithPriority = outgoingFlows.map((flow: any, index: number) => {
@@ -508,6 +509,8 @@ export default class XFlowPropertiesProvider {
         autoFocusEntry: id + "-name",
       };
     });
+
+    console.log(`Created ${items.length} condition items for gateway ${element.id}:`, items);
 
     return {
       items,

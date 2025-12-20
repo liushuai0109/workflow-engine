@@ -1,4 +1,4 @@
-.PHONY: build run test clean install
+.PHONY: build run test clean install verify-start verify-build verify-all
 
 # 检测并设置 Go 路径
 GO := $(shell which go 2>/dev/null || echo /data/mm64/simonsliu/go/bin/go)
@@ -106,3 +106,21 @@ migrate-create:
 		exit 1; \
 	fi
 	@$(MIGRATE) create -ext sql -dir migrations -seq $$(MIGRATION_NAME)
+
+# Verification targets
+# Verify build
+verify-build:
+	@echo "Verifying build..."
+	@$(GO) build ./cmd/server/main.go
+	@echo "✓ Build verification passed"
+
+# Verify server startup
+verify-start:
+	@bash scripts/verify-start.sh
+
+# Run all verifications
+verify-all: verify-build test verify-start
+	@echo ""
+	@echo "=========================================="
+	@echo "All backend verifications passed"
+	@echo "=========================================="
