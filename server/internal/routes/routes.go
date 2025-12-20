@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/bpmn-explorer/server/internal/handlers"
 	"github.com/bpmn-explorer/server/internal/middleware"
+	"github.com/bpmn-explorer/server/internal/services"
 	"github.com/bpmn-explorer/server/pkg/config"
 	"github.com/bpmn-explorer/server/pkg/database"
 	"github.com/gin-gonic/gin"
@@ -20,10 +21,16 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 	router.Use(middleware.CORSMiddleware(cfg.CORSOrigin))
 	router.Use(middleware.LoggerMiddleware(logger))
 
+	// Initialize services
+	workflowSvc := services.NewWorkflowService(db, logger)
+	instanceSvc := services.NewWorkflowInstanceService(db, logger)
+	executionSvc := services.NewWorkflowExecutionService(db, logger)
+
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(db, logger)
 	workflowHandler := handlers.NewWorkflowHandler(db, logger)
 	claudeHandler := handlers.NewClaudeHandler(cfg.Claude, logger)
+	executionHandler := handlers.NewWorkflowExecutionHandler(db, logger, workflowSvc, instanceSvc, executionSvc)
 
 	// Health check
 	router.GET("/health", handlers.HealthCheck(db))
@@ -53,6 +60,9 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 		{
 			claude.POST("/messages", claudeHandler.ProxyMessages)
 		}
+
+		// Workflow execution
+		api.POST("/execute/:workflowInstanceId", executionHandler.ExecuteWorkflow)
 	}
 
 	return router

@@ -66,6 +66,7 @@ func (s *WorkflowExecutionService) CreateWorkflowExecution(ctx context.Context, 
 	var execution models.WorkflowExecution
 	var variablesBytes []byte
 	var completedAt sql.NullTime
+	var errorMessage sql.NullString
 
 	err = s.db.QueryRowContext(ctx, query,
 		id, instanceId, workflowId, models.ExecutionStatusPending, string(variablesJSON), instanceVersion, now,
@@ -78,7 +79,7 @@ func (s *WorkflowExecutionService) CreateWorkflowExecution(ctx context.Context, 
 		&execution.ExecutionVersion,
 		&execution.StartedAt,
 		&completedAt,
-		&execution.ErrorMessage,
+		&errorMessage,
 	)
 
 	if err != nil {
@@ -127,6 +128,7 @@ func (s *WorkflowExecutionService) GetWorkflowExecutionByID(ctx context.Context,
 	var execution models.WorkflowExecution
 	var variablesBytes []byte
 	var completedAt sql.NullTime
+	var errorMessage sql.NullString
 
 	err := s.db.QueryRowContext(ctx, query, executionID).Scan(
 		&execution.Id,
@@ -137,7 +139,7 @@ func (s *WorkflowExecutionService) GetWorkflowExecutionByID(ctx context.Context,
 		&execution.ExecutionVersion,
 		&execution.StartedAt,
 		&completedAt,
-		&execution.ErrorMessage,
+		&errorMessage,
 	)
 
 	if err != nil {
@@ -162,6 +164,11 @@ func (s *WorkflowExecutionService) GetWorkflowExecutionByID(ctx context.Context,
 	// Handle completed_at
 	if completedAt.Valid {
 		execution.CompletedAt = &completedAt.Time
+	}
+
+	// Handle error_message
+	if errorMessage.Valid {
+		execution.ErrorMessage = errorMessage.String
 	}
 
 	return &execution, nil
@@ -219,6 +226,7 @@ func (s *WorkflowExecutionService) UpdateWorkflowExecution(ctx context.Context, 
 	var execution models.WorkflowExecution
 	var variablesBytes []byte
 	var completedAt sql.NullTime
+	var errorMessageNull sql.NullString
 
 	err := s.db.QueryRowContext(ctx, query, args...).Scan(
 		&execution.Id,
@@ -229,7 +237,7 @@ func (s *WorkflowExecutionService) UpdateWorkflowExecution(ctx context.Context, 
 		&execution.ExecutionVersion,
 		&execution.StartedAt,
 		&completedAt,
-		&execution.ErrorMessage,
+		&errorMessageNull,
 	)
 
 	if err != nil {
@@ -254,6 +262,11 @@ func (s *WorkflowExecutionService) UpdateWorkflowExecution(ctx context.Context, 
 	// Handle completed_at
 	if completedAt.Valid {
 		execution.CompletedAt = &completedAt.Time
+	}
+
+	// Handle error_message
+	if errorMessageNull.Valid {
+		execution.ErrorMessage = errorMessageNull.String
 	}
 
 	s.logger.Info().Str("executionId", executionID).Msg("Workflow execution updated")
@@ -331,6 +344,7 @@ func (s *WorkflowExecutionService) ListWorkflowExecutions(ctx context.Context, p
 		var execution models.WorkflowExecution
 		var variablesBytes []byte
 		var completedAt sql.NullTime
+		var errorMessage sql.NullString
 
 		err := rows.Scan(
 			&execution.Id,
@@ -341,7 +355,7 @@ func (s *WorkflowExecutionService) ListWorkflowExecutions(ctx context.Context, p
 			&execution.ExecutionVersion,
 			&execution.StartedAt,
 			&completedAt,
-			&execution.ErrorMessage,
+			&errorMessage,
 		)
 		if err != nil {
 			s.logger.Error().Err(err).Msg("Failed to scan workflow execution")
@@ -361,6 +375,11 @@ func (s *WorkflowExecutionService) ListWorkflowExecutions(ctx context.Context, p
 		// Handle completed_at
 		if completedAt.Valid {
 			execution.CompletedAt = &completedAt.Time
+		}
+
+		// Handle error_message
+		if errorMessage.Valid {
+			execution.ErrorMessage = errorMessage.String
 		}
 
 		executions = append(executions, execution)

@@ -10,6 +10,7 @@ import (
 
 const (
 	bpmnNamespace = "http://www.omg.org/spec/BPMN/20100524/MODEL"
+	xflowNamespace = "http://example.com/bpmn/xflow-extension"
 )
 
 // NodeType 节点类型枚举
@@ -69,6 +70,17 @@ type userTask struct {
 
 type serviceTask struct {
 	baseElement
+	ExtensionElements extensionElements `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL extensionElements"`
+}
+
+type extensionElements struct {
+	Values []extensionValue `xml:",any"`
+}
+
+type extensionValue struct {
+	XMLName xml.Name
+	Value   string `xml:"value,attr"`
+	Content string `xml:",chardata"`
 }
 
 type exclusiveGateway struct {
@@ -196,6 +208,22 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeServiceTask,
 			IncomingSequenceFlowIds: st.Incoming,
 			OutgoingSequenceFlowIds: st.Outgoing,
+		}
+		// 从扩展属性中提取业务接口 URL
+		if len(st.ExtensionElements.Values) > 0 {
+			for _, ext := range st.ExtensionElements.Values {
+				// 查找 xflow:Url 或 url 元素
+				localName := ext.XMLName.Local
+				if localName == "url" || localName == "Url" || strings.HasSuffix(ext.XMLName.Space, "xflow-extension") {
+					// 优先使用 value 属性，如果没有则使用内容
+					if ext.Value != "" {
+						node.BusinessApiUrl = ext.Value
+					} else if ext.Content != "" {
+						node.BusinessApiUrl = strings.TrimSpace(ext.Content)
+					}
+					break
+				}
+			}
 		}
 		wd.Nodes[node.Id] = node
 	}

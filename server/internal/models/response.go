@@ -34,6 +34,7 @@ const (
 	ErrInvalidRequest            = "INVALID_REQUEST"
 	ErrInternalError             = "INTERNAL_ERROR"
 	ErrDatabaseError             = "DATABASE_ERROR"
+	ErrInvalidNodeId             = "INVALID_NODE_ID"
 )
 
 // NewSuccessResponse creates a success response

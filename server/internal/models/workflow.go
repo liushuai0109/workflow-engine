@@ -35,6 +35,7 @@ type Node struct {
 	Type                    uint32   `json:"type" db:"type"`
 	IncomingSequenceFlowIds []string `json:"incomingSequenceFlowIds" db:"incoming_sequence_flow_ids"`
 	OutgoingSequenceFlowIds []string `json:"outgoingSequenceFlowIds" db:"outgoing_sequence_flow_ids"`
+	BusinessApiUrl          string   `json:"businessApiUrl,omitempty" db:"business_api_url"` // ServiceTask 的业务接口 URL（从扩展属性解析）
 }
 
 // SequenceFlow 序列流
