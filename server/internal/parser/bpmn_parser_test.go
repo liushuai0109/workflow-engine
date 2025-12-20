@@ -80,14 +80,14 @@ func TestParseBPMN(t *testing.T) {
 		t.Error("Start node should have outgoing sequence flows")
 	}
 
-	// 验证邻接表构建
-	flow := wd.SequenceFlows[expectedFlowID]
-	if len(wd.AdjacencyList[flow.SourceNodeID]) == 0 {
-		t.Error("Adjacency list should contain connections")
-	}
-	if len(wd.ReverseAdjacencyList[flow.TargetNodeID]) == 0 {
-		t.Error("Reverse adjacency list should contain connections")
-	}
+		// 验证邻接表构建
+		flow := wd.SequenceFlows[expectedFlowID]
+		if len(wd.AdjacencyList[flow.SourceNodeId]) == 0 {
+			t.Error("Adjacency list should contain connections")
+		}
+		if len(wd.ReverseAdjacencyList[flow.TargetNodeId]) == 0 {
+			t.Error("Reverse adjacency list should contain connections")
+		}
 }
 
 func TestParseBPMN_EmptyContent(t *testing.T) {

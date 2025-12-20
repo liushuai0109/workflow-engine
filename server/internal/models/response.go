@@ -24,12 +24,16 @@ type Metadata struct {
 
 // Error codes
 const (
-	ErrMissingEmail     = "MISSING_EMAIL"
-	ErrUserNotFound     = "USER_NOT_FOUND"
-	ErrWorkflowNotFound = "WORKFLOW_NOT_FOUND"
-	ErrInvalidRequest   = "INVALID_REQUEST"
-	ErrInternalError    = "INTERNAL_ERROR"
-	ErrDatabaseError    = "DATABASE_ERROR"
+	ErrMissingEmail              = "MISSING_EMAIL"
+	ErrUserNotFound              = "USER_NOT_FOUND"
+	ErrWorkflowNotFound          = "WORKFLOW_NOT_FOUND"
+	ErrWorkflowInstanceNotFound  = "WORKFLOW_INSTANCE_NOT_FOUND"
+	ErrWorkflowExecutionNotFound = "WORKFLOW_EXECUTION_NOT_FOUND"
+	ErrDuplicateEmail            = "DUPLICATE_EMAIL"
+	ErrForeignKeyViolation       = "FOREIGN_KEY_VIOLATION"
+	ErrInvalidRequest            = "INVALID_REQUEST"
+	ErrInternalError             = "INTERNAL_ERROR"
+	ErrDatabaseError             = "DATABASE_ERROR"
 )
 
 // NewSuccessResponse creates a success response

@@ -82,3 +82,11 @@ func (db *Database) QueryOne(ctx context.Context, query string, args ...interfac
 	}
 	return db.QueryRowContext(ctx, query, args...)
 }
+
+// QueryRowContext executes a query that returns a single row
+func (db *Database) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	if db.DB == nil {
+		return nil
+	}
+	return db.DB.QueryRowContext(ctx, query, args...)
+}

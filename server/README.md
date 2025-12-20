@@ -89,7 +89,33 @@ CORS_ORIGIN=http://localhost:8000
 
 # 数据库配置（可选）
 DB_DISABLED=true  # 设置为 true 可以不连接数据库运行
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=bpmn_explorer
 ```
+
+### 数据库迁移
+
+如果使用数据库，需要先运行迁移脚本创建表结构：
+
+```bash
+# 设置数据库环境变量
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USER=postgres
+export DB_PASSWORD=your_password
+export DB_NAME=bpmn_explorer
+
+# 运行迁移（向上迁移）
+make migrate-up
+
+# 回滚迁移（向下迁移一个版本）
+make migrate-down
+```
+
+迁移脚本位于 `server/migrations/` 目录，使用 `golang-migrate` 工具管理。
 
 ### 运行
 
@@ -153,6 +179,17 @@ make test-script
 # 或直接运行：
 # bash scripts/test.sh
 # 脚本会生成带时间戳的报告文件，并创建最新报告的符号链接
+
+# 运行集成测试（需要测试数据库）
+# 设置环境变量后运行：
+export INTEGRATION_TEST=true
+export TEST_DB_HOST=localhost
+export TEST_DB_PORT=5432
+export TEST_DB_USER=postgres
+export TEST_DB_PASSWORD=your_password
+export TEST_DB_NAME=bpmn_explorer_test
+make test-integration
+# 详细说明请参考 INTEGRATION_TEST.md
 ```
 
 ### 代码格式化

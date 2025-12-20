@@ -155,85 +155,85 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 	// 解析开始事件
 	for _, se := range proc.StartEvents {
 		node := models.Node{
-			ID:                      se.ID,
+			Id:                      se.ID,
 			Name:                    se.Name,
 			Type:                    NodeTypeStartEvent,
-			IncomingSequenceFlowIDs: se.Incoming,
-			OutgoingSequenceFlowIDs: se.Outgoing,
+			IncomingSequenceFlowIds: se.Incoming,
+			OutgoingSequenceFlowIds: se.Outgoing,
 		}
-		wd.Nodes[node.ID] = node
+		wd.Nodes[node.Id] = node
 	}
 
 	// 解析结束事件
 	for _, ee := range proc.EndEvents {
 		node := models.Node{
-			ID:                      ee.ID,
+			Id:                      ee.ID,
 			Name:                    ee.Name,
 			Type:                    NodeTypeEndEvent,
-			IncomingSequenceFlowIDs: ee.Incoming,
-			OutgoingSequenceFlowIDs: ee.Outgoing,
+			IncomingSequenceFlowIds: ee.Incoming,
+			OutgoingSequenceFlowIds: ee.Outgoing,
 		}
-		wd.Nodes[node.ID] = node
+		wd.Nodes[node.Id] = node
 	}
 
 	// 解析用户任务
 	for _, ut := range proc.UserTasks {
 		node := models.Node{
-			ID:                      ut.ID,
+			Id:                      ut.ID,
 			Name:                    ut.Name,
 			Type:                    NodeTypeUserTask,
-			IncomingSequenceFlowIDs: ut.Incoming,
-			OutgoingSequenceFlowIDs: ut.Outgoing,
+			IncomingSequenceFlowIds: ut.Incoming,
+			OutgoingSequenceFlowIds: ut.Outgoing,
 		}
-		wd.Nodes[node.ID] = node
+		wd.Nodes[node.Id] = node
 	}
 
 	// 解析服务任务
 	for _, st := range proc.ServiceTasks {
 		node := models.Node{
-			ID:                      st.ID,
+			Id:                      st.ID,
 			Name:                    st.Name,
 			Type:                    NodeTypeServiceTask,
-			IncomingSequenceFlowIDs: st.Incoming,
-			OutgoingSequenceFlowIDs: st.Outgoing,
+			IncomingSequenceFlowIds: st.Incoming,
+			OutgoingSequenceFlowIds: st.Outgoing,
 		}
-		wd.Nodes[node.ID] = node
+		wd.Nodes[node.Id] = node
 	}
 
 	// 解析排他网关
 	for _, eg := range proc.ExclusiveGateways {
 		node := models.Node{
-			ID:                      eg.ID,
+			Id:                      eg.ID,
 			Name:                    eg.Name,
 			Type:                    NodeTypeExclusiveGateway,
-			IncomingSequenceFlowIDs: eg.Incoming,
-			OutgoingSequenceFlowIDs: eg.Outgoing,
+			IncomingSequenceFlowIds: eg.Incoming,
+			OutgoingSequenceFlowIds: eg.Outgoing,
 		}
-		wd.Nodes[node.ID] = node
+		wd.Nodes[node.Id] = node
 	}
 
 	// 解析并行网关
 	for _, pg := range proc.ParallelGateways {
 		node := models.Node{
-			ID:                      pg.ID,
+			Id:                      pg.ID,
 			Name:                    pg.Name,
 			Type:                    NodeTypeParallelGateway,
-			IncomingSequenceFlowIDs: pg.Incoming,
-			OutgoingSequenceFlowIDs: pg.Outgoing,
+			IncomingSequenceFlowIds: pg.Incoming,
+			OutgoingSequenceFlowIds: pg.Outgoing,
 		}
-		wd.Nodes[node.ID] = node
+		wd.Nodes[node.Id] = node
 	}
 
 	// 解析子流程
 	for _, sp := range proc.SubProcesses {
 		node := models.Node{
-			ID:                      sp.ID,
+			Id:                      sp.ID,
 			Name:                    sp.Name,
 			Type:                    NodeTypeSubProcess,
-			IncomingSequenceFlowIDs: sp.Incoming,
-			OutgoingSequenceFlowIDs: sp.Outgoing,
+			IncomingSequenceFlowIds: sp.Incoming,
+			OutgoingSequenceFlowIds: sp.Outgoing,
 		}
-		wd.Nodes[node.ID] = node
+		wd.Nodes[node.Id] = node
 	}
 }
 
@@ -241,14 +241,14 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 func parseSequenceFlows(proc *process, wd *models.WorkflowDefinition) {
 	for _, sf := range proc.SequenceFlows {
 		flow := models.SequenceFlow{
-			ID:                sf.ID,
+			Id:                sf.ID,
 			Name:              sf.Name,
-			SourceNodeID:      sf.SourceRef,
-			TargetNodeID:      sf.TargetRef,
+			SourceNodeId:      sf.SourceRef,
+			TargetNodeId:      sf.TargetRef,
 			ConditionExpression: strings.TrimSpace(sf.ConditionExpression.Content),
 			Priority:          sf.Priority,
 		}
-		wd.SequenceFlows[flow.ID] = flow
+		wd.SequenceFlows[flow.Id] = flow
 	}
 }
 
@@ -256,10 +256,10 @@ func parseSequenceFlows(proc *process, wd *models.WorkflowDefinition) {
 func parseMessages(proc *process, wd *models.WorkflowDefinition) {
 	for _, msg := range proc.Messages {
 		message := models.Message{
-			ID:   msg.ID,
+			Id:   msg.ID,
 			Name: msg.Name,
 		}
-		wd.Messages[message.ID] = message
+		wd.Messages[message.Id] = message
 	}
 }
 
@@ -273,8 +273,8 @@ func buildAdjacencyLists(wd *models.WorkflowDefinition) {
 
 	// 根据序列流构建邻接表
 	for _, flow := range wd.SequenceFlows {
-		sourceID := flow.SourceNodeID
-		targetID := flow.TargetNodeID
+		sourceID := flow.SourceNodeId
+		targetID := flow.TargetNodeId
 
 		// 检查源节点和目标节点是否存在
 		if _, exists := wd.Nodes[sourceID]; !exists {

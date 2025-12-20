@@ -4,10 +4,10 @@ import "time"
 
 // Workflow represents a workflow
 type Workflow struct {
-	ID          string    `json:"id" db:"id"`
+	Id          string    `json:"id" db:"id"`
 	Name        string    `json:"name" db:"name"`
 	Description string    `json:"description,omitempty" db:"description"`
-	XML         string    `json:"xml" db:"xml"`
+	BpmnXml     string    `json:"bpmnXml" db:"bpmn_xml"`
 	Version     string    `json:"version" db:"version"`
 	Status      string    `json:"status" db:"status"`
 	CreatedBy   string    `json:"createdBy,omitempty" db:"created_by"`
@@ -29,27 +29,27 @@ const (
 
 // Node 节点（基类，对应 BaseElement）
 type Node struct {
-	ID                      string   `json:"id" db:"id"`
-	ParentID                string   `json:"parentId,omitempty" db:"parent_id"`
+	Id                      string   `json:"id" db:"id"`
+	ParentId                string   `json:"parentId,omitempty" db:"parent_id"`
 	Name                    string   `json:"name" db:"name"`
 	Type                    uint32   `json:"type" db:"type"`
-	IncomingSequenceFlowIDs []string `json:"incomingSequenceFlowIds" db:"incoming_sequence_flow_ids"`
-	OutgoingSequenceFlowIDs []string `json:"outgoingSequenceFlowIds" db:"outgoing_sequence_flow_ids"`
+	IncomingSequenceFlowIds []string `json:"incomingSequenceFlowIds" db:"incoming_sequence_flow_ids"`
+	OutgoingSequenceFlowIds []string `json:"outgoingSequenceFlowIds" db:"outgoing_sequence_flow_ids"`
 }
 
 // SequenceFlow 序列流
 type SequenceFlow struct {
-	ID                string `json:"id" db:"id"`
+	Id                string `json:"id" db:"id"`
 	Name              string `json:"name" db:"name"`
-	SourceNodeID      string `json:"sourceNodeId" db:"source_node_id"`
-	TargetNodeID      string `json:"targetNodeId" db:"target_node_id"`
+	SourceNodeId      string `json:"sourceNodeId" db:"source_node_id"`
+	TargetNodeId      string `json:"targetNodeId" db:"target_node_id"`
 	ConditionExpression string `json:"conditionExpression,omitempty" db:"condition_expression"`
 	Priority          uint32 `json:"priority" db:"priority"`
 }
 
 // Message 消息元素（用于流程定义中的消息元素）
 type Message struct {
-	ID   string `json:"id" db:"id"`
+	Id   string `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
 }
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/bpmn-explorer/server/internal/models"
 	"github.com/bpmn-explorer/server/internal/services"
@@ -29,7 +30,7 @@ func (h *WorkflowHandler) CreateWorkflow(c *gin.Context) {
 	var req struct {
 		Name        string `json:"name" binding:"required"`
 		Description string `json:"description"`
-		XML         string `json:"xml" binding:"required"`
+		BpmnXml     string `json:"bpmnXml" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -40,7 +41,7 @@ func (h *WorkflowHandler) CreateWorkflow(c *gin.Context) {
 		return
 	}
 
-	workflow, err := h.service.CreateWorkflow(c.Request.Context(), req.Name, req.Description, req.XML)
+	workflow, err := h.service.CreateWorkflow(c.Request.Context(), req.Name, req.Description, req.BpmnXml)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to create workflow")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
@@ -77,7 +78,7 @@ func (h *WorkflowHandler) UpdateWorkflow(c *gin.Context) {
 	var req struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
-		XML         string `json:"xml"`
+		BpmnXml     string `json:"bpmnXml"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -88,7 +89,7 @@ func (h *WorkflowHandler) UpdateWorkflow(c *gin.Context) {
 		return
 	}
 
-	workflow, err := h.service.UpdateWorkflow(c.Request.Context(), workflowID, req.Name, req.Description, req.XML)
+	workflow, err := h.service.UpdateWorkflow(c.Request.Context(), workflowID, req.Name, req.Description, req.BpmnXml)
 	if err != nil {
 		h.logger.Error().Err(err).Str("workflowId", workflowID).Msg("Failed to update workflow")
 		c.JSON(http.StatusNotFound, models.NewErrorResponse(
@@ -103,8 +104,21 @@ func (h *WorkflowHandler) UpdateWorkflow(c *gin.Context) {
 
 // ListWorkflows lists all workflows
 func (h *WorkflowHandler) ListWorkflows(c *gin.Context) {
-	// TODO: Implement pagination
-	workflows, err := h.service.ListWorkflows(c.Request.Context())
+	// Parse pagination parameters
+	page := 1
+	pageSize := 20
+	if p := c.Query("page"); p != "" {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+	if ps := c.Query("pageSize"); ps != "" {
+		if parsed, err := strconv.Atoi(ps); err == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+
+	workflows, metadata, err := h.service.ListWorkflows(c.Request.Context(), page, pageSize)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to list workflows")
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
@@ -114,5 +128,7 @@ func (h *WorkflowHandler) ListWorkflows(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, models.NewSuccessResponse(workflows))
+	response := models.NewSuccessResponse(workflows)
+	response.Metadata = metadata
+	c.JSON(http.StatusOK, response)
 }

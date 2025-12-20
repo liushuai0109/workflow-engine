@@ -39,6 +39,15 @@ test-coverage: ensure-reports-dir
 test-script:
 	@bash scripts/test.sh
 
+# Run integration tests (requires INTEGRATION_TEST=true and test database)
+test-integration:
+	@if [ "$$INTEGRATION_TEST" != "true" ]; then \
+		echo "Skipping integration tests. Set INTEGRATION_TEST=true to run."; \
+		exit 0; \
+	fi
+	@echo "Running integration tests..."
+	@$(GO) test -tags=integration -v ./internal/services/... -run TestIntegration
+
 # Ensure reports directory exists
 ensure-reports-dir:
 	@mkdir -p reports/coverage
@@ -69,3 +78,31 @@ lint:
 # Build for production
 build-prod:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -ldflags="-w -s" -o bin/server cmd/server/main.go
+
+# Database migration commands
+# Install migrate tool: go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+MIGRATE := $(shell which migrate 2>/dev/null || echo $(GO) run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate)
+
+# Run database migrations up
+migrate-up:
+	@if [ -z "$$DB_HOST" ]; then \
+		echo "Error: DB_HOST environment variable not set"; \
+		exit 1; \
+	fi
+	@$(MIGRATE) -path migrations -database "postgres://$$DB_USER:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_NAME?sslmode=disable" up
+
+# Run database migrations down
+migrate-down:
+	@if [ -z "$$DB_HOST" ]; then \
+		echo "Error: DB_HOST environment variable not set"; \
+		exit 1; \
+	fi
+	@$(MIGRATE) -path migrations -database "postgres://$$DB_USER:$$DB_PASSWORD@$$DB_HOST:$$DB_PORT/$$DB_NAME?sslmode=disable" down 1
+
+# Create a new migration file
+migrate-create:
+	@if [ -z "$$(MIGRATION_NAME)" ]; then \
+		echo "Usage: make migrate-create MIGRATION_NAME=name"; \
+		exit 1; \
+	fi
+	@$(MIGRATE) create -ext sql -dir migrations -seq $$(MIGRATION_NAME)

@@ -7,7 +7,7 @@ import (
 
 // UserProfile represents a user profile
 type UserProfile struct {
-	ID         string                 `json:"id" db:"id"`
+	Id         string                 `json:"id" db:"id"`
 	Email      string                 `json:"email" db:"email"`
 	Attributes map[string]interface{} `json:"attributes" db:"attributes"`
 	CreatedAt  time.Time              `json:"createdAt" db:"created_at"`
