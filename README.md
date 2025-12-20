@@ -72,6 +72,10 @@ make verify:start    # 验证服务启动
 make verify:all      # 完整后端验证
 ```
 
+**注意**：
+- 后端单元/集成测试在 `server` 目录下运行（使用 Go testing）
+- 后端 API 的 E2E 测试在 `client` 目录下运行（使用 Playwright，测试文件在 `tests/e2e/api-integration.spec.ts`）
+
 #### 完整验证
 
 ```bash
@@ -79,7 +83,24 @@ make verify:all      # 完整后端验证
 bash scripts/verify-all.sh
 ```
 
-更多测试信息请参见 [测试文档](docs/TESTING_AND_VALIDATION_STRATEGY.md) 和 [E2E 测试指南](tests/e2e/README.md)。
+#### E2E 测试（前端 + 后端 API）
+
+```bash
+cd client
+
+# 快速测试（< 2分钟）- 包括前端和后端 API 测试
+npm run test:e2e:quick
+
+# 完整测试（< 10分钟）
+npm run test:e2e:full
+
+# 完整测试套件（< 30分钟）
+npm run test:e2e:all
+```
+
+**注意**：所有 E2E 测试（包括后端 API 测试）都在 `client` 目录下运行，因为 Playwright 是 Node.js 工具。后端 API 测试使用 Playwright 的 `request` API 从外部测试 API 端点。
+
+更多测试信息请参见 [测试文档](docs/TESTING_AND_VALIDATION_STRATEGY.md)、[测试指南](docs/TESTING_GUIDE.md) 和 [E2E 测试指南](tests/e2e/README.md)。
 
 ### 安装 Go（如果未安装）
 

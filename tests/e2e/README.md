@@ -4,6 +4,29 @@
 
 本目录包含项目的端到端（E2E）测试套件，使用 Playwright 进行测试。
 
+### 测试架构说明
+
+**为什么所有 E2E 测试都在 client 目录下运行？**
+
+1. **Playwright 是 Node.js 工具**：需要 npm 环境和 Node.js 运行时
+2. **统一测试框架**：使用同一个工具（Playwright）测试前端和后端，便于管理
+3. **端到端测试**：E2E 测试关注的是整个系统的行为（前端+后端），而不是单独的后端
+
+**测试分类：**
+
+- **前端 E2E 测试**：使用 Playwright 的 `page` API 测试浏览器中的前端应用
+  - 文件：`core-features.spec.ts`、`regression.spec.ts` 等
+  - 测试内容：UI 交互、路由导航、组件渲染等
+
+- **后端 API E2E 测试**：使用 Playwright 的 `request` API 测试后端 HTTP API
+  - 文件：`api-integration.spec.ts`
+  - 测试内容：API 端点、错误处理、数据格式验证等
+  - **注意**：这是从外部视角测试 API，不是后端内部的单元测试
+
+- **后端单元/集成测试**：使用 Go testing 框架（在 `server/` 目录下）
+  - 运行方式：`cd server && make test` 或 `make test-integration`
+  - 测试内容：后端内部逻辑、数据库交互等
+
 ## 测试结构
 
 ```

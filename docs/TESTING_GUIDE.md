@@ -90,10 +90,14 @@ bash scripts/verify-frontend.sh
 
 ### 单元测试
 
+使用 Go testing 框架测试后端内部逻辑：
+
 ```bash
 cd server
 make test
 ```
+
+**测试位置**：`server/internal/` 目录下的 `*_test.go` 文件
 
 ### 测试覆盖率
 
@@ -106,12 +110,31 @@ make test-coverage
 
 ### 集成测试
 
-需要测试数据库环境：
+使用 Go testing with tags 测试数据库交互：
 
 ```bash
 cd server
 INTEGRATION_TEST=true make test-integration
 ```
+
+**测试位置**：`server/internal/services/integration_test.go`
+
+**注意**：需要测试数据库环境，详见 `server/INTEGRATION_TEST.md`
+
+### API 端点测试
+
+后端 API 端点的测试有两种方式：
+
+1. **Handler 单元测试**（推荐用于快速测试）：
+   - 位置：`server/internal/handlers/*_test.go`
+   - 使用 `httptest` 包模拟 HTTP 请求
+   - 运行：`cd server && make test`
+
+2. **API E2E 测试**（推荐用于完整验证）：
+   - 位置：`tests/e2e/api-integration.spec.ts`
+   - 使用 Playwright 的 `request` API 测试真实运行的服务器
+   - 运行：`cd client && npm run test:e2e:full`
+   - **注意**：需要后端服务运行（可通过 `make run` 启动）
 
 ### 编译验证
 
@@ -137,12 +160,36 @@ bash scripts/verify-backend.sh
 
 E2E 测试使用 Playwright，位于 `tests/e2e/` 目录。
 
+### 测试架构说明
+
+**为什么所有 E2E 测试都在 client 目录下运行？**
+
+1. **Playwright 是 Node.js 工具**：需要 npm 环境和 Node.js 运行时
+2. **统一测试框架**：使用同一个工具（Playwright）测试前端和后端，便于管理
+3. **端到端测试**：E2E 测试关注的是整个系统的行为（前端+后端），而不是单独的后端
+
+**测试分类：**
+
+- **前端 E2E 测试**：使用 Playwright 的 `page` API 测试浏览器中的前端应用
+  - 位置：`tests/e2e/core-features.spec.ts` 等
+  - 测试内容：UI 交互、路由导航、组件渲染等
+
+- **后端 API E2E 测试**：使用 Playwright 的 `request` API 测试后端 HTTP API
+  - 位置：`tests/e2e/api-integration.spec.ts`
+  - 测试内容：API 端点、错误处理、数据格式验证等
+  - **注意**：这是从外部视角测试 API，不是后端内部的单元测试
+
+- **后端单元/集成测试**：使用 Go testing 框架
+  - 位置：`server/internal/` 目录下的 `*_test.go` 文件
+  - 运行方式：`cd server && make test` 或 `make test-integration`
+  - 测试内容：后端内部逻辑、数据库交互等
+
 ### 测试结构
 
 ```
 tests/e2e/
-├── core-features.spec.ts      # 核心功能测试
-├── api-integration.spec.ts     # 接口集成测试
+├── core-features.spec.ts      # 前端核心功能测试（使用 page API）
+├── api-integration.spec.ts     # 后端 API 集成测试（使用 request API）
 ├── regression.spec.ts          # 回归测试
 ├── lifecycle-workflow.spec.ts  # 工作流生命周期测试
 ├── global-setup.ts             # 全局设置
