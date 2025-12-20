@@ -33,8 +33,13 @@ fi
 PLAYWRIGHT_BROWSERS_DIR="${HOME}/.cache/ms-playwright"
 if [ ! -d "${PLAYWRIGHT_BROWSERS_DIR}" ] || [ -z "$(ls -A ${PLAYWRIGHT_BROWSERS_DIR} 2>/dev/null)" ]; then
     echo -e "${YELLOW}[2/2] 安装Playwright浏览器...${NC}"
-    npx playwright install --with-deps chromium
-    echo -e "${GREEN}✓ Playwright浏览器安装完成${NC}"
+    # 先尝试不安装系统依赖（某些系统可能不支持）
+    if npx playwright install chromium 2>/dev/null; then
+        echo -e "${GREEN}✓ Playwright浏览器安装完成${NC}"
+    else
+        echo -e "${YELLOW}⚠ Playwright浏览器安装失败，将在首次运行时自动安装${NC}"
+        echo -e "${YELLOW}   可以稍后手动运行: npx playwright install chromium${NC}"
+    fi
 else
     echo -e "${GREEN}✓ Playwright浏览器已存在，跳过安装${NC}"
 fi
