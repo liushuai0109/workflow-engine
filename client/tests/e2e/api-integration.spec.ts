@@ -5,7 +5,7 @@
 
 import { test, expect } from '@playwright/test';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 test.describe('接口集成测试', () => {
   test('健康检查接口可用 @quick', async ({ request }) => {

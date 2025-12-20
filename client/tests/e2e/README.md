@@ -30,12 +30,11 @@
 ## 测试结构
 
 ```
-tests/e2e/
+client/tests/e2e/
 ├── core-features.spec.ts          # 核心功能测试
 ├── api-integration.spec.ts         # 接口集成测试
 ├── regression.spec.ts              # 回归测试
-├── lifecycle-workflow.spec.ts      # 工作流生命周期测试（已存在）
-├── headless-verification.spec.ts  # Headless浏览器验证（在client/src/__tests__/e2e/）
+├── headless-verification.spec.ts  # Headless浏览器验证
 ├── global-setup.ts                 # 全局设置
 ├── global-teardown.ts              # 全局清理
 ├── fixtures.ts                     # 测试Fixtures

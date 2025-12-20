@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/data/mm64/simonsliu/xflow/bpmn-explorer/client/playwright.config.ts",
-    "rootDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e",
+    "configFile": "/Users/simonsliu/Documents/Development/workflow-engine/client/playwright.config.ts",
+    "rootDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
     "globalSetup": null,
@@ -10,7 +10,9 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 5
+    },
     "preserveOutput": "always",
     "reporter": [
       [
@@ -44,13 +46,15 @@
     "quiet": false,
     "projects": [
       {
-        "outputDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/client/test-results",
+        "outputDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 5
+        },
         "id": "headless-verification",
         "name": "headless-verification",
-        "testDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e",
+        "testDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/headless-verification.spec.ts"
@@ -58,13 +62,15 @@
         "timeout": 10000
       },
       {
-        "outputDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/client/test-results",
+        "outputDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 5
+        },
         "id": "quick",
         "name": "quick",
-        "testDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e",
+        "testDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/core-features.spec.ts"
@@ -72,28 +78,33 @@
         "timeout": 15000
       },
       {
-        "outputDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/client/test-results",
+        "outputDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 5
+        },
         "id": "full",
         "name": "full",
-        "testDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e",
+        "testDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/core-features.spec.ts",
-          "**/api-integration.spec.ts"
+          "**/api-integration.spec.ts",
+          "**/regression.spec.ts"
         ],
         "timeout": 30000
       },
       {
-        "outputDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/client/test-results",
+        "outputDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 5
+        },
         "id": "e2e",
         "name": "e2e",
-        "testDir": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e",
+        "testDir": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e",
         "testIgnore": [
           "**/headless-verification.spec.ts"
         ],
@@ -108,7 +119,7 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.57.0",
-    "workers": 32,
+    "workers": 5,
     "webServer": {
       "command": "npm run start",
       "url": "http://localhost:8000",
@@ -116,51 +127,2097 @@
       "timeout": 120000,
       "stdout": "ignore",
       "stderr": "pipe",
-      "cwd": "/data/mm64/simonsliu/xflow/bpmn-explorer/client"
+      "cwd": "/Users/simonsliu/Documents/Development/workflow-engine/client"
     }
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: Cannot find module '@playwright/test'\nRequire stack:\n- /data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/core-features.spec.ts\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/transform/transform.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/common/configLoader.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/program.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/@playwright/test/cli.js",
-      "stack": "Error: Cannot find module '@playwright/test'\nRequire stack:\n- /data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/core-features.spec.ts\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/transform/transform.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/common/configLoader.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/program.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/@playwright/test/cli.js\n    at Object.<anonymous> (/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/core-features.spec.ts:6:1)",
-      "location": {
-        "file": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/core-features.spec.ts",
-        "column": 1,
-        "line": 6
-      },
-      "snippet": "\u001b[90m   at \u001b[39mcore-features.spec.ts:6\n\n\u001b[0m \u001b[90m 4 |\u001b[39m \u001b[90m */\u001b[39m\n \u001b[90m 5 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 6 |\u001b[39m \u001b[36mimport\u001b[39m { test\u001b[33m,\u001b[39m expect } \u001b[36mfrom\u001b[39m \u001b[32m'@playwright/test'\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m   |\u001b[39m \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 7 |\u001b[39m\n \u001b[90m 8 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'核心功能测试'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+      "title": "headless-verification.spec.ts",
+      "file": "headless-verification.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Headless Browser Verification",
+          "file": "headless-verification.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应用可以正常加载",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 10000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "headless-verification",
+                  "projectName": "headless-verification",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3918,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:05.765Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c5d11bf5302fae3f91fc-d241893826dd74b64fa5",
+              "file": "headless-verification.spec.ts",
+              "line": 9,
+              "column": 7
+            },
+            {
+              "title": "主要路由可以访问",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 10000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "headless-verification",
+                  "projectName": "headless-verification",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1584,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:10.187Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c5d11bf5302fae3f91fc-518aa2e9d2dcccc2bcef",
+              "file": "headless-verification.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "关键组件可以渲染",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 10000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "headless-verification",
+                  "projectName": "headless-verification",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 930,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.778Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c5d11bf5302fae3f91fc-a42f7d4f3fb630bdb93c",
+              "file": "headless-verification.spec.ts",
+              "line": 48,
+              "column": 7
+            },
+            {
+              "title": "无 JavaScript 运行时错误",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 10000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "headless-verification",
+                  "projectName": "headless-verification",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3892,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:12.716Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c5d11bf5302fae3f91fc-b07ce2d62b3e0765060b",
+              "file": "headless-verification.spec.ts",
+              "line": 58,
+              "column": 7
+            }
+          ]
+        }
+      ]
     },
     {
-      "message": "Error: Cannot find module '@playwright/test'\nRequire stack:\n- /data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/api-integration.spec.ts\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/transform/transform.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/common/configLoader.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/program.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/@playwright/test/cli.js",
-      "stack": "Error: Cannot find module '@playwright/test'\nRequire stack:\n- /data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/api-integration.spec.ts\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/transform/transform.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/common/configLoader.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/program.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/@playwright/test/cli.js\n    at Object.<anonymous> (/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/api-integration.spec.ts:6:1)",
-      "location": {
-        "file": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/api-integration.spec.ts",
-        "column": 1,
-        "line": 6
-      },
-      "snippet": "\u001b[90m   at \u001b[39mapi-integration.spec.ts:6\n\n\u001b[0m \u001b[90m 4 |\u001b[39m \u001b[90m */\u001b[39m\n \u001b[90m 5 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 6 |\u001b[39m \u001b[36mimport\u001b[39m { test\u001b[33m,\u001b[39m expect } \u001b[36mfrom\u001b[39m \u001b[32m'@playwright/test'\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m   |\u001b[39m \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 7 |\u001b[39m\n \u001b[90m 8 |\u001b[39m \u001b[36mconst\u001b[39m \u001b[33mBACKEND_URL\u001b[39m \u001b[33m=\u001b[39m process\u001b[33m.\u001b[39menv\u001b[33m.\u001b[39m\u001b[33mBACKEND_URL\u001b[39m \u001b[33m||\u001b[39m \u001b[32m'http://localhost:8080'\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 9 |\u001b[39m\u001b[0m"
+      "title": "core-features.spec.ts",
+      "file": "core-features.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "核心功能测试",
+          "file": "core-features.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应用可以正常启动 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "quick",
+                  "projectName": "quick",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1867,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:05.772Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-bcb09b47523430560ab6",
+              "file": "core-features.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "BPMN编辑器可以加载 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "quick",
+                  "projectName": "quick",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 970,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:08.138Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-a06bb341a5b8a48e0105",
+              "file": "core-features.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "可以创建新图表 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 15000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "quick",
+                  "projectName": "quick",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2039,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:09.121Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-2b10c84d30e9fc60d42c",
+              "file": "core-features.spec.ts",
+              "line": 57,
+              "column": 7
+            },
+            {
+              "title": "应用可以正常启动 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1910,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:05.775Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-bcd6590013d84da641c9",
+              "file": "core-features.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "路由导航正常",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1792,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:08.179Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-4db76f76de295944384c",
+              "file": "core-features.spec.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "BPMN编辑器可以加载 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 969,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:09.981Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-524429aefd19a27eec8e",
+              "file": "core-features.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "可以创建新图表 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1966,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:10.960Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-a55a91767a5ea4763e99",
+              "file": "core-features.spec.ts",
+              "line": 57,
+              "column": 7
+            },
+            {
+              "title": "可以打开文件选择对话框",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 945,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:12.932Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-3771463824ea9119ab88",
+              "file": "core-features.spec.ts",
+              "line": 77,
+              "column": 7
+            },
+            {
+              "title": "工具栏按钮可见",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 878,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:13.883Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-01945891eafbb78b0f7a",
+              "file": "core-features.spec.ts",
+              "line": 94,
+              "column": 7
+            },
+            {
+              "title": "状态栏显示正确",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 967,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:14.767Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-4e84a7ed19697a299a68",
+              "file": "core-features.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "数据持久化 - 本地存储",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1093,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:15.739Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-fc74da9c7502c1770199",
+              "file": "core-features.spec.ts",
+              "line": 114,
+              "column": 7
+            },
+            {
+              "title": "应用可以正常启动 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 926,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:12.306Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-a3724ff447304a14b158",
+              "file": "core-features.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "路由导航正常",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1471,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:13.383Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-866d7f803cddbfa0f9b7",
+              "file": "core-features.spec.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "BPMN编辑器可以加载 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1021,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:14.861Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-baef4b3317e95b59851e",
+              "file": "core-features.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "可以创建新图表 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1950,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:15.900Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-d866296a2b2c0ada0e4f",
+              "file": "core-features.spec.ts",
+              "line": 57,
+              "column": 7
+            },
+            {
+              "title": "可以打开文件选择对话框",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1121,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:17.855Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-e897273ef0d2f06c88f2",
+              "file": "core-features.spec.ts",
+              "line": 77,
+              "column": 7
+            },
+            {
+              "title": "工具栏按钮可见",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 915,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:18.982Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-60afcc5fc4772f65e31f",
+              "file": "core-features.spec.ts",
+              "line": 94,
+              "column": 7
+            },
+            {
+              "title": "状态栏显示正确",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 927,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:19.906Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-dc3f05314e8349b97a94",
+              "file": "core-features.spec.ts",
+              "line": 102,
+              "column": 7
+            },
+            {
+              "title": "数据持久化 - 本地存储",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 986,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:20.840Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-4b4e7907ef5f644dfd44",
+              "file": "core-features.spec.ts",
+              "line": 114,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "BPMN编辑器基本操作",
+          "file": "core-features.spec.ts",
+          "line": 128,
+          "column": 6,
+          "specs": [
+            {
+              "title": "编辑器加载后可以交互",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 2963,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:16.839Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-5dece668682bb9f79221",
+              "file": "core-features.spec.ts",
+              "line": 134,
+              "column": 7
+            },
+            {
+              "title": "可以访问属性面板区域",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 906,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:19.812Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-69f1e107135257e78a62",
+              "file": "core-features.spec.ts",
+              "line": 149,
+              "column": 7
+            },
+            {
+              "title": "编辑器加载后可以交互",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 2889,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:21.832Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-4778ababb1990ba4816b",
+              "file": "core-features.spec.ts",
+              "line": 134,
+              "column": 7
+            },
+            {
+              "title": "可以访问属性面板区域",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 863,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:24.730Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4c7e6ccba74c38082eff-63dfea25ded78b4d4d38",
+              "file": "core-features.spec.ts",
+              "line": 149,
+              "column": 7
+            }
+          ]
+        }
+      ]
     },
     {
-      "message": "Error: Cannot find module '@playwright/test'\nRequire stack:\n- /data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/lifecycle-workflow.spec.ts\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/transform/transform.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/common/configLoader.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/program.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/@playwright/test/cli.js",
-      "stack": "Error: Cannot find module '@playwright/test'\nRequire stack:\n- /data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/lifecycle-workflow.spec.ts\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/transform/transform.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/common/configLoader.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/playwright/lib/program.js\n- /data/mm64/simonsliu/xflow/bpmn-explorer/client/node_modules/@playwright/test/cli.js\n    at Object.<anonymous> (/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/lifecycle-workflow.spec.ts:5:1)",
-      "location": {
-        "file": "/data/mm64/simonsliu/xflow/bpmn-explorer/tests/e2e/lifecycle-workflow.spec.ts",
-        "column": 1,
-        "line": 5
-      },
-      "snippet": "\u001b[90m   at \u001b[39mlifecycle-workflow.spec.ts:5\n\n\u001b[0m \u001b[90m 3 |\u001b[39m \u001b[90m */\u001b[39m\n \u001b[90m 4 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 5 |\u001b[39m \u001b[36mimport\u001b[39m { test\u001b[33m,\u001b[39m expect } \u001b[36mfrom\u001b[39m \u001b[32m'@playwright/test'\u001b[39m\n \u001b[90m   |\u001b[39m \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 6 |\u001b[39m\n \u001b[90m 7 |\u001b[39m test\u001b[33m.\u001b[39mdescribe(\u001b[32m'Lifecycle-Enhanced Workflow Creation'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 8 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+      "title": "api-integration.spec.ts",
+      "file": "api-integration.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "接口集成测试",
+          "file": "api-integration.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "健康检查接口可用 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 33,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:05.781Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-28dc2138b91d9a246258",
+              "file": "api-integration.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "前端可以调用后端API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 3911,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:05.829Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-1419d9daf16e1ea62183",
+              "file": "api-integration.spec.ts",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "错误处理 - 404错误",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 17,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:10.178Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-d1e388cc8f389cd770f8",
+              "file": "api-integration.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "错误处理 - 错误消息显示",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1433,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:10.207Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-52adf9f949796b6f028f",
+              "file": "api-integration.spec.ts",
+              "line": 46,
+              "column": 7
+            },
+            {
+              "title": "数据格式验证 - JSON响应",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 7,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.660Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-a955cd70b994f0211ad1",
+              "file": "api-integration.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "CORS配置正确",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 6,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.671Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-7ebada30fda5782a7cc3",
+              "file": "api-integration.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "健康检查接口可用 @quick",
+              "ok": true,
+              "tags": [
+                "quick"
+              ],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 39,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.589Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-784405393a3859561ac9",
+              "file": "api-integration.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "前端可以调用后端API",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2938,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.640Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-4175e8bbb933c84a8066",
+              "file": "api-integration.spec.ts",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "错误处理 - 404错误",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 6,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:14.771Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-62bf5983e9253359dd58",
+              "file": "api-integration.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "错误处理 - 错误消息显示",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1357,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:14.783Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-118c5f3af276ffd40b10",
+              "file": "api-integration.spec.ts",
+              "line": 46,
+              "column": 7
+            },
+            {
+              "title": "数据格式验证 - JSON响应",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 25,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:16.148Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-bc142260a30a8f9407fb",
+              "file": "api-integration.spec.ts",
+              "line": 67,
+              "column": 7
+            },
+            {
+              "title": "CORS配置正确",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 5,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:16.179Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-dbe1f0742fe1b42b64f8",
+              "file": "api-integration.spec.ts",
+              "line": 79,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "聊天API集成测试",
+          "file": "api-integration.spec.ts",
+          "line": 94,
+          "column": 6,
+          "specs": [
+            {
+              "title": "可以创建聊天会话",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 7,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.682Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-6f2b96728742d6950a86",
+              "file": "api-integration.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "可以获取聊天会话列表",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 7,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.694Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-bd8ac5c29c8d5ac63210",
+              "file": "api-integration.spec.ts",
+              "line": 112,
+              "column": 7
+            },
+            {
+              "title": "可以添加消息到会话",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e/api-integration.spec.ts",
+                        "line": 130,
+                        "column": 12
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "skipped",
+                      "duration": 16,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:11.706Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e/api-integration.spec.ts",
+                            "line": 130,
+                            "column": 12
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6814873ab357f121eca0-0f1d861c1d6194ed48a9",
+              "file": "api-integration.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "可以创建聊天会话",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 5,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:16.188Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-46bda92890f0e69c9969",
+              "file": "api-integration.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "可以获取聊天会话列表",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 6,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:16.200Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6814873ab357f121eca0-6b00c552781ce81f75b1",
+              "file": "api-integration.spec.ts",
+              "line": 112,
+              "column": 7
+            },
+            {
+              "title": "可以添加消息到会话",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e/api-integration.spec.ts",
+                        "line": 130,
+                        "column": 12
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 5,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:16.212Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/simonsliu/Documents/Development/workflow-engine/client/tests/e2e/api-integration.spec.ts",
+                            "line": 130,
+                            "column": 12
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6814873ab357f121eca0-9a226780f29f80db6907",
+              "file": "api-integration.spec.ts",
+              "line": 123,
+              "column": 7
+            }
+          ]
+        }
+      ]
     },
     {
-      "message": "Error: No tests found",
-      "stack": "Error: No tests found"
+      "title": "regression.spec.ts",
+      "file": "regression.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "回归测试",
+          "file": "regression.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "应用启动时不会出现白屏",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 1890,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:05.767Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-b086b1a8cbd9fdeb590a",
+              "file": "regression.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "路由导航不会导致页面崩溃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 2021,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:08.156Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-002e9661968c14975f07",
+              "file": "regression.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "BPMN编辑器加载不会导致内存泄漏",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 4071,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:10.188Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-bf6f2f08878cf965af27",
+              "file": "regression.spec.ts",
+              "line": 52,
+              "column": 7
+            },
+            {
+              "title": "API调用失败时不会导致应用崩溃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 2919,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:14.266Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-3921f4bf708e8c48696b",
+              "file": "regression.spec.ts",
+              "line": 70,
+              "column": 7
+            },
+            {
+              "title": "本地存储操作不会导致错误",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 227,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:17.192Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-d79b1ad6035c8bf16110",
+              "file": "regression.spec.ts",
+              "line": 103,
+              "column": 7
+            },
+            {
+              "title": "窗口大小改变不会导致布局问题",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "full",
+                  "projectName": "full",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 2942,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:17.425Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-e8d3c9b9bc8907fbd994",
+              "file": "regression.spec.ts",
+              "line": 133,
+              "column": 7
+            },
+            {
+              "title": "应用启动时不会出现白屏",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 934,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:16.227Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-32c456bad3d757f4a5e8",
+              "file": "regression.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "路由导航不会导致页面崩溃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2088,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:17.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-dba8844cde504298e9cb",
+              "file": "regression.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "BPMN编辑器加载不会导致内存泄漏",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3972,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:19.268Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-f29959bf887a89fc0dc8",
+              "file": "regression.spec.ts",
+              "line": 52,
+              "column": 7
+            },
+            {
+              "title": "API调用失败时不会导致应用崩溃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2858,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:23.249Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-55c31bc47d9edcf109a5",
+              "file": "regression.spec.ts",
+              "line": 70,
+              "column": 7
+            },
+            {
+              "title": "本地存储操作不会导致错误",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 243,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:26.112Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-3ca418c1dcdef1a05260",
+              "file": "regression.spec.ts",
+              "line": 103,
+              "column": 7
+            },
+            {
+              "title": "窗口大小改变不会导致布局问题",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2792,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-20T16:41:26.360Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9dc370239c4a30f174fb-e01b1b2e0deb5e7563ba",
+              "file": "regression.spec.ts",
+              "line": 133,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2025-12-20T15:21:35.902Z",
-    "duration": 129.20600000000002,
-    "expected": 0,
-    "skipped": 0,
+    "startTime": "2025-12-20T16:41:04.930Z",
+    "duration": 24272.825,
+    "expected": 55,
+    "skipped": 2,
     "unexpected": 0,
     "flaky": 0
   }

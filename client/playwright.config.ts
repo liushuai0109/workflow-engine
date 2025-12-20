@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
  * 用于 E2E 测试和 Headless Browser 验证
  */
 export default defineConfig({
-  testDir: '../tests/e2e',
+  testDir: './tests/e2e',
   
   // 测试超时设置
   timeout: 30 * 1000,
@@ -49,8 +49,8 @@ export default defineConfig({
   },
 
   // 全局测试设置
-  globalSetup: process.env.E2E_SETUP ? '../tests/e2e/global-setup.ts' : undefined,
-  globalTeardown: process.env.E2E_TEARDOWN ? '../tests/e2e/global-teardown.ts' : undefined,
+  globalSetup: process.env.E2E_SETUP ? './tests/e2e/global-setup.ts' : undefined,
+  globalTeardown: process.env.E2E_TEARDOWN ? './tests/e2e/global-teardown.ts' : undefined,
 
   // 测试项目配置
   projects: [
@@ -74,11 +74,11 @@ export default defineConfig({
       timeout: 15 * 1000,
     },
     
-    // 完整测试模式（核心功能 + 接口集成，< 10分钟）
+    // 完整测试模式（核心功能 + 接口集成 + 回归测试，< 10分钟）
     {
       name: 'full',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: ['**/core-features.spec.ts', '**/api-integration.spec.ts'],
+      testMatch: ['**/core-features.spec.ts', '**/api-integration.spec.ts', '**/regression.spec.ts'],
       timeout: 30 * 1000,
     },
     

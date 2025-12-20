@@ -286,17 +286,19 @@ openspec/
 ```markdown
 # 变更：[变更的简要描述]
 
-## 为什么
+## Why
 [1-2 句关于问题/机会的说明]
 
-## 变更内容
+## What Changes
 - [变更的项目符号列表]
 - [用 **BREAKING** 标记破坏性变更]
 
-## 影响
+## Impact
 - 受影响的规范：[列出功能]
 - 受影响的代码：[关键文件/系统]
 ```
+
+**重要**：proposal.md 的章节标题必须使用英文（`## Why`、`## What Changes`、`## Impact`），以确保 OpenSpec CLI 能够正确解析。章节内容可以使用中文描述。
 
 3. **创建规范增量：** `specs/[capability]/spec.md`
 ```markdown
@@ -359,6 +361,49 @@ openspec/
 ```
 
 ## 规范文件格式
+
+### 重要：OpenSpec 文件格式语言要求
+
+**所有 OpenSpec 文件中的结构化关键字和标题必须使用英文**，以确保 OpenSpec CLI 工具能够正确解析和验证。
+
+**必须使用英文的部分：**
+- `proposal.md` 中的章节标题：
+  - `## Why`（不是 "## 为什么"）
+  - `## What Changes`（不是 "## 变更内容"）
+  - `## Impact`（不是 "## 影响"）
+- 规范增量文件中的操作标题：
+  - `## ADDED Requirements`
+  - `## MODIFIED Requirements`
+  - `## REMOVED Requirements`
+  - `## RENAMED Requirements`
+- 场景格式：
+  - `#### Scenario: ...`
+  - `- **WHEN** ...`
+  - `- **THEN** ...`
+  - `- **AND** ...`
+
+**可以使用中文的部分：**
+- 文件内容描述（Why、What Changes、Impact 等章节的正文内容）
+- 需求描述和场景描述
+- 任务列表内容
+- 设计文档内容
+
+**示例：**
+```markdown
+# 变更：建立代码质量保障体系
+
+## Why
+当前项目存在严重的代码质量问题...
+
+## What Changes
+- **ADDED**: AI预设提示词层面的强制验证机制
+- **ADDED**: 前端测试架构增强
+...
+
+## Impact
+- **受影响的规范**：新增 `code-quality` 规范能力领域
+...
+```
 
 ### 关键：场景格式
 

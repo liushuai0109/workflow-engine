@@ -1,2 +1,144 @@
-<testsuites id="" name="" tests="0" failures="0" skipped="0" errors="0" time="0.12920600000000002">
+<testsuites id="" name="" tests="57" failures="0" skipped="2" errors="0" time="24.272825">
+<testsuite name="headless-verification.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="headless-verification" tests="4" failures="0" skipped="0" time="10.324" errors="0">
+<testcase name="Headless Browser Verification › 应用可以正常加载" classname="headless-verification.spec.ts" time="3.918">
+</testcase>
+<testcase name="Headless Browser Verification › 主要路由可以访问" classname="headless-verification.spec.ts" time="1.584">
+</testcase>
+<testcase name="Headless Browser Verification › 关键组件可以渲染" classname="headless-verification.spec.ts" time="0.93">
+</testcase>
+<testcase name="Headless Browser Verification › 无 JavaScript 运行时错误" classname="headless-verification.spec.ts" time="3.892">
+</testcase>
+</testsuite>
+<testsuite name="core-features.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="quick" tests="3" failures="0" skipped="0" time="4.876" errors="0">
+<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="1.867">
+</testcase>
+<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="0.97">
+</testcase>
+<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="2.039">
+</testcase>
+</testsuite>
+<testsuite name="api-integration.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="full" tests="9" failures="0" skipped="1" time="5.437" errors="0">
+<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.033">
+</testcase>
+<testcase name="接口集成测试 › 前端可以调用后端API" classname="api-integration.spec.ts" time="3.911">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 404错误" classname="api-integration.spec.ts" time="0.017">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 错误消息显示" classname="api-integration.spec.ts" time="1.433">
+</testcase>
+<testcase name="接口集成测试 › 数据格式验证 - JSON响应" classname="api-integration.spec.ts" time="0.007">
+</testcase>
+<testcase name="接口集成测试 › CORS配置正确" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="聊天API集成测试 › 可以创建聊天会话" classname="api-integration.spec.ts" time="0.007">
+</testcase>
+<testcase name="聊天API集成测试 › 可以获取聊天会话列表" classname="api-integration.spec.ts" time="0.007">
+</testcase>
+<testcase name="聊天API集成测试 › 可以添加消息到会话" classname="api-integration.spec.ts" time="0.016">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="core-features.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="full" tests="10" failures="0" skipped="0" time="14.389" errors="0">
+<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="1.91">
+</testcase>
+<testcase name="核心功能测试 › 路由导航正常" classname="core-features.spec.ts" time="1.792">
+</testcase>
+<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="0.969">
+</testcase>
+<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="1.966">
+</testcase>
+<testcase name="核心功能测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="0.945">
+</testcase>
+<testcase name="核心功能测试 › 工具栏按钮可见" classname="core-features.spec.ts" time="0.878">
+</testcase>
+<testcase name="核心功能测试 › 状态栏显示正确" classname="core-features.spec.ts" time="0.967">
+</testcase>
+<testcase name="核心功能测试 › 数据持久化 - 本地存储" classname="core-features.spec.ts" time="1.093">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器加载后可以交互" classname="core-features.spec.ts" time="2.963">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 可以访问属性面板区域" classname="core-features.spec.ts" time="0.906">
+</testcase>
+</testsuite>
+<testsuite name="regression.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="full" tests="6" failures="0" skipped="0" time="14.07" errors="0">
+<testcase name="回归测试 › 应用启动时不会出现白屏" classname="regression.spec.ts" time="1.89">
+</testcase>
+<testcase name="回归测试 › 路由导航不会导致页面崩溃" classname="regression.spec.ts" time="2.021">
+</testcase>
+<testcase name="回归测试 › BPMN编辑器加载不会导致内存泄漏" classname="regression.spec.ts" time="4.071">
+</testcase>
+<testcase name="回归测试 › API调用失败时不会导致应用崩溃" classname="regression.spec.ts" time="2.919">
+</testcase>
+<testcase name="回归测试 › 本地存储操作不会导致错误" classname="regression.spec.ts" time="0.227">
+</testcase>
+<testcase name="回归测试 › 窗口大小改变不会导致布局问题" classname="regression.spec.ts" time="2.942">
+</testcase>
+</testsuite>
+<testsuite name="api-integration.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="e2e" tests="9" failures="0" skipped="1" time="4.386" errors="0">
+<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.039">
+</testcase>
+<testcase name="接口集成测试 › 前端可以调用后端API" classname="api-integration.spec.ts" time="2.938">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 404错误" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 错误消息显示" classname="api-integration.spec.ts" time="1.357">
+</testcase>
+<testcase name="接口集成测试 › 数据格式验证 - JSON响应" classname="api-integration.spec.ts" time="0.025">
+</testcase>
+<testcase name="接口集成测试 › CORS配置正确" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="聊天API集成测试 › 可以创建聊天会话" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="聊天API集成测试 › 可以获取聊天会话列表" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="聊天API集成测试 › 可以添加消息到会话" classname="api-integration.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="core-features.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="e2e" tests="10" failures="0" skipped="0" time="13.069" errors="0">
+<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="0.926">
+</testcase>
+<testcase name="核心功能测试 › 路由导航正常" classname="core-features.spec.ts" time="1.471">
+</testcase>
+<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="1.021">
+</testcase>
+<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="1.95">
+</testcase>
+<testcase name="核心功能测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="1.121">
+</testcase>
+<testcase name="核心功能测试 › 工具栏按钮可见" classname="core-features.spec.ts" time="0.915">
+</testcase>
+<testcase name="核心功能测试 › 状态栏显示正确" classname="core-features.spec.ts" time="0.927">
+</testcase>
+<testcase name="核心功能测试 › 数据持久化 - 本地存储" classname="core-features.spec.ts" time="0.986">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器加载后可以交互" classname="core-features.spec.ts" time="2.889">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 可以访问属性面板区域" classname="core-features.spec.ts" time="0.863">
+</testcase>
+</testsuite>
+<testsuite name="regression.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="e2e" tests="6" failures="0" skipped="0" time="12.887" errors="0">
+<testcase name="回归测试 › 应用启动时不会出现白屏" classname="regression.spec.ts" time="0.934">
+</testcase>
+<testcase name="回归测试 › 路由导航不会导致页面崩溃" classname="regression.spec.ts" time="2.088">
+</testcase>
+<testcase name="回归测试 › BPMN编辑器加载不会导致内存泄漏" classname="regression.spec.ts" time="3.972">
+</testcase>
+<testcase name="回归测试 › API调用失败时不会导致应用崩溃" classname="regression.spec.ts" time="2.858">
+</testcase>
+<testcase name="回归测试 › 本地存储操作不会导致错误" classname="regression.spec.ts" time="0.243">
+</testcase>
+<testcase name="回归测试 › 窗口大小改变不会导致布局问题" classname="regression.spec.ts" time="2.792">
+</testcase>
+</testsuite>
 </testsuites>
