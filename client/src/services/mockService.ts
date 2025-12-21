@@ -24,6 +24,43 @@ export interface GatewayConfig {
   selectedPath: string // sequence flow ID
 }
 
+// Node-level mock data structure (matches backend)
+export interface NodeMockData {
+  statusCode: number
+  body: any
+  headers?: Record<string, string>
+}
+
+// Mock instance structure (matches backend MockWorkflowInstance)
+export interface MockInstance {
+  id: string
+  workflowId: string
+  status: string
+  currentNodeIds: string[]
+  variables: Record<string, any>
+  instanceVersion: number
+  createdAt: string
+  updatedAt: string
+}
+
+// Execution result structure (matches backend ExecuteResult)
+export interface ExecuteResult {
+  businessResponse?: {
+    statusCode: number
+    body: any
+    headers?: Record<string, string>
+  }
+  engineResponse: {
+    instanceId: string
+    currentNodeIds: string[]
+    nextNodeIds?: string[]
+    status: string
+    executionId: string
+    variables: Record<string, any>
+  }
+}
+
+// Legacy MockExecution for backwards compatibility
 export interface MockExecution {
   id: string
   workflowId: string
@@ -36,28 +73,102 @@ export interface MockExecution {
 }
 
 export interface ExecuteMockRequest {
-  configId?: string
+  startNodeId?: string
   initialVariables?: Record<string, any>
-  bpmnXml?: string // 可选的 BPMN XML，用于无数据库模式
+  nodeMockData?: Record<string, NodeMockData>
+  bpmnXml?: string // Optional BPMN XML for database-free mode
+}
+
+export interface StepMockRequest {
+  businessParams?: Record<string, any>
+  nodeMockData?: Record<string, NodeMockData>
 }
 
 class MockService {
   private baseUrl: string
 
   constructor() {
-    // 从环境变量或配置中获取 API 基础 URL
-    // 如果使用域名但无法解析，使用 IP:端口
+    // Get API base URL from environment or config
+    // If using domain but cannot resolve, use IP:port
     this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://api.workflow.com:3000/api'
   }
 
   /**
-   * 执行 Mock 工作流
+   * Execute Mock workflow (new API - returns ExecuteResult)
    */
   async executeWorkflow(
     workflowId: string,
     request: ExecuteMockRequest = {}
-  ): Promise<MockExecution> {
-    const response = await fetch(`${this.baseUrl}/workflows/${workflowId}/mock/execute`, {
+  ): Promise<ExecuteResult> {
+    console.log('MockService.executeWorkflow called with:', { workflowId, request })
+
+    const url = `${this.baseUrl}/workflows/${workflowId}/mock/execute`
+    console.log('Request URL:', url)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+
+    console.log('Response status:', response.status, response.statusText)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Error response:', errorText)
+
+      let error
+      try {
+        error = JSON.parse(errorText)
+      } catch (e) {
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
+      }
+      throw new Error(error.error?.message || error.message || 'Failed to execute mock workflow')
+    }
+
+    const responseText = await response.text()
+    console.log('Response body:', responseText)
+
+    let result
+    try {
+      result = JSON.parse(responseText)
+    } catch (e) {
+      console.error('Failed to parse response:', e)
+      throw new Error('Invalid JSON response from server')
+    }
+
+    console.log('Parsed result:', result)
+    return result.data
+  }
+
+  /**
+   * Get Mock instance by ID
+   */
+  async getInstance(instanceId: string): Promise<MockInstance> {
+    const response = await fetch(`${this.baseUrl}/workflows/mock/instances/${instanceId}`)
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to get mock instance'
+      try {
+        const error = await response.json()
+        errorMessage = error.error?.message || error.message || errorMessage
+      } catch (e) {
+        errorMessage = response.statusText || errorMessage
+      }
+      throw new Error(errorMessage)
+    }
+
+    const result = await response.json()
+    return result.data
+  }
+
+  /**
+   * Step execution (new API - uses instanceId)
+   */
+  async stepExecution(instanceId: string, request: StepMockRequest = {}): Promise<ExecuteResult> {
+    const response = await fetch(`${this.baseUrl}/workflows/mock/instances/${instanceId}/step`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,53 +177,11 @@ class MockService {
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Failed to execute mock workflow')
-    }
-
-    const result = await response.json()
-    return result.data
-  }
-
-  /**
-   * 获取 Mock 执行状态
-   */
-  async getExecution(executionId: string): Promise<MockExecution> {
-    const response = await fetch(`${this.baseUrl}/workflows/mock/executions/${executionId}`)
-
-    if (!response.ok) {
-      // 尝试解析错误响应
-      let errorMessage = 'Failed to get mock execution'
-      try {
-        const error = await response.json()
-        errorMessage = error.error?.message || error.message || errorMessage
-      } catch (e) {
-        // 如果响应不是 JSON，使用状态文本
-        errorMessage = response.statusText || errorMessage
-      }
-      throw new Error(errorMessage)
-    }
-
-    const result = await response.json()
-    return result.data
-  }
-
-  /**
-   * 单步执行
-   */
-  async stepExecution(executionId: string): Promise<MockExecution> {
-    const response = await fetch(`${this.baseUrl}/workflows/mock/executions/${executionId}/step`, {
-      method: 'POST',
-    })
-
-    if (!response.ok) {
-      // 尝试解析错误响应
       let errorMessage = 'Failed to step execution'
       try {
         const error = await response.json()
         errorMessage = error.error?.message || error.message || errorMessage
       } catch (e) {
-        // 如果响应不是 JSON，使用状态文本
         errorMessage = response.statusText || errorMessage
       }
       throw new Error(errorMessage)
@@ -123,7 +192,28 @@ class MockService {
   }
 
   /**
-   * 继续执行
+   * Legacy: Get execution (for backwards compatibility)
+   * This now fetches the mock instance and converts it to the old format
+   */
+  async getExecution(executionId: string): Promise<MockExecution> {
+    // Assuming executionId is actually instanceId in the new system
+    const instance = await this.getInstance(executionId)
+
+    // Convert MockInstance to MockExecution format
+    return {
+      id: instance.id,
+      workflowId: instance.workflowId,
+      status: this.convertStatus(instance.status),
+      currentNodeId: instance.currentNodeIds[0] || '',
+      variables: instance.variables,
+      executedNodes: [], // Not tracked in new system
+      createdAt: instance.createdAt,
+      updatedAt: instance.updatedAt,
+    }
+  }
+
+  /**
+   * Legacy: Continue execution
    */
   async continueExecution(executionId: string): Promise<MockExecution> {
     const response = await fetch(
@@ -134,13 +224,11 @@ class MockService {
     )
 
     if (!response.ok) {
-      // 尝试解析错误响应
       let errorMessage = 'Failed to continue execution'
       try {
         const error = await response.json()
         errorMessage = error.error?.message || error.message || errorMessage
       } catch (e) {
-        // 如果响应不是 JSON，使用状态文本
         errorMessage = response.statusText || errorMessage
       }
       throw new Error(errorMessage)
@@ -151,7 +239,7 @@ class MockService {
   }
 
   /**
-   * 停止执行
+   * Legacy: Stop execution
    */
   async stopExecution(executionId: string): Promise<MockExecution> {
     const response = await fetch(`${this.baseUrl}/workflows/mock/executions/${executionId}/stop`, {
@@ -160,7 +248,7 @@ class MockService {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.message || 'Failed to stop execution')
+      throw new Error(error.error?.message || error.message || 'Failed to stop execution')
     }
 
     const result = await response.json()
@@ -168,7 +256,22 @@ class MockService {
   }
 
   /**
-   * 创建 Mock 配置
+   * Convert status from backend format to frontend format
+   */
+  private convertStatus(status: string): 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'stopped' {
+    const statusMap: Record<string, any> = {
+      'pending': 'pending',
+      'running': 'running',
+      'paused': 'paused',
+      'completed': 'completed',
+      'failed': 'failed',
+      'cancelled': 'stopped',
+    }
+    return statusMap[status] || 'running'
+  }
+
+  /**
+   * Create Mock configuration
    */
   async createConfig(workflowId: string, config: Omit<MockConfig, 'id' | 'workflowId' | 'createdAt' | 'updatedAt'>): Promise<MockConfig> {
     const response = await fetch(`${this.baseUrl}/workflows/${workflowId}/mock/configs`, {
@@ -189,7 +292,7 @@ class MockService {
   }
 
   /**
-   * 获取工作流的所有 Mock 配置
+   * Get all Mock configurations for a workflow
    */
   async getConfigs(workflowId: string): Promise<MockConfig[]> {
     const response = await fetch(`${this.baseUrl}/workflows/${workflowId}/mock/configs`)
@@ -204,7 +307,7 @@ class MockService {
   }
 
   /**
-   * 获取单个 Mock 配置
+   * Get single Mock configuration
    */
   async getConfig(configId: string): Promise<MockConfig> {
     const response = await fetch(`${this.baseUrl}/workflows/mock/configs/${configId}`)
@@ -219,7 +322,7 @@ class MockService {
   }
 
   /**
-   * 更新 Mock 配置
+   * Update Mock configuration
    */
   async updateConfig(
     configId: string,
@@ -243,7 +346,7 @@ class MockService {
   }
 
   /**
-   * 删除 Mock 配置
+   * Delete Mock configuration
    */
   async deleteConfig(configId: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}/workflows/mock/configs/${configId}`, {
@@ -258,4 +361,5 @@ class MockService {
 }
 
 export const mockService = new MockService()
+
 

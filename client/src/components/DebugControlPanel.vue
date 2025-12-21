@@ -2,78 +2,70 @@
   <div class="debug-control-panel">
     <div class="panel-header">
       <h3>Debug 控制</h3>
-      <button class="close-btn" @click="$emit('close')">×</button>
     </div>
 
     <div class="panel-content">
       <!-- 会话状态 -->
-      <div class="status-section">
-        <div class="status-label">会话状态:</div>
-        <div class="status-value" :class="statusClass">
-          {{ sessionStatus || '未启动' }}
-        </div>
-      </div>
+      <t-form :label-width="80">
+        <t-form-item label="会话状态">
+          <t-tag :theme="statusTagTheme" variant="light-outline">
+            {{ sessionStatus || '未启动' }}
+          </t-tag>
+        </t-form-item>
 
-      <!-- 当前节点 -->
-      <div v-if="currentSession?.currentNodeId" class="current-node-section">
-        <div class="label">当前节点:</div>
-        <div class="value">{{ currentSession.currentNodeId }}</div>
-      </div>
+        <!-- 当前节点 -->
+        <t-form-item v-if="currentSession?.currentNodeId" label="当前节点">
+          <div class="value">{{ currentSession.currentNodeId }}</div>
+        </t-form-item>
 
-      <!-- 断点数量 -->
-      <div v-if="currentSession" class="breakpoints-section">
-        <div class="label">断点数量:</div>
-        <div class="value">{{ currentSession.breakpoints.length }}</div>
-      </div>
+        <!-- 断点数量 -->
+        <t-form-item v-if="currentSession" label="断点数量">
+          <div class="value">{{ currentSession.breakpoints.length }}</div>
+        </t-form-item>
+      </t-form>
 
       <!-- 控制按钮 -->
       <div class="control-buttons">
-        <button
-          v-if="!currentSession || currentSession.status === 'stopped'"
-          class="btn btn-primary"
+        <a-button
+          type="primary"
+          block
           @click="handleStart"
-          :disabled="isLoading"
+          :loading="isLoading"
+          :disabled="currentSession && currentSession.status !== 'stopped'"
         >
           启动 Debug
-        </button>
-        <button
-          v-else-if="currentSession.status === 'running'"
-          class="btn btn-secondary"
-          @click="handlePause"
-          :disabled="isLoading"
-        >
-          暂停
-        </button>
-        <button
-          v-else-if="currentSession.status === 'paused'"
-          class="btn btn-primary"
-          @click="handleContinue"
-          :disabled="isLoading"
-        >
-          继续
-        </button>
-        <button
-          v-if="currentSession && currentSession.status !== 'stopped'"
-          class="btn btn-step"
+        </a-button>
+        <a-button
+          type="success"
+          block
           @click="handleStep"
-          :disabled="isLoading"
+          :loading="isLoading"
+          :disabled="currentSession && currentSession.status === 'stopped'"
         >
-          单步执行
-        </button>
-        <button
-          v-if="currentSession && currentSession.status !== 'stopped'"
-          class="btn btn-danger"
+          单步 (Step)
+        </a-button>
+        <a-button
+          type="primary"
+          block
+          @click="handleContinue"
+          :loading="isLoading"
+          :disabled="!currentSession || currentSession.status !== 'paused'"
+        >
+          继续 (Continue)
+        </a-button>
+        <a-button
+          type="danger"
+          block
           @click="handleStop"
-          :disabled="isLoading"
+          :loading="isLoading"
+          :disabled="!currentSession || currentSession.status === 'stopped'"
         >
-          停止
-        </button>
+          停止 (Stop)
+        </a-button>
       </div>
 
       <!-- 错误信息 -->
-      <div v-if="errorMessage" class="error-message">
-        {{ errorMessage }}
-      </div>
+      <t-alert v-if="errorMessage" type="error" :message="errorMessage" close />
     </div>
   </div>
 </template>
@@ -115,6 +107,18 @@ const statusClass = computed(() => {
   return `status-${currentSession.value.status}`
 })
 
+const statusTagTheme = computed((): 'default' | 'primary' | 'success' | 'warning' | 'danger' => {
+  if (!currentSession.value) return 'default'
+  const themeMap: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
+    pending: 'default',
+    running: 'primary',
+    paused: 'warning',
+    completed: 'success',
+    stopped: 'default',
+  }
+  return themeMap[currentSession.value.status] || 'default'
+})
+
 const handleStart = async () => {
   isLoading.value = true
   errorMessage.value = ''
@@ -132,6 +136,13 @@ const handleStart = async () => {
 }
 
 const handleStep = async () => {
+  // If no session exists, start one first
+  if (!currentSession.value) {
+    await handleStart()
+    // Wait a bit for session to start
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
   if (!currentSession.value) return
 
   isLoading.value = true
@@ -269,112 +280,17 @@ onBeforeUnmount(() => {
   padding: 16px;
 }
 
-.status-section,
-.current-node-section,
-.breakpoints-section {
-  margin-bottom: 16px;
-}
-
-.status-label,
-.label {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.status-value,
 .value {
   font-size: 14px;
   font-weight: 600;
 }
 
-.status-pending {
-  color: #999;
-}
-
-.status-running {
-  color: #1890ff;
-}
-
-.status-paused {
-  color: #faad14;
-}
-
-.status-completed {
-  color: #52c41a;
-}
-
-.status-stopped {
-  color: #999;
-}
-
 .control-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
   margin-top: 16px;
-}
-
-.btn {
-  flex: 1;
-  min-width: 80px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #1890ff;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #40a9ff;
-}
-
-.btn-secondary {
-  background: #faad14;
-  color: white;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #ffc53d;
-}
-
-.btn-step {
-  background: #52c41a;
-  color: white;
-}
-
-.btn-step:hover:not(:disabled) {
-  background: #73d13d;
-}
-
-.btn-danger {
-  background: #ff4d4f;
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #ff7875;
-}
-
-.error-message {
-  margin-top: 12px;
-  padding: 8px;
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  border-radius: 4px;
-  color: #ff4d4f;
-  font-size: 12px;
+  margin-bottom: 16px;
 }
 </style>
 

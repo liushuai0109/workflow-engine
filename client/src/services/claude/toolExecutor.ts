@@ -23,6 +23,7 @@ export interface ToolExecutorConfig {
   // 编辑器操作回调函数
   createNode?: (params: any) => Promise<any>
   createFlow?: (params: any) => Promise<any>
+  createBoundaryEvent?: (params: any) => Promise<any>  // 新增：创建边界事件
   deleteNode?: (params: any) => Promise<any>
   updateNode?: (params: any) => Promise<any>
   clearCanvas?: () => Promise<any>
@@ -118,6 +119,8 @@ export class ClaudeToolExecutor {
         return this.config.createNode
       case 'createFlow':
         return this.config.createFlow
+      case 'createBoundaryEvent':
+        return this.config.createBoundaryEvent
       case 'deleteNode':
         return this.config.deleteNode
       case 'updateNode':

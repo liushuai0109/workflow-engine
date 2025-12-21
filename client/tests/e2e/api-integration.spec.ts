@@ -105,7 +105,7 @@ test.describe('工作流管理 API 测试', () => {
       const response = await request.post(`${BACKEND_URL}/api/workflows`, {
         data: {
           name: `Test Workflow ${Date.now()}`,
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
 
@@ -117,11 +117,13 @@ test.describe('工作流管理 API 测试', () => {
         if (body.id) {
           await request.delete(`${BACKEND_URL}/api/workflows/${body.id}`).catch(() => {});
         }
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -133,7 +135,7 @@ test.describe('工作流管理 API 测试', () => {
       const createResponse = await request.post(`${BACKEND_URL}/api/workflows`, {
         data: {
           name: `Test Workflow ${Date.now()}`,
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
 
@@ -148,11 +150,12 @@ test.describe('工作流管理 API 测试', () => {
           expect(body).toHaveProperty('id');
           expect(body).toHaveProperty('xml');
         }
-      } else if (createResponse.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理
       if (workflowId) {
@@ -169,7 +172,7 @@ test.describe('工作流管理 API 测试', () => {
       const createResponse = await request.post(`${BACKEND_URL}/api/workflows`, {
         data: {
           name: `Test Workflow ${Date.now()}`,
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
 
@@ -188,11 +191,12 @@ test.describe('工作流管理 API 测试', () => {
           const updated = await updateResponse.json();
           expect(updated).toHaveProperty('id');
         }
-      } else if (createResponse.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理
       if (workflowId) {
@@ -209,7 +213,7 @@ test.describe('工作流管理 API 测试', () => {
       const createResponse = await request.post(`${BACKEND_URL}/api/workflows`, {
         data: {
           name: `Test Workflow ${Date.now()}`,
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
 
@@ -221,11 +225,12 @@ test.describe('工作流管理 API 测试', () => {
         const deleteResponse = await request.delete(`${BACKEND_URL}/api/workflows/${workflowId}`);
         expect(deleteResponse.status()).toBeGreaterThanOrEqual(200);
         expect(deleteResponse.status()).toBeLessThan(300);
-      } else if (createResponse.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理（如果删除失败）
       if (workflowId) {
@@ -241,11 +246,13 @@ test.describe('工作流管理 API 测试', () => {
       if (response.status() === 200) {
         const body = await response.json();
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -253,18 +260,20 @@ test.describe('工作流管理 API 测试', () => {
     try {
       const response = await request.post(`${BACKEND_URL}/api/workflows/parse`, {
         data: {
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
 
       if (response.status() === 200) {
         const body = await response.json();
         expect(body).toHaveProperty('nodes');
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 });
@@ -278,7 +287,7 @@ test.describe('工作流执行 API 测试', () => {
       const createResponse = await request.post(`${BACKEND_URL}/api/workflows`, {
         data: {
           name: `Test Workflow ${Date.now()}`,
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
 
@@ -294,14 +303,16 @@ test.describe('工作流执行 API 测试', () => {
         if (executeResponse.status() === 200 || executeResponse.status() === 201) {
           const execution = await executeResponse.json();
           expect(execution).toHaveProperty('id');
-        } else if (executeResponse.status() === 404) {
-          test.skip();
+        } else {
+          // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+          expect([400, 404, 503]).toContain(executeResponse.status());
         }
-      } else if (createResponse.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理
       if (workflowId) {
@@ -317,11 +328,13 @@ test.describe('工作流执行 API 测试', () => {
       if (response.status() === 200) {
         const body = await response.json();
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -338,7 +351,7 @@ test.describe('工作流执行 API 测试', () => {
       // 可能返回 404（不存在）或 400（无效数据），这是正常的
       expect(response.status()).toBeGreaterThanOrEqual(400);
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -349,11 +362,13 @@ test.describe('工作流执行 API 测试', () => {
       if (response.status() === 200) {
         const body = await response.json();
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 });
@@ -376,11 +391,13 @@ test.describe('工作流实例 API 测试', () => {
         if (instance.id) {
           await request.delete(`${BACKEND_URL}/api/workflow-instances/${instance.id}`).catch(() => {});
         }
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -391,7 +408,7 @@ test.describe('工作流实例 API 测试', () => {
       // 可能返回 404（不存在），这是正常的
       expect(response.status()).toBeGreaterThanOrEqual(400);
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -422,11 +439,12 @@ test.describe('工作流实例 API 测试', () => {
           const updated = await updateResponse.json();
           expect(updated).toHaveProperty('status');
         }
-      } else if (createResponse.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理
       if (instanceId) {
@@ -442,11 +460,13 @@ test.describe('工作流实例 API 测试', () => {
       if (response.status() === 200) {
         const body = await response.json();
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 });
@@ -463,11 +483,13 @@ test.describe('Mock 和 Debug API 测试', () => {
       if (response.status() === 200 || response.status() === 201) {
         const execution = await response.json();
         expect(execution).toHaveProperty('id');
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -482,11 +504,13 @@ test.describe('Mock 和 Debug API 测试', () => {
       if (response.status() === 200 || response.status() === 201) {
         const session = await response.json();
         expect(session).toHaveProperty('id');
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -497,11 +521,13 @@ test.describe('Mock 和 Debug API 测试', () => {
       if (response.status() === 200) {
         const body = await response.json();
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404），这是允许的
+        // 但如果是其他错误（如 500），应该失败
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 });
@@ -518,11 +544,12 @@ test.describe('错误处理测试', () => {
       if (response.status() === 400) {
         const body = await response.json();
         expect(body).toHaveProperty('error');
-      } else if (response.status() === 404) {
-        test.skip();
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -540,7 +567,7 @@ test.describe('错误处理测试', () => {
       expect(response.status()).toBeGreaterThanOrEqual(400);
     } catch (error) {
       // 网络错误也是错误处理的一部分
-      test.skip();
+      throw error;
     }
   });
 
@@ -554,7 +581,7 @@ test.describe('错误处理测试', () => {
         expect(typeof body === 'object').toBe(true);
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -575,14 +602,10 @@ test.describe('并发请求测试', () => {
     // 先验证后端可用
     try {
       const healthCheck = await request.get(`${BACKEND_URL}/health`, { timeout: 5000 });
-      if (!healthCheck.ok()) {
-        test.skip();
-        return;
-      }
+      expect(healthCheck.ok()).toBeTruthy();
     } catch (error) {
-      // 后端不可用，跳过测试
-      test.skip();
-      return;
+      // 后端不可用，应该失败而不是跳过
+      throw error;
     }
 
     // 发送多个并发请求
@@ -626,17 +649,17 @@ test.describe('聊天API集成测试', () => {
 
     if (response.status() === 200 || response.status() === 201) {
       const body = await response.json();
-      expect(body).toHaveProperty('id');
-      expect(body).toHaveProperty('title');
-      
+      expect(body.data).toHaveProperty('id');
+      expect(body.data).toHaveProperty('title');
+
       // 清理
-      if (body.id) {
-        await request.delete(`${BACKEND_URL}/api/chat/conversations/${body.id}`).catch(() => {});
+      if (body.data && body.data.id) {
+        await request.delete(`${BACKEND_URL}/api/chat/conversations/${body.data.id}`).catch(() => {});
       }
-    } else if (response.status() === 404) {
-      // API可能不存在，跳过测试
-      test.skip();
-    }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+      }
   });
 
   test('可以获取聊天会话列表', async ({ request }) => {
@@ -645,8 +668,9 @@ test.describe('聊天API集成测试', () => {
     if (response.status() === 200) {
       const body = await response.json();
       expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-    } else if (response.status() === 404) {
-      test.skip();
+    } else {
+      // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+      expect([400, 404, 503]).toContain(response.status());
     }
   });
 
@@ -656,12 +680,16 @@ test.describe('聊天API集成测试', () => {
       data: { title: 'Test' },
     });
 
-    if (createResponse.status() !== 200 && createResponse.status() !== 201) {
-      test.skip();
+    // 如果返回 503，可能是数据库不可用，跳过此测试
+    if (createResponse.status() === 503) {
+      return;
     }
 
+    expect(createResponse.status()).toBeGreaterThanOrEqual(200);
+    expect(createResponse.status()).toBeLessThan(300);
+
     const conversation = await createResponse.json();
-    const conversationId = conversation.id;
+    const conversationId = conversation.data?.id || conversation.id;
 
     // 添加消息
     const messageResponse = await request.post(
@@ -676,11 +704,13 @@ test.describe('聊天API集成测试', () => {
 
     if (messageResponse.status() === 200 || messageResponse.status() === 201) {
       const message = await messageResponse.json();
-      expect(message).toHaveProperty('id');
-      expect(message).toHaveProperty('content');
-      expect(message.content).toBe('Test message');
-    } else if (messageResponse.status() === 404) {
-      test.skip();
+      const messageData = message.data || message;
+      expect(messageData).toHaveProperty('id');
+      expect(messageData).toHaveProperty('content');
+      expect(messageData.content).toBe('Test message');
+    } else {
+      // API 可能不存在（404）、请求错误（400）或服务不可用（503），这是允许的
+      expect([400, 404, 503]).toContain(messageResponse.status());
     }
     
     // 清理

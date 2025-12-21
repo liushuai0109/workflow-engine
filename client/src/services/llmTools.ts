@@ -21,7 +21,7 @@ export interface FunctionDeclaration {
  */
 export const createNodeTool: FunctionDeclaration = {
   name: 'createNode',
-  description: '在流程图编辑器中创建一个新节点。支持多种节点类型：开始节点(startEvent)、结束节点(endEvent)、用户任务(userTask)、服务任务(serviceTask)、排他网关(exclusiveGateway)、并行网关(parallelGateway)。建议为每个节点添加documentation来说明其业务含义。',
+  description: '在流程图编辑器中创建一个新节点。支持多种节点类型：开始节点(startEvent)、结束节点(endEvent)、用户任务(userTask)、服务任务(serviceTask)、排他网关(exclusiveGateway)、并行网关(parallelGateway)。建议为每个节点添加documentation来说明其业务含义。\n\n🚨 重要约束：如果创建的是 userTask 类型节点，创建后必须立即调用 createBoundaryEvent 工具为其创建边界事件，否则无法保存流程图！',
   parameters: {
     type: 'object',
     properties: {
@@ -35,7 +35,7 @@ export const createNodeTool: FunctionDeclaration = {
       },
       type: {
         type: 'string',
-        description: 'BPMN 节点类型，如 bpmn:StartEvent（开始事件）、bpmn:EndEvent（结束事件）、bpmn:UserTask（用户任务）、bpmn:ServiceTask（服务任务）、bpmn:ExclusiveGateway（排他网关）、bpmn:ParallelGateway（并行网关）等'
+        description: 'BPMN 节点类型。注意：如果是 bpmn:UserTask，创建后必须立即创建 BoundaryEvent！其他类型：bpmn:StartEvent（开始事件）、bpmn:EndEvent（结束事件）、bpmn:ServiceTask（服务任务）、bpmn:ExclusiveGateway（排他网关）、bpmn:ParallelGateway（并行网关）'
       },
       x: {
         type: 'number',
@@ -59,7 +59,7 @@ export const createNodeTool: FunctionDeclaration = {
  */
 export const createFlowTool: FunctionDeclaration = {
   name: 'createFlow',
-  description: '在两个节点之间创建一条顺序流连线。必须在创建节点之后调用。可选提供waypoints参数来自定义连线路径，避免遮挡其他节点。',
+  description: '在两个节点之间创建一条顺序流连线。必须在创建节点之后调用。可选提供waypoints参数来自定义连线路径，避免遮挡其他节点。\n\n🚨 关键约束：严禁将 sourceId 设置为 UserTask 节点的 ID！如果连线从 UserTask 出发，sourceId 必须是附加在该 UserTask 上的 BoundaryEvent 的 ID，否则保存时会报错！',
   parameters: {
     type: 'object',
     properties: {
@@ -69,7 +69,7 @@ export const createFlowTool: FunctionDeclaration = {
       },
       sourceId: {
         type: 'string',
-        description: '源节点的 ID，必须是已存在的节点'
+        description: '源节点的 ID，必须是已存在的节点。🚨 警告：如果连线从 UserTask 出发，这里必须填写 BoundaryEvent 的 ID，不能填写 UserTask 的 ID！'
       },
       targetId: {
         type: 'string',
@@ -103,6 +103,45 @@ export const createFlowTool: FunctionDeclaration = {
       }
     },
     required: ['id', 'sourceId', 'targetId']
+  }
+}
+
+/**
+ * 创建边界事件工具
+ */
+export const createBoundaryEventTool: FunctionDeclaration = {
+  name: 'createBoundaryEvent',
+  description: '在节点（通常是 UserTask）边缘创建边界事件。边界事件用于处理节点执行过程中的异常或特殊情况。🚨 关键约束：(1) UserTask 的所有 outgoing 连线必须从 BoundaryEvent 出发 (2) 每个 BoundaryEvent 创建后必须立即添加 outgoing 连线，不允许孤立的 BoundaryEvent。',
+  parameters: {
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        description: '边界事件的唯一标识符，格式如 BoundaryEvent_1, BoundaryEvent_Timeout_1, BoundaryEvent_Approved 等'
+      },
+      name: {
+        type: 'string',
+        description: '边界事件的显示名称，如"超时"、"审批通过"、"审批拒绝"、"取消"等'
+      },
+      attachedToRef: {
+        type: 'string',
+        description: '附加到的节点 ID，必须是已存在的节点（通常是 UserTask）'
+      },
+      cancelActivity: {
+        type: 'boolean',
+        description: '是否中断当前活动。true=中断型边界事件（触发后终止主任务），false=非中断型（主任务继续执行）。默认 true。审批通过/拒绝通常用 true，通知/提醒通常用 false'
+      },
+      position: {
+        type: 'string',
+        description: '边界事件在节点边缘的位置：bottom（底部，默认）、top（顶部）、left（左侧）、right（右侧）',
+        enum: ['top', 'bottom', 'left', 'right']
+      },
+      documentation: {
+        type: 'string',
+        description: '边界事件的文档说明，描述触发条件和处理逻辑'
+      }
+    },
+    required: ['id', 'attachedToRef']
   }
 }
 
@@ -182,6 +221,7 @@ export const getNodesTool: FunctionDeclaration = {
 export const availableTools: FunctionDeclaration[] = [
   createNodeTool,
   createFlowTool,
+  createBoundaryEventTool,
   deleteNodeTool,
   updateNodeTool,
   clearCanvasTool,

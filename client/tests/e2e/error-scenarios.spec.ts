@@ -19,16 +19,13 @@ test.describe('网络错误测试', () => {
     
     // 尝试触发 API 调用
     const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
-    if (await newButton.count() > 0) {
-      await newButton.click();
+    expect(await newButton.count()).not.toBe(0);
+await newButton.click();
       await page.waitForTimeout(1000);
       
       // 验证页面没有崩溃
       const bodyContent = await page.textContent('body');
       expect(bodyContent).toBeTruthy();
-    } else {
-      test.skip();
-    }
   });
 
   test('API 超时场景处理', async ({ page }) => {
@@ -43,16 +40,13 @@ test.describe('网络错误测试', () => {
     
     // 尝试触发 API 调用
     const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
-    if (await newButton.count() > 0) {
-      await newButton.click();
+    expect(await newButton.count()).not.toBe(0);
+await newButton.click();
       
       // 验证页面没有崩溃（即使超时）
       await page.waitForTimeout(2000);
       const bodyContent = await page.textContent('body');
       expect(bodyContent).toBeTruthy();
-    } else {
-      test.skip();
-    }
   });
 
   test('慢网络场景处理', async ({ page }) => {
@@ -94,8 +88,6 @@ test.describe('网络错误测试', () => {
       if (await editor.count() > 0) {
         expect(await editor.count()).toBeGreaterThan(0);
       }
-    } else {
-      test.skip();
     }
   });
 });
@@ -111,12 +103,9 @@ test.describe('数据验证错误测试', () => {
     // 由于 Playwright 的文件上传限制，这里只验证错误处理机制存在
     // 实际测试需要真实的文件上传
     const openButton = page.locator('button:has-text("Open"), button:has-text("打开")').first();
-    if (await openButton.count() > 0) {
-      // 验证打开按钮存在，可以触发文件选择
+    expect(await openButton.count()).not.toBe(0);
+// 验证打开按钮存在，可以触发文件选择
       expect(await openButton.count()).toBeGreaterThan(0);
-    } else {
-      test.skip();
-    }
   });
 
   test('缺失必需字段处理', async ({ request }) => {
@@ -132,11 +121,12 @@ test.describe('数据验证错误测试', () => {
       if (response.status() === 400) {
         const body = await response.json();
         expect(body).toHaveProperty('error');
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -154,11 +144,12 @@ test.describe('数据验证错误测试', () => {
       if (response.status() === 400) {
         const body = await response.json();
         expect(body).toHaveProperty('error');
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -176,7 +167,7 @@ test.describe('数据验证错误测试', () => {
       expect(response.status()).toBeGreaterThanOrEqual(200);
       expect(response.status()).toBeLessThan(500);
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 });
@@ -197,23 +188,21 @@ test.describe('边界条件测试', () => {
       if (await editor.count() > 0) {
         await expect(editor).toBeVisible({ timeout: 5000 });
       }
-    } else {
-      test.skip();
     }
   });
 
   test('超大工作流处理', async ({ page }) => {
     // 创建一个包含大量元素的工作流 XML
     const largeXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL">
-  <bpmn2:process id="Process_1" isExecutable="true">
-    <bpmn2:startEvent id="StartEvent_1"/>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1"/>
     ${Array.from({ length: 100 }, (_, i) => `
-      <bpmn2:task id="Task_${i}"/>
+      <bpmn:task id="Task_${i}"/>
     `).join('')}
-    <bpmn2:endEvent id="EndEvent_1"/>
-  </bpmn2:process>
-</bpmn2:definitions>`;
+    <bpmn:endEvent id="EndEvent_1"/>
+  </bpmn:process>
+</bpmn:definitions>`;
     
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -238,11 +227,11 @@ test.describe('边界条件测试', () => {
         await fetch(`${BACKEND_URL}/api/workflows/${workflow.id}`, {
           method: 'DELETE',
         }).catch(() => {});
-      } else if (response.status === 404) {
-        test.skip();
+      } else {
+        expect(response.status).not.toBe(404);
       }
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -266,11 +255,12 @@ test.describe('边界条件测试', () => {
         if (workflow.id) {
           await request.delete(`${BACKEND_URL}/api/workflows/${workflow.id}`).catch(() => {});
         }
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -294,11 +284,12 @@ test.describe('边界条件测试', () => {
         if (workflow.id) {
           await request.delete(`${BACKEND_URL}/api/workflows/${workflow.id}`).catch(() => {});
         }
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 });
@@ -326,16 +317,13 @@ test.describe('错误恢复机制测试', () => {
     
     // 尝试触发 API 调用
     const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
-    if (await newButton.count() > 0) {
-      await newButton.click();
+    expect(await newButton.count()).not.toBe(0);
+await newButton.click();
       await page.waitForTimeout(1000);
       
       // 验证页面没有崩溃
       const bodyContent = await page.textContent('body');
       expect(bodyContent).toBeTruthy();
-    } else {
-      test.skip();
-    }
   });
 
   test('数据验证错误后可以修正', async ({ page }) => {
@@ -344,14 +332,14 @@ test.describe('错误恢复机制测试', () => {
     
     // 创建新图表
     const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
-    if (await newButton.count() > 0) {
-      await newButton.click();
+    expect(await newButton.count()).not.toBe(0);
+await newButton.click();
       await page.waitForTimeout(2000);
       
       // 尝试编辑属性（可能触发验证）
       const propertiesPanel = page.locator('#properties-panel, .properties-panel').first();
-      if (await propertiesPanel.count() > 0) {
-        const nameInput = propertiesPanel.locator('input[name*="name"]').first();
+      expect(await propertiesPanel.count()).not.toBe(0);
+const nameInput = propertiesPanel.locator('input[name*="name"]').first();
         if (await nameInput.count() > 0) {
           // 先输入无效值
           await nameInput.fill('');
@@ -364,14 +352,6 @@ test.describe('错误恢复机制测试', () => {
           // 验证可以修正
           const value = await nameInput.inputValue();
           expect(value).toBe('Valid Name');
-        } else {
-          test.skip();
-        }
-      } else {
-        test.skip();
-      }
-    } else {
-      test.skip();
     }
   });
 });

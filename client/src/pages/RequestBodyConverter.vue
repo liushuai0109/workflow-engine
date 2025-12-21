@@ -17,15 +17,16 @@
       <div class="output-panel">
         <div class="panel-header">
           <h2>转化后的数据</h2>
-          <button
+          <a-button
             @click="copyToClipboard"
-            class="copy-btn"
+            :theme="copySuccess ? 'success' : 'primary'"
+            size="small"
             :disabled="!convertedData"
             :title="copySuccess ? '已复制！' : '复制到剪贴板'"
           >
             <span class="copy-icon">{{ copySuccess ? '✓' : '📋' }}</span>
             {{ copySuccess ? '已复制' : '复制' }}
-          </button>
+          </a-button>
         </div>
         <textarea
           v-model="convertedData"

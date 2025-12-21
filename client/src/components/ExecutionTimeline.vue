@@ -3,23 +3,27 @@
     <div class="panel-header">
       <h3>执行历史</h3>
       <div class="header-actions">
-        <button
-          class="nav-btn"
+        <a-button
+          type="text"
+         
+          size="small"
           @click="jumpToPrevious"
           :disabled="!selectedHistoryId || histories.findIndex(h => h.id === selectedHistoryId) <= 0"
           title="上一个"
         >
           ↑
-        </button>
-        <button
-          class="nav-btn"
+        </a-button>
+        <a-button
+          type="text"
+         
+          size="small"
           @click="jumpToNext"
           :disabled="!selectedHistoryId || histories.findIndex(h => h.id === selectedHistoryId) >= histories.length - 1"
           title="下一个"
         >
           ↓
-        </button>
-        <button class="close-btn" @click="$emit('close')">×</button>
+        </a-button>
+        <a-button type="text" @click="$emit('close')">×</a-button>
       </div>
     </div>
 
@@ -28,15 +32,14 @@
         暂无执行历史
       </div>
 
-      <div v-else class="timeline">
-        <div
+      <t-timeline v-else layout="vertical">
+        <t-timeline-item
           v-for="(history, index) in histories"
           :key="history.id"
-          class="timeline-item"
           :class="{ active: selectedHistoryId === history.id }"
+          :dot-color="selectedHistoryId === history.id ? 'primary' : 'default'"
           @click="selectHistory(history)"
         >
-          <div class="timeline-marker"></div>
           <div class="timeline-content">
             <div class="timeline-header">
               <span class="node-name">{{ history.nodeName || history.nodeId }}</span>
@@ -57,8 +60,8 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </t-timeline-item>
+      </t-timeline>
     </div>
   </div>
 </template>
@@ -101,8 +104,9 @@ const selectHistory = (history: ExecutionHistory) => {
 
 // 跳转到指定历史记录
 const jumpToHistory = (index: number) => {
-  if (index >= 0 && index < props.histories.length) {
-    selectHistory(props.histories[index])
+  const history = props.histories[index]
+  if (history && index >= 0 && index < props.histories.length) {
+    selectHistory(history)
   }
 }
 
@@ -237,41 +241,17 @@ const getNodeTypeName = (nodeType: number): string => {
   font-size: 14px;
 }
 
-.timeline {
-  position: relative;
-  padding-left: 24px;
-}
-
-.timeline-item {
-  position: relative;
-  margin-bottom: 16px;
+.panel-content :deep(.a-timeline-item) {
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.timeline-item:hover {
+.panel-content :deep(.a-timeline-item:hover) {
   opacity: 0.8;
 }
 
-.timeline-item.active {
+.panel-content :deep(.a-timeline-item.active) {
   opacity: 1;
-}
-
-.timeline-item.active .timeline-marker {
-  background: #1890ff;
-  border-color: #1890ff;
-}
-
-.timeline-marker {
-  position: absolute;
-  left: -20px;
-  top: 4px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ddd;
-  border: 2px solid white;
-  box-shadow: 0 0 0 2px #ddd;
 }
 
 .timeline-content {
@@ -281,7 +261,7 @@ const getNodeTypeName = (nodeType: number): string => {
   padding: 12px;
 }
 
-.timeline-item.active .timeline-content {
+.panel-content :deep(.a-timeline-item.active) .timeline-content {
   background: #e6f7ff;
   border-color: #1890ff;
 }

@@ -2,7 +2,7 @@
   <div class="variable-watch-panel">
     <div class="panel-header">
       <h3>变量监视</h3>
-      <button class="close-btn" @click="$emit('close')">×</button>
+      <a-button type="text" @click="$emit('close')">×</a-button>
     </div>
 
     <div class="panel-content">

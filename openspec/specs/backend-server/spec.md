@@ -366,55 +366,21 @@ TBD - created by archiving change add-go-server. Update Purpose after archive.
 
 ### Requirement: 工作流执行管理 API
 
-系统 SHALL 提供工作流执行的 CRUD 操作，并持久化到数据库。
+系统 SHALL 提供工作流执行器 API，支持从指定节点执行工作流。
 
-#### Scenario: 创建工作流执行
+#### Scenario: 工作流执行器端点
 
-- **当** 客户端发送 `POST /api/workflow-executions` 请求时
-- **则** 系统应：
-  - 生成UUID作为执行ID
-  - 验证关联的 `instance_id` 和 `workflow_id` 存在
-  - 将variables序列化为JSONB格式
-  - 设置 `execution_version` 为 1（首次执行）或从实例的 `instance_version` 获取
-  - 执行数据库INSERT操作到 `workflow_executions` 表
-  - 设置默认 `status` 为 "pending"
-  - 设置 `started_at` 为当前时间
-- **并且** 如果instance_id或workflow_id不存在，返回404状态码和相应错误码
-- **并且** 成功响应应返回201状态码和执行数据
-- **注意**：执行不包含user_id字段，用户信息应在实例层面管理
+- **当** 客户端请求 `POST /api/execute/:workflowInstanceId` 时
+- **则** 系统应使用 `WorkflowExecutorHandler` 处理请求
+- **并且** Handler 名称应为 `WorkflowExecutorHandler`（而非 `WorkflowExecutionHandler`）
+- **并且** 请求体包含：
+  - `fromNodeId`: 起始节点 ID（必需）
+  - `businessParams`: 业务参数（可选）
+- **并且** 响应包含：
+  - `businessResponse`: 业务 API 响应（如果有）
+  - `engineResponse`: 引擎响应（包括 instanceId, currentNodeIds, nextNodeIds, status, executionId, variables）
 
-#### Scenario: 获取工作流执行
-
-- **当** 客户端发送 `GET /api/workflow-executions/:executionId` 请求时
-- **则** 系统应：
-  - 执行数据库SELECT查询
-  - 反序列化JSONB variables字段
-  - 如果执行不存在，返回404状态码和错误码 `WORKFLOW_EXECUTION_NOT_FOUND`
-- **并且** 成功响应应返回200状态码和执行数据
-
-#### Scenario: 更新工作流执行
-
-- **当** 客户端发送 `PUT /api/workflow-executions/:executionId` 请求时
-- **则** 系统应：
-  - 执行数据库UPDATE操作
-  - 更新状态、变量等字段
-  - 如果状态变为 "completed" 或 "failed"，设置 `completed_at` 时间戳
-  - 如果提供variables，使用JSONB `||` 操作符合并
-  - **注意**：`current_node_ids` 应在实例层面更新，而非执行层面
-- **并且** 如果执行不存在，返回404状态码和错误码 `WORKFLOW_EXECUTION_NOT_FOUND`
-- **并且** 成功响应应返回200状态码和更新后的执行数据
-
-#### Scenario: 列出工作流执行
-
-- **当** 客户端发送 `GET /api/workflow-executions` 请求时
-- **则** 系统应：
-  - 支持查询参数：`page`、`pageSize`、`instanceId`、`workflowId`、`status`
-  - 执行数据库SELECT查询，使用LIMIT和OFFSET实现分页
-  - 执行COUNT查询获取总数
-  - 按 `started_at DESC` 排序
-- **并且** 响应应包含 `metadata` 字段和过滤后的数据列表
-- **并且** 支持按 `instanceId` 过滤，获取特定实例的所有执行记录
-- **注意**：不支持按userId过滤，用户信息应在实例层面查询
+**注**: 此需求修改了命名规范，将 `WorkflowExecutionHandler` 重命名为 `WorkflowExecutorHandler`，以区分"执行器"（Executor）和"执行记录"（Execution）的概念。
 
 ### Requirement: 数据库迁移管理
 
@@ -533,11 +499,15 @@ TBD - created by archiving change add-go-server. Update Purpose after archive.
   - 验证工作流实例存在
   - 获取工作流定义（BPMN XML）并解析
   - 验证 `fromNodeId` 存在于工作流定义中
+  - **在执行节点前，检查并处理回滚场景（如果需要）**
   - 根据节点类型执行相应逻辑：
     - ServiceTask：调用业务接口
-    - UserTask：返回待处理状态
+    - UserTask：返回待处理状态，不自动流转
+    - IntermediateCatchEvent：等待外部事件，不自动流转
+    - EventBasedGateway：等待事件选择，不自动流转
     - Gateway：根据条件表达式选择下一个节点
     - EndEvent：标记实例为完成状态
+  - **对于非 UserTask、IntermediateCatchEvent、EventBasedGateway 节点，执行完成后自动流转到下一个节点**
   - 根据序列流和条件表达式推进到下一个节点
   - 更新工作流实例的 `current_node_ids` 和状态
   - 创建或更新工作流执行记录
@@ -566,84 +536,45 @@ TBD - created by archiving change add-go-server. Update Purpose after archive.
   }
   ```
 
-#### Scenario: 执行 ServiceTask 节点（调用业务接口）
+#### Scenario: 执行前回滚检查（边界事件）
 
-- **当** 执行的节点类型为 ServiceTask 时
-- **则** 系统应：
-  - 从节点的扩展属性中获取业务接口 URL（使用 `xflow:` 命名空间）
-  - 使用 `businessParams` 作为请求体调用业务接口
-  - 发送 HTTP POST 请求到业务接口 URL
-  - 处理业务接口响应（状态码、响应体、响应头）
-  - 将业务接口响应存储到执行记录的 `variables.businessResponse` 中
-  - 如果业务接口调用失败，记录错误信息并更新执行状态为 `failed`
-- **并且** 业务接口调用应设置超时时间（默认30秒）
-- **并且** 如果业务接口返回错误状态码（4xx、5xx），应记录错误但继续流程执行（或根据配置决定是否停止）
+- **WHEN** 执行的节点类型为边界事件（BoundaryEvent）时
+- **THEN** 系统应检查 `attached_node_id` 是否为空，为空则抛出异常
+- **AND** 如果 `attached_node_id` 在 `current_node_ids` 中，则返回（不回滚）
+- **AND** 如果 `attached_node_id` 不在 `current_node_ids` 中，则检查 `can_fallback` 字段
+- **AND** 如果 `can_fallback` 为 true，则执行回滚到 `attached_node_id`
+- **AND** 如果 `can_fallback` 为 false，则抛出异常
+- **AND** 边界事件是异步触发的，可以在 attached_node_id 执行期间的任何时刻触发，因此不进行跳步骤检查，只要不在当前节点就无条件回滚到 attached_node_id
 
-#### Scenario: 执行 Gateway 节点（条件判断）
+#### Scenario: 执行前回滚检查（中间捕获事件）
 
-- **当** 执行的节点类型为 ExclusiveGateway 时
-- **则** 系统应：
-  - 查找该节点的所有出边（序列流）
-  - 对于每个序列流，如果有条件表达式，则评估条件表达式
-  - 选择第一个条件为真的序列流（或默认序列流）
-  - 如果所有条件都不满足且没有默认序列流，返回错误
-- **并且** 条件表达式应使用工作流变量作为上下文进行评估
-- **并且** 如果条件表达式评估失败，应记录错误并停止执行
+- **WHEN** 执行的节点类型为中间捕获事件（IntermediateCatchEvent）时
+- **THEN** 如果 `from_node_id` 在 `current_node_ids` 中，则返回（不回滚）
+- **AND** 如果前置节点为 EVENT_BASED_GATEWAY 且在 `current_node_ids` 中，则返回（不回滚）
+- **AND** 如果 `from_node_id` 在 `current_node_ids` 之前，则检查 `can_fallback` 字段
+- **AND** 如果 `can_fallback` 为 true，则执行回滚到 `from_node_id`
+- **AND** 如果 `can_fallback` 为 false，则抛出异常
+- **AND** 如果 `from_node_id` 在 `current_node_ids` 之后，则抛出跳步骤异常
+- **AND** 如果 `from_node_id` 与 `current_node_ids` 所指节点均无关，则检查 `can_fallback` 字段并执行回滚（兜底处理）
 
-#### Scenario: 执行 EndEvent 节点（完成流程）
+#### Scenario: 执行前回滚检查（普通节点）
 
-- **当** 执行的节点类型为 EndEvent 时
-- **则** 系统应：
-  - 将工作流实例状态更新为 `completed`
-  - 清空 `current_node_ids`（设置为空数组）
-  - 更新执行记录的 `completed_at` 时间戳
-  - 将执行状态更新为 `completed`
+- **WHEN** 执行的节点类型为普通节点（非边界事件、非中间捕获事件）时
+- **THEN** 如果 `from_node_id` 在 `current_node_ids` 中，则返回（不回滚）
+- **AND** 如果 `from_node_id` 在 `current_node_ids` 之前，则检查 `can_fallback` 字段
+- **AND** 如果 `can_fallback` 为 true，则执行回滚到 `from_node_id`
+- **AND** 如果 `can_fallback` 为 false，则抛出异常
+- **AND** 如果 `from_node_id` 在 `current_node_ids` 之后，则抛出跳步骤异常
+- **AND** 如果 `from_node_id` 与 `current_node_ids` 所指节点均无关，则检查 `can_fallback` 字段并执行回滚（兜底处理）
 
-#### Scenario: 流程推进逻辑
+#### Scenario: 自动流转排除机制
 
-- **当** 节点执行完成后
-- **则** 系统应：
-  - 根据节点的 `OutgoingSequenceFlowIds` 查找所有出边
-  - 对于 ExclusiveGateway，根据条件表达式选择符合条件的序列流
-  - 获取序列流的 `TargetNodeId` 作为下一个节点
-  - 更新工作流实例的 `current_node_ids` 为下一个节点 ID
-  - 如果下一个节点是 EndEvent，标记实例为完成状态
-- **并且** 如果找不到下一个节点，应记录错误并停止执行
-
-#### Scenario: 处理执行错误
-
-- **当** 工作流执行过程中发生错误时
-- **则** 系统应：
-  - 记录详细的错误信息到执行记录的 `error_message` 字段
-  - 将执行状态更新为 `failed`
-  - 将工作流实例状态更新为 `failed`（如果错误严重）
-  - 返回适当的 HTTP 状态码和错误信息
-- **并且** 错误类型包括：
-  - 业务接口调用失败（网络错误、超时、HTTP 错误）
-  - 节点不存在
-  - 流程定义解析失败
-  - 条件表达式评估失败
-  - 找不到下一个节点
-
-#### Scenario: 业务接口响应格式
-
-- **当** 业务接口调用成功时
-- **则** `businessResponse` 应包含：
-  - `statusCode`：HTTP 状态码（整数）
-  - `body`：响应体（JSON 对象或字符串）
-  - `headers`：响应头（对象，键值对）
-- **并且** 响应体应存储到执行记录的 `variables.businessResponse` 中
-
-#### Scenario: 流程引擎响应格式
-
-- **当** 工作流执行完成（无论成功或失败）时
-- **则** `engineResponse` 应包含：
-  - `instanceId`：工作流实例 ID
-  - `currentNodeIds`：当前节点 ID 数组（执行后的当前节点）
-  - `nextNodeIds`：下一个节点 ID 数组（如果已确定）
-  - `status`：实例状态（"pending"、"running"、"completed"、"failed"）
-  - `executionId`：执行记录 ID
-  - `variables`：工作流变量（包含业务接口响应等）
+- **WHEN** 节点执行完成后
+- **THEN** 对于 UserTask 节点，不自动流转，保持当前节点状态
+- **AND** 对于 IntermediateCatchEvent 节点，不自动流转，等待外部事件
+- **AND** 对于 EventBasedGateway 节点，不自动流转，等待事件选择
+- **AND** 对于其他节点类型，根据序列流和条件表达式自动流转到下一个节点
+- **AND** 自动流转逻辑应在 `advanceToNextNode` 函数中实现
 
 ### Requirement: 工作流 Mock 执行 API
 
@@ -834,4 +765,156 @@ TBD - created by archiving change add-go-server. Update Purpose after archive.
 - **则** 系统停止 Debug 执行
 - **并且** 更新状态为 'stopped'
 - **并且** 返回最终执行结果
+
+### Requirement: 聊天会话管理 API
+
+系统 SHALL 提供聊天会话的 CRUD 操作，并持久化到数据库。
+
+#### Scenario: 创建聊天会话
+
+- **WHEN** 客户端发送 `POST /api/chat/conversations` 请求时
+- **THEN** 系统应：
+  - 生成UUID作为会话ID
+  - 如果提供了 `title`，使用提供的标题；否则使用默认标题（如"新对话"）
+  - 执行数据库INSERT操作到 `chat_conversations` 表
+  - 设置 `created_at`、`updated_at` 和 `last_message_at` 为当前时间
+- **AND** 成功响应应返回201状态码和会话数据
+
+#### Scenario: 获取聊天会话列表
+
+- **WHEN** 客户端发送 `GET /api/chat/conversations` 请求时
+- **THEN** 系统应：
+  - 支持查询参数：`page`（默认1）、`pageSize`（默认20）、`orderBy`（默认"updatedAt"）、`order`（默认"desc"）
+  - 执行数据库SELECT查询，使用LIMIT和OFFSET实现分页
+  - 执行COUNT查询获取总数
+  - 按 `last_message_at DESC` 排序（默认）
+- **AND** 响应应包含 `metadata` 字段和会话列表
+- **AND** 每个会话应包含：`id`、`title`、`lastMessageAt`、`messageCount`（消息数量）
+
+#### Scenario: 获取聊天会话详情
+
+- **WHEN** 客户端发送 `GET /api/chat/conversations/:id` 请求时
+- **THEN** 系统应：
+  - 执行数据库SELECT查询获取会话信息
+  - 关联查询该会话的所有消息，按 `sequence` 排序
+  - 如果会话不存在，返回404状态码和错误码 `CONVERSATION_NOT_FOUND`
+- **AND** 成功响应应返回200状态码和会话数据（包含消息列表）
+
+#### Scenario: 更新聊天会话
+
+- **WHEN** 客户端发送 `PUT /api/chat/conversations/:id` 请求时
+- **THEN** 系统应：
+  - 更新会话的 `title` 字段（如果提供）
+  - 更新 `updated_at` 时间戳
+  - 执行数据库UPDATE操作
+- **AND** 如果会话不存在，返回404状态码和错误码 `CONVERSATION_NOT_FOUND`
+- **AND** 成功响应应返回200状态码和更新后的会话数据
+
+#### Scenario: 删除聊天会话
+
+- **WHEN** 客户端发送 `DELETE /api/chat/conversations/:id` 请求时
+- **THEN** 系统应：
+  - 执行数据库DELETE操作
+  - 级联删除关联的所有消息（使用 ON DELETE CASCADE）
+- **AND** 如果会话不存在，返回404状态码和错误码 `CONVERSATION_NOT_FOUND`
+- **AND** 成功响应应返回200状态码
+
+### Requirement: 聊天消息管理 API
+
+系统 SHALL 提供聊天消息的创建和批量创建操作，并持久化到数据库。
+
+#### Scenario: 添加聊天消息
+
+- **WHEN** 客户端发送 `POST /api/chat/conversations/:id/messages` 请求时
+- **THEN** 系统应：
+  - 生成UUID作为消息ID
+  - 验证会话存在
+  - 获取会话中当前最大 `sequence` 值，新消息的 `sequence` 为该值加1
+  - 将 `metadata` 序列化为JSONB格式（如果提供）
+  - 执行数据库INSERT操作到 `chat_messages` 表
+  - 更新会话的 `last_message_at` 和 `updated_at` 为当前时间
+- **AND** 如果会话不存在，返回404状态码和错误码 `CONVERSATION_NOT_FOUND`
+- **AND** 成功响应应返回201状态码和消息数据
+
+#### Scenario: 批量添加聊天消息
+
+- **WHEN** 客户端发送 `POST /api/chat/conversations/:id/messages/batch` 请求时
+- **THEN** 系统应：
+  - 验证会话存在
+  - 获取会话中当前最大 `sequence` 值
+  - 为每条消息分配递增的 `sequence` 值
+  - 使用事务批量插入所有消息
+  - 更新会话的 `last_message_at` 和 `updated_at` 为当前时间
+- **AND** 如果会话不存在，返回404状态码和错误码 `CONVERSATION_NOT_FOUND`
+- **AND** 如果批量插入失败，回滚事务
+- **AND** 成功响应应返回201状态码和消息列表
+
+### Requirement: 聊天记录自动清理
+
+系统 SHALL 自动清理 7 天前的聊天记录。
+
+#### Scenario: 自动清理过期会话
+
+- **WHEN** 系统执行自动清理任务时
+- **THEN** 系统应：
+  - 删除 `last_message_at < NOW() - INTERVAL '7 days'` 的所有会话
+  - 级联删除关联的所有消息（使用 ON DELETE CASCADE）
+  - 记录清理的会话数量和消息数量
+  - 记录清理任务的执行时间和结果
+- **AND** 清理任务应每 24 小时执行一次
+- **AND** 清理任务应在后端服务启动时启动
+- **AND** 如果清理任务执行失败，应记录错误日志但不影响服务运行
+
+#### Scenario: 清理任务日志
+
+- **WHEN** 清理任务执行完成时
+- **THEN** 系统应记录：
+  - 执行时间
+  - 删除的会话数量
+  - 删除的消息数量
+  - 执行结果（成功/失败）
+- **AND** 日志级别应为 INFO（成功）或 ERROR（失败）
+
+### Requirement: 节点类型扩展支持
+
+系统 SHALL 支持 IntermediateCatchEvent、EventBasedGateway、BoundaryEvent 节点类型的解析和执行。
+
+#### Scenario: 解析 IntermediateCatchEvent 节点
+
+- **WHEN** BPMN XML 包含中间捕获事件（`<bpmn:intermediateCatchEvent>`）时
+- **THEN** 系统应解析节点 ID、名称、输入输出序列流
+- **AND** 识别节点类型为 IntermediateCatchEvent
+- **AND** 将节点添加到工作流定义中
+
+#### Scenario: 解析 EventBasedGateway 节点
+
+- **WHEN** BPMN XML 包含事件网关（`<bpmn:eventBasedGateway>`）时
+- **THEN** 系统应解析节点 ID、名称、输入输出序列流
+- **AND** 识别节点类型为 EventBasedGateway
+- **AND** 将节点添加到工作流定义中
+
+#### Scenario: 解析 BoundaryEvent 节点
+
+- **WHEN** BPMN XML 包含边界事件（`<bpmn:boundaryEvent>`）时
+- **THEN** 系统应解析节点 ID、名称、输入输出序列流
+- **AND** 解析 `attachedToRef` 属性，获取 `attached_node_id`
+- **AND** 识别节点类型为 BoundaryEvent
+- **AND** 将节点添加到工作流定义中
+
+### Requirement: 节点回滚属性支持
+
+系统 SHALL 支持节点的回滚相关属性。
+
+#### Scenario: 节点 can_fallback 属性
+
+- **WHEN** 节点定义包含 `can_fallback` 属性时
+- **THEN** 系统应解析 `can_fallback` 属性值（布尔类型）
+- **AND** 如果未定义，默认值为 true（允许回滚）
+- **AND** 在执行回滚前检查该属性
+
+#### Scenario: 边界事件 attached_node_id 属性
+
+- **WHEN** 边界事件节点定义包含 `attachedToRef` 属性时
+- **THEN** 系统应解析 `attachedToRef` 属性值，作为 `attached_node_id`
+- **AND** 在回滚判断时使用该属性
 

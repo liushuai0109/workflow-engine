@@ -76,11 +76,51 @@ export class ClaudeLLMService {
     try {
       const conv = await chatApiService.createConversation(title)
       this.conversationId = conv.id
+      
+      // 保存会话ID到 LocalStorage
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          localStorage.setItem('claude_conversation_id', conv.id)
+        } catch (e) {
+          console.warn('Failed to save conversation ID to localStorage:', e)
+        }
+      }
+      
       return conv.id
     } catch (error) {
       console.warn('Failed to create conversation, falling back to LocalStorage:', error)
       this.useDatabase = false
       return ''
+    }
+  }
+
+  /**
+   * 从 LocalStorage 加载会话ID
+   */
+  loadConversationIdFromStorage(): string | null {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return null
+    }
+
+    try {
+      return localStorage.getItem('claude_conversation_id')
+    } catch (e) {
+      console.warn('Failed to load conversation ID from localStorage:', e)
+      return null
+    }
+  }
+
+  /**
+   * 清除会话ID（从 LocalStorage 和内存）
+   */
+  clearConversationId(): void {
+    this.conversationId = null
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.removeItem('claude_conversation_id')
+      } catch (e) {
+        console.warn('Failed to remove conversation ID from localStorage:', e)
+      }
     }
   }
 
@@ -93,24 +133,44 @@ export class ClaudeLLMService {
     }
 
     try {
+      console.log('📥 loadConversation called with ID:', conversationId)
       const response = await chatApiService.getConversation(conversationId)
+      console.log('📥 API response:', response)
+      console.log('📥 Response data:', response.data)
+      console.log('📥 Messages from API:', response.data.messages)
+      
       this.conversationId = conversationId
 
       // 转换消息格式
-      const messages: ClaudeMessage[] = response.data.messages.map(msg => {
+      const messages: ClaudeMessage[] = response.data.messages.map((msg, index) => {
+        console.log(`📝 Converting message ${index + 1}:`, {
+          role: msg.role,
+          contentType: typeof msg.content,
+          contentLength: typeof msg.content === 'string' ? msg.content.length : 'N/A',
+          hasMetadata: !!(msg.metadata && Object.keys(msg.metadata).length > 0)
+        })
+        
         const claudeMsg: ClaudeMessage = {
           role: msg.role === 'assistant' ? 'assistant' : 'user',
-          content: msg.content
+          content: msg.content // msg.content 应该是字符串
         }
 
         // 如果有 metadata 且包含 tool_use 信息，需要恢复
         if (msg.metadata && Object.keys(msg.metadata).length > 0) {
+          console.log('📝 Message has metadata:', msg.metadata)
           // 这里可以根据 metadata 恢复 tool_use 等复杂内容
           // 暂时只保存 content
         }
 
         return claudeMsg
       })
+
+      console.log('📝 Converted messages:', messages.length, 'messages')
+      console.log('📝 Messages details:', messages.map(m => ({
+        role: m.role,
+        contentType: typeof m.content,
+        contentPreview: typeof m.content === 'string' ? m.content.substring(0, 50) : 'N/A'
+      })))
 
       this.context = {
         messages,
@@ -119,9 +179,17 @@ export class ClaudeLLMService {
         enableCache: this.context.enableCache
       }
 
-      return this.exportContext()
+      const exported = this.exportContext()
+      console.log('📤 Exported context:', {
+        messageCount: exported.messages.length,
+        hasSystemPrompt: !!exported.systemPrompt,
+        toolsCount: exported.tools?.length || 0
+      })
+      
+      return exported
     } catch (error) {
-      console.error('Failed to load conversation:', error)
+      console.error('❌ Failed to load conversation:', error)
+      console.error('Error stack:', error instanceof Error ? error.stack : 'N/A')
       throw error
     }
   }
@@ -223,23 +291,16 @@ export class ClaudeLLMService {
       const toolUses = extractToolUses(response.content)
       const executionResults = await this.executor.executeTools(toolUses)
 
-      // 将工具执行结果添加到上下文
+      // 将工具执行结果添加到上下文（仅用于 Claude API，不保存到数据库）
       const toolResults = this.executor.formatResultsForClaude(executionResults)
       this.context.messages.push({
         role: 'user',
         content: toolResults as any
       })
 
-      // 保存工具执行结果到数据库（作为用户消息，包含 metadata）
-      const toolResultsContent = JSON.stringify(toolResults)
-      await this.saveMessage('user', toolResultsContent, {
-        type: 'tool_results',
-        toolUses: toolUses.map(tu => ({ id: tu.id, name: tu.name })),
-        executionResults: executionResults.map(er => ({ 
-          toolName: er.toolName, 
-          success: er.success 
-        }))
-      })
+      // ⚠️ 注意：不保存工具执行结果到数据库
+      // 工具调用是内部流程，用户不需要看到这些中间消息
+      // 只保存用户的原始消息和 AI 的最终响应
 
       currentRound++
 

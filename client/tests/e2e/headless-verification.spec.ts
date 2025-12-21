@@ -41,7 +41,7 @@ test.describe('Headless Browser Verification', () => {
       expect(page.url()).toContain('/editor');
     } catch (e) {
       // 如果路由不存在，跳过
-      test.skip();
+      throw error;
     }
   });
 

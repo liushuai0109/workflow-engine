@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/bpmn-explorer/server/internal/handlers"
+	"github.com/bpmn-explorer/server/internal/interceptor"
 	"github.com/bpmn-explorer/server/internal/middleware"
 	"github.com/bpmn-explorer/server/internal/services"
 	"github.com/bpmn-explorer/server/pkg/config"
@@ -25,17 +26,23 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 	workflowSvc := services.NewWorkflowService(db, logger)
 	instanceSvc := services.NewWorkflowInstanceService(db, logger)
 	executionSvc := services.NewWorkflowExecutionService(db, logger)
+	mockInstanceSvc := services.NewMockInstanceService(db, logger, workflowSvc)
+	engineService := services.NewWorkflowEngineServiceWithMockInstance(db, logger, workflowSvc, instanceSvc, executionSvc, mockInstanceSvc)
+
+	// Initialize session store for interceptor
+	sessionStore := interceptor.NewMemorySessionStore()
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(db, logger)
 	workflowHandler := handlers.NewWorkflowHandler(db, logger)
 	claudeHandler := handlers.NewClaudeHandler(cfg.Claude, logger)
-	executionHandler := handlers.NewWorkflowExecutionHandler(db, logger, workflowSvc, instanceSvc, executionSvc)
-	mockHandler := handlers.NewMockHandler(db, logger, workflowSvc)
+	executorHandler := handlers.NewWorkflowExecutorHandler(db, logger, workflowSvc, instanceSvc, executionSvc)
+	mockHandler := handlers.NewMockHandler(db, logger, workflowSvc, instanceSvc, executionSvc)
 	mockConfigHandler := handlers.NewMockConfigHandler(db, logger)
 	debugHandler := handlers.NewDebugHandler(db, logger)
 	executionHistoryHandler := handlers.NewExecutionHistoryHandler(db, logger)
 	chatHandler := handlers.NewChatConversationHandler(db, logger)
+	interceptorHandler := handlers.NewInterceptorHandler(engineService, mockInstanceSvc, workflowSvc, sessionStore, logger)
 
 	// Health check
 	router.GET("/health", handlers.HealthCheck(db))
@@ -67,16 +74,23 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 		}
 
 		// Workflow execution
-		api.POST("/execute/:workflowInstanceId", executionHandler.ExecuteWorkflow)
+		api.POST("/execute/:workflowInstanceId", executorHandler.ExecuteWorkflow)
 
 		// Mock execution
 		mock := api.Group("/workflows/:workflowId/mock")
 		{
 			mock.POST("/execute", mockHandler.ExecuteMock)
 		}
-		// Mock execution operations (不需要 workflowId)
+
+		// Mock instance management (new instance-based API)
+		api.GET("/workflows/mock/instances/:instanceId", mockHandler.GetMockInstance)
+		api.POST("/workflows/mock/instances", mockHandler.CreateMockInstance)
+		api.PUT("/workflows/mock/instances/:instanceId", mockHandler.UpdateMockInstance)
+		api.GET("/workflows/mock/instances", mockHandler.ListMockInstances)
+		api.POST("/workflows/mock/instances/:instanceId/step", mockHandler.StepMockExecution)
+
+		// Legacy Mock execution operations (for backwards compatibility)
 		api.GET("/workflows/mock/executions/:executionId", mockHandler.GetMockExecution)
-		api.POST("/workflows/mock/executions/:executionId/step", mockHandler.StepMockExecution)
 		api.POST("/workflows/mock/executions/:executionId/continue", mockHandler.ContinueMockExecution)
 		api.POST("/workflows/mock/executions/:executionId/stop", mockHandler.StopMockExecution)
 
@@ -116,6 +130,21 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 			chat.DELETE("/:id", chatHandler.DeleteConversation)
 			chat.POST("/:id/messages", chatHandler.AddMessage)
 			chat.POST("/:id/messages/batch", chatHandler.BatchAddMessages)
+		}
+
+		// Interceptor routes
+		interceptorGroup := api.Group("/interceptor")
+		{
+			// Initialize interceptor execution
+			interceptorGroup.POST("/workflows/:workflowId/execute", interceptorHandler.ExecuteIntercept)
+
+			// Trigger node execution (for stopping points)
+			interceptorGroup.POST("/instances/:instanceId/trigger", interceptorHandler.TriggerNode)
+
+			// Session management
+			interceptorGroup.GET("/sessions/:sessionId", interceptorHandler.GetInterceptSession)
+			interceptorGroup.GET("/sessions/:sessionId/log", interceptorHandler.GetExecutionLog)
+			interceptorGroup.POST("/sessions/:sessionId/reset", interceptorHandler.ResetIntercept)
 		}
 	}
 

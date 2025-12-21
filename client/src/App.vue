@@ -3,8 +3,7 @@
 </template>
 
 <script setup lang="ts">
-// App.vue 现在只作为路由容器
-// 所有业务逻辑都在 BpmnEditorPage.vue 中
+// App.vue 作为路由容器
 </script>
 
 <style scoped>

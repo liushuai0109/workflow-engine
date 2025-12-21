@@ -36,6 +36,9 @@ const (
 	ErrDatabaseError             = "DATABASE_ERROR"
 	ErrInvalidNodeId             = "INVALID_NODE_ID"
 	ErrConversationNotFound      = "CONVERSATION_NOT_FOUND"
+	ErrBoundaryEventNoAttachment = "BOUNDARY_EVENT_NO_ATTACHMENT"
+	ErrSkippedStep               = "SKIPPED_STEP"
+	ErrFallbackNotAllowed        = "FALLBACK_NOT_ALLOWED"
 )
 
 // NewSuccessResponse creates a success response

@@ -174,12 +174,9 @@ async function startBackend(): Promise<void> {
   // 检查数据库可用性
   const dbAvailable = checkDatabase();
   if (!dbAvailable) {
-    console.log('⚠️  数据库不可用 - 后端将以 DB_DISABLED=true 模式启动');
-    console.log('   注意：需要数据库的 API 测试可能会被跳过');
-    process.env.DB_DISABLED = 'true';
-  } else {
-    console.log('✅ 数据库可用 - 后端将正常连接数据库');
+    throw new Error('PostgreSQL 数据库不可用 - 测试需要数据库支持。请确保 PostgreSQL 已启动并且数据库已创建。');
   }
+  console.log('✅ 数据库可用 - 后端将正常连接数据库');
   
   console.log('🚀 启动后端服务...');
   

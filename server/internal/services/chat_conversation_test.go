@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/bpmn-explorer/server/internal/models"
 	"github.com/bpmn-explorer/server/pkg/database"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"

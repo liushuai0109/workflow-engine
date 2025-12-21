@@ -1,94 +1,129 @@
 <template>
   <div
     class="chat-box-container"
-    :class="{ 'minimized': isMinimized }"
-    :style="{ left: position.x + 'px', top: position.y + 'px' }"
-    @mousedown="handleMouseDown"
+    :class="{ 'show-conversations': showConversationList }"
   >
     <!-- 头部 -->
-    <div class="chat-header" @mousedown.stop="startDrag">
+    <div class="chat-header">
       <div class="header-left">
         <span class="chat-icon">💬</span>
         <span class="chat-title">AI 助手</span>
       </div>
       <div class="header-right">
-        <button
-          @click.stop="toggleMinimize"
-          class="header-btn"
-          :title="isMinimized ? '展开' : '最小化'"
+        <a-button
+          @click.stop="toggleConversationList"
+          type="text"
+         
+          :title="showConversationList ? '隐藏会话列表' : '显示会话列表'"
         >
-          {{ isMinimized ? '▢' : '−' }}
-        </button>
-        <button
-          @click.stop="closeChat"
-          class="header-btn close-btn"
-          title="关闭"
-        >
-          ×
-        </button>
+          ☰
+        </a-button>
       </div>
     </div>
 
     <!-- 消息区域 -->
-    <div v-show="!isMinimized" class="chat-body">
-      <div class="messages-container" ref="messagesContainer">
-        <div
-          v-for="(message, index) in messages"
-          :key="index"
-          class="message"
-          :class="message.role"
-        >
-          <div class="message-avatar">
-            {{ message.role === 'user' ? '👤' : '🤖' }}
-          </div>
-          <div class="message-content">
-            <div class="message-text">{{ message.content }}</div>
-            <div class="message-time">{{ formatTime(message.timestamp) }}</div>
-          </div>
+    <div class="chat-body">
+      <!-- 会话列表面板 -->
+      <div v-show="showConversationList" class="conversation-list">
+        <div class="conversation-list-header">
+          <span class="list-title">会话列表</span>
+          <a-button @click="createNewConversation" type="text" title="新建会话">
+            +
+          </a-button>
         </div>
-
-        <!-- 欢迎消息 -->
-        <div v-if="messages.length === 0" class="welcome-message">
-          <div class="welcome-icon">👋</div>
-          <div class="welcome-text">你好！我是 AI 助手</div>
-          <div class="welcome-subtitle">有什么我可以帮助你的吗？</div>
-        </div>
-
-        <!-- 加载指示器 -->
-        <div v-if="isLoading" class="message assistant">
-          <div class="message-avatar">🤖</div>
-          <div class="message-content">
-            <div class="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </div>
+        <a-list v-if="conversations.length > 0" class="conversation-items">
+          <a-list-item
+            v-for="conv in conversations"
+            :key="conv.id"
+            :class="{ 'active': conv.id === currentConversationId }"
+            @click="switchConversation(conv.id)"
+          >
+            <a-list-item-meta>
+              <template #title>
+                <div class="conversation-title">{{ conv.title || '新会话' }}</div>
+              </template>
+              <template #description>
+                <div class="conversation-time">{{ formatConversationTime(conv.updatedAt) }}</div>
+              </template>
+            </a-list-item-meta>
+            <template #actions>
+              <a-button
+                @click.stop="deleteConversationItem(conv.id)"
+                size="small"
+                danger
+                title="删除会话"
+              >
+                ×
+              </a-button>
+            </template>
+          </a-list-item>
+        </a-list>
+        <div v-else class="no-conversations">
+          暂无会话
         </div>
       </div>
 
-      <!-- 输入区域 -->
-      <div class="chat-input-area">
-        <div class="input-wrapper">
-          <textarea
-            v-model="inputMessage"
-            @keydown.enter="handleKeyDown"
-            placeholder="输入消息..."
-            class="chat-input"
-            rows="1"
-            ref="textareaRef"
-          ></textarea>
-          <button
-            @click="sendMessage"
-            class="send-btn"
-            :disabled="!inputMessage.trim() || isLoading"
-            title="发送 (Enter)"
+      <!-- 主聊天区域 -->
+      <div class="main-chat-area">
+        <div class="messages-container" ref="messagesContainer">
+          <div
+            v-for="(message, index) in messages"
+            :key="index"
+            class="message"
+            :class="message.role"
           >
-            <span class="send-icon">↑</span>
-          </button>
+            <div class="message-avatar">
+              {{ message.role === 'user' ? '👤' : '🤖' }}
+            </div>
+            <div class="message-content">
+              <div class="message-text">{{ message.content }}</div>
+              <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+            </div>
+          </div>
+
+          <!-- 欢迎消息 -->
+          <div v-if="messages.length === 0" class="welcome-message">
+            <div class="welcome-icon">👋</div>
+            <div class="welcome-text">你好！我是 AI 助手</div>
+            <div class="welcome-subtitle">有什么我可以帮助你的吗？</div>
+          </div>
+
+          <!-- 加载指示器 -->
+          <div v-if="isLoading" class="message assistant">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+              <div class="loading-container">
+                <a-spin size="small" />
+                <span class="loading-text">AI 正在思考...</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="input-hint">
-          按 Enter 发送，Shift + Enter 换行
+
+        <!-- 输入区域 -->
+        <div class="chat-input-area">
+          <div class="input-wrapper">
+            <a-textarea
+              v-model:value="inputMessage"
+              @pressEnter="handlePressEnter"
+              placeholder="输入消息..."
+              :autosize="{ minRows: 1, maxRows: 5 }"
+              ref="textareaRef"
+            />
+            <a-button
+              @click="sendMessage"
+              type="primary"
+              shape="circle"
+              size="small"
+              :disabled="!canSend"
+              title="发送 (Enter)"
+            >
+              <span class="send-icon">↑</span>
+            </a-button>
+          </div>
+          <div class="input-hint">
+            按 Enter 发送，Shift + Enter 换行
+          </div>
         </div>
       </div>
     </div>
@@ -96,7 +131,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick, watch } from 'vue'
+import { ref, reactive, nextTick, watch, onMounted, computed } from 'vue'
+import { Modal } from 'ant-design-vue'
+import { chatApiService, type ChatConversation } from '../services/chatApiService'
 
 // 定义消息类型
 interface Message {
@@ -106,61 +143,58 @@ interface Message {
 }
 
 // 响应式数据
-const isMinimized = ref(false)
 const isLoading = ref(false)
 const inputMessage = ref('')
 const messages = ref<Message[]>([])
 const messagesContainer = ref<HTMLElement>()
 const textareaRef = ref<HTMLTextAreaElement>()
 
-// 位置和拖动状态
-const position = reactive({ x: window.innerWidth - 420, y: window.innerHeight - 620 })
-const isDragging = ref(false)
-const dragOffset = reactive({ x: 0, y: 0 })
+// 会话管理
+const showConversationList = ref(false)
+const conversations = ref<ChatConversation[]>([])
+const currentConversationId = ref<string | null>(null)
+const isLoadingConversations = ref(false)
 
 // 定义事件
 const emit = defineEmits<{
-  close: []
   sendMessage: [message: string]
 }>()
 
-// 切换最小化
-const toggleMinimize = () => {
-  isMinimized.value = !isMinimized.value
-}
-
-// 关闭聊天框
-const closeChat = () => {
-  emit('close')
-}
+// 计算是否可以发送
+const canSend = computed(() => {
+  return inputMessage.value.trim().length > 0 && !isLoading.value
+})
 
 // 发送消息
 const sendMessage = async () => {
   const message = inputMessage.value.trim()
   if (!message || isLoading.value) return
 
-  // 添加用户消息
-  messages.value.push({
-    role: 'user',
-    content: message,
-    timestamp: new Date()
-  })
-
+  // 不在这里添加用户消息，由父组件的 Claude 服务统一管理
+  // 只清空输入框
   inputMessage.value = ''
+
+  // 设置加载状态
+  isLoading.value = true
 
   // 滚动到底部
   await nextTick()
   scrollToBottom()
 
-  // 触发发送消息事件
+  // 触发发送消息事件，父组件会调用 Claude API
   emit('sendMessage', message)
+}
 
-  // 模拟 AI 回复（实际应该由父组件处理）
-  // isLoading.value = true
-  // setTimeout(() => {
-  //   addAssistantMessage('这是一个示例回复。实际的 LLM 集成将在后续实现。')
-  //   isLoading.value = false
-  // }, 1000)
+// 添加用户消息（供外部调用）
+const addUserMessage = (content: string) => {
+  messages.value.push({
+    role: 'user',
+    content,
+    timestamp: new Date()
+  })
+  nextTick(() => {
+    scrollToBottom()
+  })
 }
 
 // 添加助手消息（供外部调用）
@@ -185,12 +219,15 @@ const setLoading = (loading: boolean) => {
   }
 }
 
-// 键盘事件处理
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    sendMessage()
+// 键盘事件处理（Ant Design Textarea pressEnter 事件）
+const handlePressEnter = (e: KeyboardEvent) => {
+  // Shift + Enter 换行，不发送
+  if (e.shiftKey) {
+    return
   }
+  // Enter 发送消息
+  e.preventDefault()
+  sendMessage()
 }
 
 // 滚动到底部
@@ -205,91 +242,158 @@ const formatTime = (date: Date): string => {
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
-// 拖动相关函数
-const startDrag = (e: MouseEvent) => {
-  isDragging.value = true
-  dragOffset.x = e.clientX - position.x
-  dragOffset.y = e.clientY - position.y
-
-  document.addEventListener('mousemove', onDrag)
-  document.addEventListener('mouseup', stopDrag)
+// 会话管理函数
+const toggleConversationList = () => {
+  showConversationList.value = !showConversationList.value
+  if (showConversationList.value && conversations.value.length === 0) {
+    loadConversations()
+  }
 }
 
-const onDrag = (e: MouseEvent) => {
-  if (!isDragging.value) return
+const loadConversations = async () => {
+  if (isLoadingConversations.value) return
 
-  let newX = e.clientX - dragOffset.x
-  let newY = e.clientY - dragOffset.y
-
-  // 边界限制
-  const maxX = window.innerWidth - 400
-  const maxY = window.innerHeight - 100
-
-  newX = Math.max(0, Math.min(newX, maxX))
-  newY = Math.max(0, Math.min(newY, maxY))
-
-  position.x = newX
-  position.y = newY
+  isLoadingConversations.value = true
+  try {
+    const response = await chatApiService.listConversations(1, 20)
+    conversations.value = response.data || []
+  } catch (error) {
+    console.error('Failed to load conversations:', error)
+    conversations.value = []
+  } finally {
+    isLoadingConversations.value = false
+  }
 }
 
-const stopDrag = () => {
-  isDragging.value = false
-  document.removeEventListener('mousemove', onDrag)
-  document.removeEventListener('mouseup', stopDrag)
+const createNewConversation = async () => {
+  try {
+    const newConv = await chatApiService.createConversation(`会话 ${Date.now()}`)
+    conversations.value.unshift(newConv)
+    await switchConversation(newConv.id)
+  } catch (error) {
+    console.error('Failed to create conversation:', error)
+  }
 }
 
-const handleMouseDown = (e: MouseEvent) => {
-  // 将此聊天框置于最前
-  const target = e.currentTarget as HTMLElement
-  target.style.zIndex = '10000'
+const switchConversation = async (conversationId: string) => {
+  if (currentConversationId.value === conversationId) return
+
+  try {
+    const response = await chatApiService.getConversation(conversationId)
+    currentConversationId.value = conversationId
+
+    // 加载消息到界面
+    messages.value = response.data.messages.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+      timestamp: new Date(msg.createdAt)
+    }))
+
+    // 存储到 LocalStorage
+    localStorage.setItem('claude_conversation_id', conversationId)
+
+    await nextTick()
+    scrollToBottom()
+  } catch (error) {
+    console.error('Failed to switch conversation:', error)
+  }
 }
 
-// 自动调整 textarea 高度
-watch(inputMessage, () => {
-  nextTick(() => {
-    if (textareaRef.value) {
-      textareaRef.value.style.height = 'auto'
-      textareaRef.value.style.height = Math.min(textareaRef.value.scrollHeight, 120) + 'px'
+const deleteConversationItem = async (conversationId: string) => {
+  Modal.confirm({
+    title: '确认删除',
+    content: '确定要删除这个会话吗？',
+    okText: '删除',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        await chatApiService.deleteConversation(conversationId)
+        conversations.value = conversations.value.filter(c => c.id !== conversationId)
+
+        // 如果删除的是当前会话，清空消息
+        if (currentConversationId.value === conversationId) {
+          currentConversationId.value = null
+          messages.value = []
+          localStorage.removeItem('claude_conversation_id')
+        }
+      } catch (error) {
+        console.error('Failed to delete conversation:', error)
+      }
     }
   })
+}
+
+const formatConversationTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (days === 0) {
+    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  } else if (days === 1) {
+    return '昨天'
+  } else if (days < 7) {
+    return `${days}天前`
+  } else {
+    return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+  }
+}
+
+// 组件挂载时加载会话ID（如果存在）
+onMounted(async () => {
+  const savedConversationId = localStorage.getItem('claude_conversation_id')
+  if (savedConversationId) {
+    currentConversationId.value = savedConversationId
+    try {
+      // 尝试加载会话消息
+      const response = await chatApiService.getConversation(savedConversationId)
+      messages.value = response.data.messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.createdAt)
+      }))
+      await nextTick()
+      scrollToBottom()
+    } catch (error) {
+      console.error('Failed to load conversation on mount:', error)
+      // 如果加载失败，清除无效的会话ID
+      localStorage.removeItem('claude_conversation_id')
+      currentConversationId.value = null
+    }
+  }
 })
 
 // 暴露方法给父组件
 defineExpose({
+  addUserMessage,
   addAssistantMessage,
-  setLoading
+  setLoading,
+  messages, // 暴露 messages 以便父组件可以直接访问
+  scrollToBottom // 暴露滚动方法
 })
 </script>
 
 <style scoped>
 .chat-box-container {
-  position: fixed;
-  width: 400px;
-  height: 600px;
+  width: 100%;
+  height: 100%;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  z-index: 9999;
-  transition: height 0.3s ease;
 }
 
-.chat-box-container.minimized {
-  height: 56px;
-}
-
-/* 头部 */
+/* 头部 - Ant Design 风格 */
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px 16px;
+  background: #1890ff;
   color: white;
-  border-radius: 12px 12px 0 0;
-  cursor: move;
   user-select: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .header-left {
@@ -304,7 +408,7 @@ defineExpose({
 
 .chat-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .header-right {
@@ -327,21 +431,28 @@ defineExpose({
   transition: background 0.2s;
 }
 
-.header-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
 .close-btn {
   font-size: 24px;
   line-height: 1;
 }
 
-/* 消息区域 */
+/* 消息区域 - Ant Design 风格 */
 .chat-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  background: #fafafa;
+}
+
+.main-chat-area {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
+  background: #ffffff;
 }
 
 .messages-container {
@@ -350,7 +461,8 @@ defineExpose({
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  background: #fafafa;
 }
 
 .messages-container::-webkit-scrollbar {
@@ -358,22 +470,22 @@ defineExpose({
 }
 
 .messages-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f0f0f0;
 }
 
 .messages-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #bfbfbf;
   border-radius: 3px;
 }
 
 .messages-container::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: #999999;
 }
 
-/* 消息样式 */
+/* 消息样式 - Ant Design 风格 */
 .message {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   animation: slideIn 0.3s ease;
 }
 
@@ -396,11 +508,23 @@ defineExpose({
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  background: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.message.user .message-avatar {
+  background: #1890ff;
+  color: white;
+}
+
+.message.assistant .message-avatar {
+  background: #52c41a;
+  color: white;
 }
 
 .message-content {
@@ -408,6 +532,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0; /* 允许 flex 子元素正确收缩 */
 }
 
 .message.user .message-content {
@@ -415,100 +540,87 @@ defineExpose({
 }
 
 .message-text {
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
   word-wrap: break-word;
-  line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.5715;
+  max-width: 100%;
+  white-space: pre-wrap;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.09);
 }
 
 .message.user .message-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   color: white;
-  border-radius: 12px 12px 4px 12px;
+  border-radius: 8px 8px 2px 8px;
 }
 
 .message.assistant .message-text {
-  background: #f3f4f6;
-  color: #374151;
-  border-radius: 12px 12px 12px 4px;
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.85);
+  border: 1px solid #d9d9d9;
+  border-radius: 8px 8px 8px 2px;
 }
 
 .message-time {
-  font-size: 11px;
-  color: #9ca3af;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
   padding: 0 4px;
 }
 
-/* 欢迎消息 */
+/* 欢迎消息 - Ant Design 风格 */
 .welcome-message {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 20px;
-  color: #6b7280;
+  padding: 48px 24px;
+  color: rgba(0, 0, 0, 0.45);
 }
 
 .welcome-icon {
   font-size: 48px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .welcome-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
   margin-bottom: 8px;
 }
 
 .welcome-subtitle {
   font-size: 14px;
-  color: #9ca3af;
+  color: rgba(0, 0, 0, 0.45);
 }
 
-/* 加载指示器 */
-.typing-indicator {
+/* 加载指示器 - Ant Design 风格 */
+.loading-container {
   display: flex;
-  gap: 4px;
-  padding: 10px 14px;
-  background: #f3f4f6;
-  border-radius: 12px 12px 12px 4px;
-}
-
-.typing-indicator span {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #9ca3af;
-  animation: typing 1.4s infinite;
-}
-
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.7;
-  }
-  30% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
-}
-
-/* 输入区域 */
-.chat-input-area {
-  border-top: 1px solid #e5e7eb;
+  align-items: center;
+  gap: 8px;
   padding: 12px 16px;
-  background: #f9fafb;
-  border-radius: 0 0 12px 12px;
+  background: #ffffff;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px 8px 8px 2px;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+/* 输入区域 - Ant Design 风格 */
+.chat-input-area {
+  border-top: 1px solid #f0f0f0;
+  padding: 12px;
+  background: #ffffff;
+  flex-shrink: 0;
 }
 
 .input-wrapper {
@@ -517,61 +629,135 @@ defineExpose({
   align-items: flex-end;
 }
 
-.chat-input {
+.input-wrapper :deep(.ant-input-textarea) {
   flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+}
+
+.input-wrapper :deep(.ant-input) {
+  border-radius: 6px;
+  border-color: #d9d9d9;
   font-size: 14px;
-  resize: none;
-  outline: none;
-  font-family: inherit;
-  line-height: 1.5;
-  max-height: 120px;
-  transition: border-color 0.2s;
+  line-height: 1.5715;
 }
 
-.chat-input:focus {
-  border-color: #667eea;
+.input-wrapper :deep(.ant-input:hover) {
+  border-color: #40a9ff;
 }
 
-.chat-input::placeholder {
-  color: #9ca3af;
+.input-wrapper :deep(.ant-input:focus) {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
-.send-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
+.input-wrapper :deep(.ant-btn-primary) {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: #1890ff;
+  border-color: #1890ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
   flex-shrink: 0;
 }
 
-.send-btn:hover:not(:disabled) {
-  opacity: 0.9;
+.input-wrapper :deep(.ant-btn-primary:hover) {
+  background: #40a9ff;
+  border-color: #40a9ff;
 }
 
-.send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.input-wrapper :deep(.ant-btn-primary:disabled) {
+  background: #f5f5f5;
+  border-color: #d9d9d9;
+  color: rgba(0, 0, 0, 0.25);
 }
 
 .send-icon {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
+  line-height: 1;
 }
 
 .input-hint {
-  font-size: 11px;
-  color: #9ca3af;
-  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-top: 8px;
   text-align: center;
+}
+
+/* 会话列表样式 - Ant Design 风格 */
+.conversation-list {
+  width: 240px;
+  min-width: 240px;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.conversation-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #ffffff;
+}
+
+.list-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.conversation-items {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+.conversation-items :deep(.ant-list-item) {
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 12px 16px;
+  border-left: 3px solid transparent;
+}
+
+.conversation-items :deep(.ant-list-item:hover) {
+  background: #f5f5f5;
+}
+
+.conversation-items :deep(.ant-list-item.active) {
+  background: #e6f7ff;
+  border-left: 3px solid #1890ff;
+}
+
+.conversation-title {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-time {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.no-conversations {
+  padding: 48px 20px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+}
+
+/* 当显示会话列表时，调整聊天主体布局 */
+.chat-box-container.show-conversations .messages-container {
+  flex: 1;
+  min-width: 0;
 }
 </style>

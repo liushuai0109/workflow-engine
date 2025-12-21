@@ -15,14 +15,17 @@ const (
 
 // NodeType 节点类型枚举
 const (
-	NodeTypeStartEvent        uint32 = 1
-	NodeTypeEndEvent          uint32 = 2
-	NodeTypeUserTask          uint32 = 3
-	NodeTypeServiceTask       uint32 = 4
-	NodeTypeExclusiveGateway  uint32 = 5
-	NodeTypeParallelGateway   uint32 = 6
-	NodeTypeSubProcess        uint32 = 7
-	NodeTypeIntermediateEvent uint32 = 8
+	NodeTypeStartEvent              uint32 = 1
+	NodeTypeEndEvent                uint32 = 2
+	NodeTypeUserTask                uint32 = 3
+	NodeTypeServiceTask             uint32 = 4
+	NodeTypeExclusiveGateway        uint32 = 5
+	NodeTypeParallelGateway         uint32 = 6
+	NodeTypeSubProcess              uint32 = 7
+	NodeTypeIntermediateEvent       uint32 = 8
+	NodeTypeIntermediateCatchEvent  uint32 = 9
+	NodeTypeEventBasedGateway       uint32 = 10
+	NodeTypeBoundaryEvent           uint32 = 11
 )
 
 // XML 结构体定义，用于解析 BPMN XML
@@ -38,15 +41,18 @@ type process struct {
 	ID      string   `xml:"id,attr"`
 	Name    string   `xml:"name,attr"`
 	// 支持多种节点类型
-	StartEvents       []startEvent       `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL startEvent"`
-	EndEvents         []endEvent         `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL endEvent"`
-	UserTasks         []userTask         `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL userTask"`
-	ServiceTasks      []serviceTask      `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL serviceTask"`
-	ExclusiveGateways []exclusiveGateway `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL exclusiveGateway"`
-	ParallelGateways  []parallelGateway  `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL parallelGateway"`
-	SubProcesses      []subProcess       `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL subProcess"`
-	SequenceFlows     []sequenceFlow     `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL sequenceFlow"`
-	Messages          []message          `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL message"`
+	StartEvents              []startEvent              `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL startEvent"`
+	EndEvents                []endEvent                `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL endEvent"`
+	UserTasks                []userTask                `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL userTask"`
+	ServiceTasks             []serviceTask             `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL serviceTask"`
+	ExclusiveGateways        []exclusiveGateway        `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL exclusiveGateway"`
+	ParallelGateways         []parallelGateway         `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL parallelGateway"`
+	SubProcesses             []subProcess              `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL subProcess"`
+	IntermediateCatchEvents  []intermediateCatchEvent  `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL intermediateCatchEvent"`
+	EventBasedGateways       []eventBasedGateway       `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL eventBasedGateway"`
+	BoundaryEvents           []boundaryEvent           `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL boundaryEvent"`
+	SequenceFlows            []sequenceFlow            `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL sequenceFlow"`
+	Messages                 []message                 `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL message"`
 }
 
 type baseElement struct {
@@ -93,6 +99,20 @@ type parallelGateway struct {
 
 type subProcess struct {
 	baseElement
+}
+
+type intermediateCatchEvent struct {
+	baseElement
+}
+
+type eventBasedGateway struct {
+	baseElement
+}
+
+type boundaryEvent struct {
+	baseElement
+	AttachedToRef string `xml:"attachedToRef,attr"`
+	CancelActivity bool   `xml:"cancelActivity,attr"`
 }
 
 type sequenceFlow struct {
@@ -156,6 +176,11 @@ func ParseBPMN(bpmnContent string) (*models.WorkflowDefinition, error) {
 	// 构建邻接表
 	buildAdjacencyLists(wd)
 
+	// 验证 UserTask 约束
+	if err := validateUserTaskConstraints(wd); err != nil {
+		return nil, err
+	}
+
 	// 识别开始和结束事件
 	identifyStartAndEndEvents(wd)
 
@@ -172,6 +197,7 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeStartEvent,
 			IncomingSequenceFlowIds: se.Incoming,
 			OutgoingSequenceFlowIds: se.Outgoing,
+			CanFallback:             true,
 		}
 		wd.Nodes[node.Id] = node
 	}
@@ -184,6 +210,7 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeEndEvent,
 			IncomingSequenceFlowIds: ee.Incoming,
 			OutgoingSequenceFlowIds: ee.Outgoing,
+			CanFallback:             true,
 		}
 		wd.Nodes[node.Id] = node
 	}
@@ -196,6 +223,7 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeUserTask,
 			IncomingSequenceFlowIds: ut.Incoming,
 			OutgoingSequenceFlowIds: ut.Outgoing,
+			CanFallback:             true,
 		}
 		wd.Nodes[node.Id] = node
 	}
@@ -208,6 +236,7 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeServiceTask,
 			IncomingSequenceFlowIds: st.Incoming,
 			OutgoingSequenceFlowIds: st.Outgoing,
+			CanFallback:             true,
 		}
 		// 从扩展属性中提取业务接口 URL
 		if len(st.ExtensionElements.Values) > 0 {
@@ -236,6 +265,7 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeExclusiveGateway,
 			IncomingSequenceFlowIds: eg.Incoming,
 			OutgoingSequenceFlowIds: eg.Outgoing,
+			CanFallback:             true,
 		}
 		wd.Nodes[node.Id] = node
 	}
@@ -248,6 +278,7 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeParallelGateway,
 			IncomingSequenceFlowIds: pg.Incoming,
 			OutgoingSequenceFlowIds: pg.Outgoing,
+			CanFallback:             true,
 		}
 		wd.Nodes[node.Id] = node
 	}
@@ -260,6 +291,47 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeSubProcess,
 			IncomingSequenceFlowIds: sp.Incoming,
 			OutgoingSequenceFlowIds: sp.Outgoing,
+			CanFallback:             true,
+		}
+		wd.Nodes[node.Id] = node
+	}
+
+	// 解析中间捕获事件
+	for _, ice := range proc.IntermediateCatchEvents {
+		node := models.Node{
+			Id:                      ice.ID,
+			Name:                    ice.Name,
+			Type:                    NodeTypeIntermediateCatchEvent,
+			IncomingSequenceFlowIds: ice.Incoming,
+			OutgoingSequenceFlowIds: ice.Outgoing,
+			CanFallback:             true,
+		}
+		wd.Nodes[node.Id] = node
+	}
+
+	// 解析事件网关
+	for _, ebg := range proc.EventBasedGateways {
+		node := models.Node{
+			Id:                      ebg.ID,
+			Name:                    ebg.Name,
+			Type:                    NodeTypeEventBasedGateway,
+			IncomingSequenceFlowIds: ebg.Incoming,
+			OutgoingSequenceFlowIds: ebg.Outgoing,
+			CanFallback:             true,
+		}
+		wd.Nodes[node.Id] = node
+	}
+
+	// 解析边界事件
+	for _, be := range proc.BoundaryEvents {
+		node := models.Node{
+			Id:                      be.ID,
+			Name:                    be.Name,
+			Type:                    NodeTypeBoundaryEvent,
+			IncomingSequenceFlowIds: be.Incoming,
+			OutgoingSequenceFlowIds: be.Outgoing,
+			AttachedNodeId:          be.AttachedToRef,
+			CanFallback:             true,
 		}
 		wd.Nodes[node.Id] = node
 	}
@@ -318,6 +390,58 @@ func buildAdjacencyLists(wd *models.WorkflowDefinition) {
 		// 添加到反向邻接表
 		wd.ReverseAdjacencyList[targetID] = append(wd.ReverseAdjacencyList[targetID], sourceID)
 	}
+}
+
+// validateUserTaskConstraints 验证 UserTask 的 outgoing 连线约束
+// 确保所有 UserTask 的 outgoing 连线都从 BoundaryEvent 出发
+func validateUserTaskConstraints(wd *models.WorkflowDefinition) error {
+	// 1. 构建 BoundaryEvent 索引：attachedNodeId -> []boundaryEventIDs
+	boundaryEvents := make(map[string][]string)
+	for nodeID, node := range wd.Nodes {
+		if node.Type == NodeTypeBoundaryEvent {
+			if node.AttachedNodeId == "" {
+				return fmt.Errorf("BoundaryEvent %s missing attachedToRef", nodeID)
+			}
+			boundaryEvents[node.AttachedNodeId] = append(
+				boundaryEvents[node.AttachedNodeId], nodeID)
+		}
+	}
+
+	// 2. 验证每个 UserTask
+	for nodeID, node := range wd.Nodes {
+		if node.Type != NodeTypeUserTask {
+			continue
+		}
+
+		if len(node.OutgoingSequenceFlowIds) == 0 {
+			continue // 没有 outgoing，跳过
+		}
+
+		// 检查每条 outgoing 连线的 sourceRef
+		for _, flowID := range node.OutgoingSequenceFlowIds {
+			flow, exists := wd.SequenceFlows[flowID]
+			if !exists {
+				return fmt.Errorf("SequenceFlow %s not found", flowID)
+			}
+
+			// 验证失败：连线直接从 UserTask 出发
+			if flow.SourceNodeId == nodeID {
+				return fmt.Errorf(
+					"UserTask %s has direct outgoing flow %s. "+
+						"All outgoing flows from UserTask must originate from BoundaryEvent",
+					nodeID, flowID)
+			}
+		}
+
+		// 检查是否有 BoundaryEvent
+		if len(boundaryEvents[nodeID]) == 0 {
+			return fmt.Errorf(
+				"UserTask %s has outgoing flows but no BoundaryEvent attached",
+				nodeID)
+		}
+	}
+
+	return nil
 }
 
 // identifyStartAndEndEvents 识别开始和结束事件

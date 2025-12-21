@@ -35,7 +35,9 @@ type Node struct {
 	Type                    uint32   `json:"type" db:"type"`
 	IncomingSequenceFlowIds []string `json:"incomingSequenceFlowIds" db:"incoming_sequence_flow_ids"`
 	OutgoingSequenceFlowIds []string `json:"outgoingSequenceFlowIds" db:"outgoing_sequence_flow_ids"`
-	BusinessApiUrl          string   `json:"businessApiUrl,omitempty" db:"business_api_url"` // ServiceTask 的业务接口 URL（从扩展属性解析）
+	BusinessApiUrl          string   `json:"businessApiUrl,omitempty" db:"business_api_url"`  // ServiceTask 的业务接口 URL（从扩展属性解析）
+	AttachedNodeId          string   `json:"attachedNodeId,omitempty" db:"attached_node_id"` // BoundaryEvent 依附的节点 ID
+	CanFallback             bool     `json:"canFallback" db:"can_fallback"`                  // 是否允许回滚，默认 true
 }
 
 // SequenceFlow 序列流

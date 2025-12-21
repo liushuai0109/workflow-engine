@@ -3,48 +3,27 @@
     <!-- 顶部工具栏 -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <button @click="openFile" class="btn btn-primary">
-          <span class="icon">📁</span>
+        <a-button @click="openFile" type="primary">
+          <template #icon><FolderOpenOutlined /></template>
           Open BPMN
-        </button>
-        <button @click="saveFile" class="btn btn-secondary" :disabled="!currentDiagram">
-          <span class="icon">💾</span>
+        </a-button>
+        <a-button @click="saveFile" :disabled="!currentDiagram">
+          <template #icon><SaveOutlined /></template>
           Save BPMN
-        </button>
-        <button @click="newDiagram" class="btn btn-outline">
-          <span class="icon">🆕</span>
+        </a-button>
+        <a-button @click="newDiagram">
+          <template #icon><FileAddOutlined /></template>
           New
-        </button>
-        <button
+        </a-button>
+        <a-button
           @click="toggleFlowVisualization"
-          class="btn"
-          :class="{ 'btn-flow-active': isFlowVisualizationEnabled }"
+          :type="isFlowVisualizationEnabled ? 'primary' : 'default'"
           :disabled="!currentDiagram"
           :title="isFlowVisualizationEnabled ? '关闭流量可视化' : '启用流量可视化'"
         >
-          <span class="icon">📊</span>
+          <template #icon><LineChartOutlined /></template>
           {{ isFlowVisualizationEnabled ? '关闭流量' : '显示流量' }}
-        </button>
-        <button
-          v-if="currentDiagram"
-          @click="toggleMockPanel"
-          class="btn"
-          :class="{ 'btn-flow-active': showMockPanel }"
-          title="Mock 执行"
-        >
-          <span class="icon">🎭</span>
-          Mock
-        </button>
-        <button
-          v-if="currentDiagram"
-          @click="toggleDebugPanel"
-          class="btn"
-          :class="{ 'btn-flow-active': showDebugPanel }"
-          title="Debug 调试"
-        >
-          <span class="icon">🐛</span>
-          Debug
-        </button>
+        </a-button>
       </div>
     </div>
 
@@ -52,33 +31,47 @@
     <div class="main-content">
       <!-- BPMN 编辑器 -->
       <div class="editor-container">
-        <BpmnEditor v-if="currentDiagram" ref="bpmnEditor" :xml="currentDiagram" @error="handleError"
-          @shown="handleShown" @loading="handleLoading" @changed="handleDiagramChanged" />
+        <a-spin :spinning="isAIProcessing" tip="AI 正在处理流程图..." size="large">
+          <BpmnEditor v-if="currentDiagram" ref="bpmnEditor" :xml="currentDiagram" @error="handleError"
+            @shown="handleShown" @loading="handleLoading" @changed="handleDiagramChanged" />
 
-        <!-- 欢迎界面 -->
-        <div v-else class="welcome-screen">
-          <div class="welcome-content">
-            <h1>BPMN Explorer</h1>
-            <p>Create and edit BPMN diagrams with ease</p>
-            <div class="welcome-actions">
-              <button @click="openFile" class="btn btn-primary btn-large">
-                <span class="icon">📁</span>
-                Open BPMN File
-              </button>
-              <button @click="newDiagram" class="btn btn-outline btn-large">
-                <span class="icon">🆕</span>
-                Create New Diagram
-              </button>
-            </div>
-            <div class="drag-hint">
-              <p>Or drag and drop a BPMN file here</p>
+          <!-- 欢迎界面 -->
+          <div v-else class="welcome-screen">
+            <div class="welcome-content">
+              <h1>BPMN Explorer</h1>
+              <p>Create and edit BPMN diagrams with ease</p>
+              <div class="welcome-actions">
+                <a-button @click="openFile" type="primary" size="large">
+                  <template #icon><FolderOpenOutlined /></template>
+                  Open BPMN File
+                </a-button>
+                <a-button @click="newDiagram" size="large">
+                  <template #icon><FileAddOutlined /></template>
+                  Create New Diagram
+                </a-button>
+              </div>
+              <div class="drag-hint">
+                <p>Or drag and drop a BPMN file here</p>
+              </div>
             </div>
           </div>
-        </div>
+        </a-spin>
       </div>
 
-      <!-- Properties Panel -->
-      <div class="properties-panel" id="properties-panel"></div>
+      <!-- 右侧统一面板 -->
+      <RightPanelContainer
+        v-if="currentDiagram"
+        ref="rightPanelRef"
+        :active-tab="activeRightPanelTab"
+        :workflow-id="getWorkflowId"
+        :bpmn-xml="currentDiagram"
+        :config-id="selectedMockConfigId"
+        @tab-change="handleRightPanelTabChange"
+        @mock-execution-update="handleMockExecutionUpdate"
+        @debug-session-update="handleDebugSessionUpdate"
+        @interceptor-session-update="handleInterceptorSessionUpdate"
+        @chat-message="handleChatMessage"
+      />
     </div>
 
     <!-- 状态栏 -->
@@ -99,49 +92,12 @@
     <!-- 隐藏的文件输入 -->
     <input ref="fileInput" type="file" accept=".bpmn,.xml" @change="handleFileSelect" style="display: none" />
 
-    <!-- 客服按钮 -->
-    <div
-      v-if="!showChatBox"
-      class="chat-toggle-btn"
-      @click="toggleChatBox"
-      title="打开AI助手"
-    >
-      <span class="avatar-icon">👤</span>
-      <div class="pulse-ring"></div>
-    </div>
-
-    <!-- 聊天对话框 -->
-    <ChatBox
-      v-if="showChatBox"
-      ref="chatBoxRef"
-      @sendMessage="handleChatMessage"
-      @close="handleCloseChatBox"
-    />
-
-    <!-- Mock 控制面板 -->
-    <MockControlPanel
-      :bpmnXml="currentDiagram"
-      v-if="showMockPanel && currentDiagram"
-      :workflow-id="getWorkflowId || ''"
-      :config-id="selectedMockConfigId"
-      @close="showMockPanel = false"
-      @execution-update="handleMockExecutionUpdate"
-    />
-
     <!-- Mock 配置面板 -->
     <MockConfigPanel
       v-if="showMockConfigPanel && currentDiagram"
       :workflow-id="getWorkflowId || ''"
       @close="showMockConfigPanel = false"
       @config-selected="handleMockConfigSelected"
-    />
-
-    <!-- Debug 控制面板 -->
-    <DebugControlPanel
-      v-if="showDebugPanel && currentDiagram"
-      :workflow-id="getWorkflowId || ''"
-      @close="showDebugPanel = false"
-      @session-update="handleDebugSessionUpdate"
     />
 
     <!-- 变量监视面板 -->
@@ -163,12 +119,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
+import {
+  FolderOpenOutlined,
+  SaveOutlined,
+  FileAddOutlined,
+  LineChartOutlined
+} from '@ant-design/icons-vue'
 import BpmnEditor from '../components/BpmnEditor.vue'
-import ChatBox from '../components/ChatBox.vue'
-import MockControlPanel from '../components/MockControlPanel.vue'
+import RightPanelContainer from '../components/RightPanelContainer.vue'
 import MockConfigPanel from '../components/MockConfigPanel.vue'
-import DebugControlPanel from '../components/DebugControlPanel.vue'
 import VariableWatchPanel from '../components/VariableWatchPanel.vue'
 import ExecutionTimeline from '../components/ExecutionTimeline.vue'
 import { LocalStorageService } from '../services/localStorageService'
@@ -176,6 +136,7 @@ import { visualizationService } from '../services/visualizationService'
 import { contextMenuService } from '../services/contextMenuService'
 import type { MockExecution } from '../services/mockService'
 import { debugService, type DebugSession } from '../services/debugService'
+import type { InterceptSession } from '../services/interceptorService'
 import type { ExecutionHistory } from '../components/ExecutionTimeline.vue'
 import { llmService } from '../services/llmService'
 import type { Message, FunctionCall } from '../services/llmService'
@@ -201,23 +162,27 @@ const USE_FUNCTION_CALLING = false
 // 响应式数据
 const currentDiagram = ref<string>('')
 const isLoading = ref<boolean>(false)
+const isAIProcessing = ref<boolean>(false) // AI 处理中的状态
 const hasError = ref<boolean>(false)
 const errorMessage = ref<string>('')
 const lastSaved = ref<Date | null>(null)
 const fileInput = ref<HTMLInputElement>()
 const bpmnEditor = ref<any>()
 const isFlowVisualizationEnabled = ref<boolean>(false)
-const showChatBox = ref<boolean>(false)
-const chatBoxRef = ref<any>()
+const rightPanelRef = ref<any>() // RightPanelContainer 组件引用
 
 // Mock 和 Debug 相关状态
-const showMockPanel = ref<boolean>(false)
 const showMockConfigPanel = ref<boolean>(false)
-const showDebugPanel = ref<boolean>(false)
 const showVariablePanel = ref<boolean>(false)
 const showTimelinePanel = ref<boolean>(false)
 const selectedMockConfigId = ref<string | undefined>()
 const currentWorkflowId = ref<string>('')
+const debugVariables = ref<Record<string, any>>({})
+const previousDebugVariables = ref<Record<string, any>>({})
+const executionHistories = ref<ExecutionHistory[]>([])
+
+// 右侧面板 Tab 状态
+const activeRightPanelTab = ref<'properties' | 'chat' | 'mock' | 'debug' | 'interceptor'>('properties')
 
 // 当图表改变时，更新工作流 ID
 watch(() => currentDiagram.value, () => {
@@ -228,8 +193,6 @@ watch(() => currentDiagram.value, () => {
     }
   }
 }, { immediate: true })
-const debugVariables = ref<Record<string, any>>({})
-const executionHistories = ref<ExecutionHistory[]>([])
 
 // 计算当前工作流 ID（从 BPMN XML 中提取或使用默认值）
 const getWorkflowId = computed((): string => {
@@ -247,6 +210,67 @@ const getWorkflowId = computed((): string => {
   return currentWorkflowId.value || `workflow-${Date.now()}`
 })
 
+// UserTask 约束验证
+const validateUserTaskConstraints = (modeler: any): {
+  valid: boolean
+  errors: string[]
+} => {
+  const elementRegistry = modeler.get('elementRegistry')
+  const errors: string[] = []
+
+  // 1. 收集所有 BoundaryEvent，按 attachedToRef 分组
+  const boundaryEvents = elementRegistry.filter((el: any) => el.type === 'bpmn:BoundaryEvent')
+  const boundaryEventsByAttached = new Map<string, any[]>()
+
+  boundaryEvents.forEach((be: any) => {
+    const attachedToRef = be.businessObject.attachedToRef?.id
+    if (attachedToRef) {
+      if (!boundaryEventsByAttached.has(attachedToRef)) {
+        boundaryEventsByAttached.set(attachedToRef, [])
+      }
+      boundaryEventsByAttached.get(attachedToRef)!.push(be)
+    }
+  })
+
+  // 2. 检查所有 UserTask
+  const userTasks = elementRegistry.filter((el: any) => el.type === 'bpmn:UserTask')
+
+  userTasks.forEach((task: any) => {
+    const outgoing = task.businessObject.outgoing || []
+    if (outgoing.length === 0) {
+      // UserTask 没有 outgoing 是允许的（流程终点）
+      return
+    }
+
+    // 检查每条 outgoing 连线的 sourceRef
+    outgoing.forEach((flow: any) => {
+      const sourceRef = flow.sourceRef?.id
+      if (sourceRef === task.id) {
+        // 违规：连线直接从 UserTask 出发
+        errors.push(
+          `❌ UserTask "${task.businessObject.name || task.id}" 有直接的 outgoing 连线。\n` +
+          `所有从 UserTask 出发的连线必须从 BoundaryEvent 出发。\n\n` +
+          `修复建议：\n` +
+          `1. 删除从 UserTask 直接连出的连线\n` +
+          `2. 在 UserTask 上创建 BoundaryEvent（如"完成"、"通过"、"拒绝"等）\n` +
+          `3. 从 BoundaryEvent 创建连线到下一个节点`
+        )
+      }
+    })
+
+    // 检查是否有 BoundaryEvent
+    const hasBoundaryEvents = boundaryEventsByAttached.has(task.id)
+    if (!hasBoundaryEvents && outgoing.length > 0) {
+      errors.push(
+        `❌ UserTask "${task.businessObject.name || task.id}" 有 outgoing 连线但没有附加 BoundaryEvent。\n\n` +
+        `修复建议：在该 UserTask 上创建至少一个 BoundaryEvent。`
+      )
+    }
+  })
+
+  return { valid: errors.length === 0, errors }
+}
+
 // 文件操作
 const openFile = (): void => {
   fileInput.value?.click()
@@ -256,6 +280,31 @@ const saveFile = async (): Promise<void> => {
   if (!bpmnEditor.value) return
 
   try {
+    // 步骤 1: 保存前验证 UserTask 约束
+    const modeler = bpmnEditor.value.getModeler()
+    if (!modeler) {
+      showStatus('编辑器未初始化', 'error')
+      return
+    }
+
+    const validationResult = validateUserTaskConstraints(modeler)
+
+    if (!validationResult.valid) {
+      // 验证失败，显示详细错误信息
+      const errorMsg = validationResult.errors.join('\n\n' + '='.repeat(50) + '\n\n')
+      alert(
+        `❌ 无法保存：BPMN 结构不符合约束规则\n\n` +
+        `${errorMsg}\n\n` +
+        `📋 UserTask 约束规则：\n` +
+        `所有从 UserTask 出发的连线必须从 BoundaryEvent 出发，不能直接连接。\n\n` +
+        `这个约束确保流程图的语义清晰，明确定义每个任务的所有可能出口。`
+      )
+      hasError.value = true
+      errorMessage.value = validationResult.errors[0].split('\n')[0] // 状态栏显示第一个错误的第一行
+      return
+    }
+
+    // 步骤 2: 验证通过，继续保存
     // 从 BpmnEditor 获取最新的 XML 内容（BPMN 格式）
     const bpmnXml = await bpmnEditor.value.getXml()
 
@@ -441,24 +490,78 @@ const handleError = (err: Error): void => {
 
 // Mock 和 Debug 控制函数
 const toggleMockPanel = () => {
-  console.log('Toggle Mock Panel, current state:', showMockPanel.value)
-  showMockPanel.value = !showMockPanel.value
-  if (showMockPanel.value) {
-    showDebugPanel.value = false
-  }
-  console.log('Mock Panel state after toggle:', showMockPanel.value)
+  console.log('Toggle Mock Panel, current tab:', activeRightPanelTab.value)
+  activeRightPanelTab.value = activeRightPanelTab.value === 'mock' ? 'properties' : 'mock'
+  console.log('Mock Panel tab after toggle:', activeRightPanelTab.value)
 }
 
 const toggleDebugPanel = () => {
-  console.log('Toggle Debug Panel, current state:', showDebugPanel.value)
-  showDebugPanel.value = !showDebugPanel.value
-  if (showDebugPanel.value) {
-    showMockPanel.value = false
+  console.log('Toggle Debug Panel, current tab:', activeRightPanelTab.value)
+  activeRightPanelTab.value = activeRightPanelTab.value === 'debug' ? 'properties' : 'debug'
+  if (activeRightPanelTab.value === 'debug') {
     showVariablePanel.value = true
     showTimelinePanel.value = true
     console.log('Debug Panel opened, showing variable and timeline panels')
   }
-  console.log('Debug Panel state after toggle:', showDebugPanel.value)
+  console.log('Debug Panel tab after toggle:', activeRightPanelTab.value)
+}
+
+const toggleInterceptorPanel = () => {
+  console.log('Toggle Interceptor Panel, current tab:', activeRightPanelTab.value)
+  activeRightPanelTab.value = activeRightPanelTab.value === 'interceptor' ? 'properties' : 'interceptor'
+  console.log('Interceptor Panel tab after toggle:', activeRightPanelTab.value)
+}
+
+// 处理右侧面板 Tab 切换
+const handleRightPanelTabChange = async (tab: string) => {
+  activeRightPanelTab.value = tab as 'properties' | 'chat' | 'mock' | 'debug' | 'interceptor'
+
+  // 如果切换到聊天 Tab，滚动到底部并加载历史
+  if (tab === 'chat') {
+    await nextTick()
+    // 滚动到底部
+    if (rightPanelRef.value && rightPanelRef.value.scrollToBottom) {
+      // 延迟执行确保组件已完全渲染
+      setTimeout(() => {
+        rightPanelRef.value.scrollToBottom()
+      }, 100)
+    }
+
+    // 如果使用 Claude 并且还未初始化，加载历史
+    if (USE_CLAUDE) {
+      await loadChatHistoryForTab()
+    }
+  }
+}
+
+// 为 Tab 模式加载聊天历史
+const loadChatHistoryForTab = async (): Promise<void> => {
+  if (!USE_CLAUDE) return
+
+  try {
+    // 初始化 Claude 服务（如果尚未初始化）
+    if (!claudeService) {
+      if (bpmnEditor.value) {
+        const modeler = bpmnEditor.value.getModeler()
+        if (modeler) {
+          editorOperationService.init(modeler)
+        }
+      }
+
+      const editorBridge = createClaudeEditorBridge()
+      claudeService = createBpmnClaudeLLMService(editorBridge, CLAUDE_BPMN_SYSTEM_PROMPT)
+    }
+
+    // 尝试从 LocalStorage 加载会话ID
+    const conversationId = claudeService.loadConversationIdFromStorage()
+
+    if (conversationId) {
+      // 加载会话但不需要更新 UI,因为 ChatBox 会在挂载时自动处理
+      await claudeService.loadConversation(conversationId)
+    }
+  } catch (error) {
+    console.error('Failed to load chat history for tab:', error)
+  }
 }
 
 const handleMockExecutionUpdate = (execution: MockExecution) => {
@@ -513,6 +616,22 @@ const handleDebugSessionUpdate = async (session: DebugSession) => {
       executionHistories.value = result.histories
     } catch (error) {
       console.error('Failed to get execution histories:', error)
+    }
+  }
+}
+
+const handleInterceptorSessionUpdate = (session: InterceptSession) => {
+  // 更新可视化
+  if (bpmnEditor.value) {
+    const modeler = bpmnEditor.value.getModeler()
+    if (modeler) {
+      visualizationService.init(modeler)
+      // 高亮当前节点
+      if (session.currentNodeIds && session.currentNodeIds.length > 0) {
+        session.currentNodeIds.forEach(nodeId => {
+          visualizationService.highlightNode(nodeId, 'running')
+        })
+      }
     }
   }
 }
@@ -1020,9 +1139,17 @@ const addBasicDiagram = (bpmnXml: string): string => {
 const handleChatMessage = async (message: string): Promise<void> => {
   console.log('User message:', message)
 
-  // 设置加载状态
-  if (chatBoxRef.value) {
-    chatBoxRef.value.setLoading(true)
+  // 添加用户消息到聊天界面
+  if (rightPanelRef.value && rightPanelRef.value.addUserMessage) {
+    rightPanelRef.value.addUserMessage(message)
+  }
+
+  // 开启 Loading 状态
+  isAIProcessing.value = true
+
+  // 设置 ChatBox 的 loading 状态
+  if (rightPanelRef.value && rightPanelRef.value.setChatLoading) {
+    rightPanelRef.value.setChatLoading(true)
   }
 
   try {
@@ -1039,9 +1166,7 @@ const handleChatMessage = async (message: string): Promise<void> => {
     if (!isFlowRequest) {
       // 普通对话，不使用工具
       const response = await llmService.sendMessage(message)
-      if (chatBoxRef.value) {
-        chatBoxRef.value.addAssistantMessage(response)
-      }
+      // 注意:现在 ChatBox 在 RightPanelContainer 内部,响应会通过 Claude 服务发送
       return
     }
 
@@ -1055,18 +1180,19 @@ const handleChatMessage = async (message: string): Promise<void> => {
     }
   } catch (error) {
     console.error('LLM API 调用失败:', error)
+    showStatus('AI 处理失败', 'error')
 
     // 显示错误消息
-    if (chatBoxRef.value) {
-      const errorMsg = error instanceof Error
-        ? `抱歉，发生错误：${error.message}`
-        : '抱歉，发生了未知错误，请稍后重试。'
-      chatBoxRef.value.addAssistantMessage(errorMsg)
+    if (rightPanelRef.value && rightPanelRef.value.addChatMessage) {
+      rightPanelRef.value.addChatMessage('抱歉，处理您的请求时出现错误，请稍后重试。')
     }
   } finally {
-    // 取消加载状态
-    if (chatBoxRef.value) {
-      chatBoxRef.value.setLoading(false)
+    // 清除 Loading 状态
+    isAIProcessing.value = false
+
+    // 清除 ChatBox 的 loading 状态
+    if (rightPanelRef.value && rightPanelRef.value.setChatLoading) {
+      rightPanelRef.value.setChatLoading(false)
     }
   }
 }
@@ -1106,9 +1232,11 @@ const handleChatWithClaude = async (message: string): Promise<void> => {
     // 调用 Claude API，自动处理工具调用
     const response = await claudeService.sendMessage(message)
 
-    // 显示响应
-    if (chatBoxRef.value && response) {
-      chatBoxRef.value.addAssistantMessage(response)
+    // 将 AI 响应添加到聊天界面
+    if (rightPanelRef.value && rightPanelRef.value.addChatMessage) {
+      // 如果响应为空或只包含工具调用信息，则返回简短提示
+      const displayMessage = response.trim() || '操作已完成'
+      rightPanelRef.value.addChatMessage(displayMessage)
     }
 
     // 如果流程图发生变化，更新状态
@@ -1156,28 +1284,15 @@ const handleChatWithXMLGeneration = async (message: string): Promise<void> => {
           LocalStorageService.saveDiagram(bpmnXml, 'AI Generated Diagram')
         }
 
-        // 显示成功消息
-        if (chatBoxRef.value) {
-          chatBoxRef.value.addAssistantMessage('✅ 流程图已生成并加载到编辑器中！')
-        }
-
         showStatus('流程图已由 AI 生成', 'success')
       }
     } catch (conversionError) {
       console.error('转换或加载流程图失败:', conversionError)
-
-      // 显示错误信息
-      if (chatBoxRef.value) {
-        chatBoxRef.value.addAssistantMessage(
-          `生成了流程图定义，但加载失败：${conversionError}\n\n生成的 BPMN 代码：\n\`\`\`xml\n${extractedXML}\n\`\`\``
-        )
-      }
+      showStatus('生成流程图失败', 'error')
     }
   } else {
-    // 没有提取到 XML，显示原始回复
-    if (chatBoxRef.value) {
-      chatBoxRef.value.addAssistantMessage(response)
-    }
+    // 没有提取到 XML，只记录日志
+    console.log('No XML extracted from response')
   }
 }
 
@@ -1229,9 +1344,6 @@ const handleChatWithFunctionCalling = async (message: string): Promise<void> => 
     if (textPart && textPart.text) {
       // LLM 返回了文本，说明操作完成
       console.log('✅ LLM 完成操作，返回文本响应')
-      if (chatBoxRef.value) {
-        chatBoxRef.value.addAssistantMessage(textPart.text)
-      }
       showStatus('流程图已更新', 'success')
       break
     }
@@ -1290,18 +1402,8 @@ const handleChatWithFunctionCalling = async (message: string): Promise<void> => 
 
   if (iterationCount >= maxIterations) {
     console.warn('达到最大迭代次数，停止')
-    if (chatBoxRef.value) {
-      chatBoxRef.value.addAssistantMessage('⚠️ 操作复杂度超出限制，已部分完成。')
-    }
+    showStatus('操作复杂度超出限制', 'error')
   }
-}
-
-const handleCloseChatBox = (): void => {
-  showChatBox.value = false
-}
-
-const toggleChatBox = (): void => {
-  showChatBox.value = !showChatBox.value
 }
 
 // 生命周期
@@ -1353,73 +1455,6 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
-.btn-secondary {
-  background: #10b981;
-  color: white;
-  border-color: #10b981;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #059669;
-  border-color: #059669;
-}
-
-.btn-outline {
-  background: transparent;
-  border-color: #d1d5db;
-}
-
-.btn-flow-active {
-  background: #f59e0b;
-  color: white;
-  border-color: #f59e0b;
-}
-
-.btn-flow-active:hover:not(:disabled) {
-  background: #d97706;
-  border-color: #d97706;
-}
-
-.btn-large {
-  padding: 12px 24px;
-  font-size: 16px;
-}
-
 .icon {
   font-size: 16px;
 }
@@ -1434,6 +1469,18 @@ onBeforeUnmount(() => {
   flex: 1;
   position: relative;
   background: white;
+}
+
+.editor-container :deep(.ant-spin-nested-loading) {
+  height: 100%;
+}
+
+.editor-container :deep(.ant-spin-nested-loading .ant-spin-container) {
+  height: 100%;
+}
+
+.editor-container :deep(.bpmn-editor) {
+  height: 100%;
 }
 
 .welcome-screen {
@@ -1475,26 +1522,6 @@ onBeforeUnmount(() => {
   font-size: 14px;
 }
 
-.properties-panel {
-  width: 400px;
-  background: white;
-  border-left: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-}
-
-.properties-header {
-  padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
-
-.properties-header h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #374151;
-}
-
 .status-bar {
   display: flex;
   justify-content: space-between;
@@ -1524,112 +1551,6 @@ onBeforeUnmount(() => {
 
 .status-saved {
   color: #10b981;
-}
-
-/* 客服按钮 */
-/* Mock 和 Debug 控制按钮 */
-.mock-debug-controls {
-  position: fixed;
-  bottom: 100px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 10000;
-}
-
-.control-btn {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
-  background: white;
-  color: #333;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 100px;
-}
-
-.control-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #f5f5f5 !important;
-}
-
-.control-btn.active {
-  background: #1890ff;
-  color: white;
-}
-
-.mock-btn.active {
-  background: #52c41a;
-}
-
-.debug-btn.active {
-  background: #faad14;
-}
-
-.chat-toggle-btn {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-  z-index: 9998;
-  transition: all 0.3s ease;
-}
-
-.chat-toggle-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.6);
-}
-
-.chat-toggle-btn:active {
-  transform: scale(1.05);
-}
-
-.avatar-icon {
-  font-size: 28px;
-  position: relative;
-  z-index: 2;
-}
-
-/* 脉冲动画 */
-.pulse-ring {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: rgba(102, 126, 234, 0.3);
-  animation: pulse 2s ease-out infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
 }
 </style>
 

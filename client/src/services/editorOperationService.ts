@@ -29,6 +29,15 @@ export interface FlowConfig {
   waypoints?: Array<{ x: number; y: number }>  // 自定义路径点，用于绕过节点避免遮挡
 }
 
+export interface BoundaryEventConfig {
+  id: string
+  name?: string
+  attachedToRef: string  // 附加到的节点 ID
+  cancelActivity?: boolean  // 是否中断当前活动，默认 true
+  position?: 'top' | 'bottom' | 'left' | 'right'  // 边界事件在节点边缘的位置
+  documentation?: string  // 文档说明
+}
+
 class EditorOperationService {
   private modeler: BpmnModelerInstance | null = null
   private elementFactory: any = null
@@ -181,6 +190,93 @@ class EditorOperationService {
     }
 
     return connection
+  }
+
+  /**
+   * 创建边界事件（Boundary Event）
+   * 边界事件附加在节点（通常是 UserTask）的边缘，用于处理任务执行过程中的特殊情况
+   *
+   * ⚠️ 重要约束：UserTask 的所有 outgoing 连线必须从 BoundaryEvent 出发
+   */
+  createBoundaryEvent(config: BoundaryEventConfig): any {
+    this.ensureInitialized()
+
+    const { id, name, attachedToRef, cancelActivity = true, position = 'bottom', documentation } = config
+
+    // 1. 获取附加的节点
+    const attachedElement = this.elementRegistry.get(attachedToRef)
+    if (!attachedElement) {
+      throw new Error(`找不到附加节点: ${attachedToRef}`)
+    }
+
+    // 2. 计算边界事件的位置
+    const boundaryPosition = this.calculateBoundaryPosition(attachedElement, position)
+
+    // 3. 创建 business object
+    const bpmnFactory = this.modeler.get('bpmnFactory')
+    const boundaryEventBO = bpmnFactory.create('bpmn:BoundaryEvent', {
+      id,
+      name: name || '',
+      attachedToRef: attachedElement.businessObject,  // 关键：引用 businessObject，不是 ID 字符串
+      cancelActivity
+    })
+
+    // 添加 documentation（如果提供）
+    if (documentation) {
+      const docElement = bpmnFactory.create('bpmn:Documentation', { text: documentation })
+      boundaryEventBO.documentation = [docElement]
+    }
+
+    // 4. 创建形状
+    const boundaryShape = this.elementFactory.createShape({
+      type: 'bpmn:BoundaryEvent',
+      businessObject: boundaryEventBO
+    })
+
+    // 5. 添加到画布
+    // BoundaryEvent 需要使用特殊的创建方式，指定 host（被附加的元素）
+    const newBoundary = this.modeling.createShape(
+      boundaryShape,
+      boundaryPosition,
+      attachedElement,  // BoundaryEvent的host是被附加的元素本身
+      { attach: true }  // 标记为附加形状
+    )
+
+    console.log(`✅ 创建边界事件: ${name || id} 附加到 ${attachedToRef} (${position} 位置, cancelActivity=${cancelActivity})`)
+    return newBoundary
+  }
+
+  /**
+   * 计算边界事件在节点边缘的位置
+   *
+   * @param attachedElement 附加的节点元素
+   * @param position 位置：top（顶部）、bottom（底部）、left（左侧）、right（右侧）
+   * @returns 边界事件的坐标 { x, y }
+   */
+  private calculateBoundaryPosition(
+    attachedElement: any,
+    position: 'top' | 'bottom' | 'left' | 'right'
+  ): { x: number; y: number } {
+    // 动态获取节点的实际尺寸和位置
+    const { x, y, width, height } = attachedElement
+
+    // 计算节点中心点
+    const centerX = x + width / 2
+    const centerY = y + height / 2
+
+    // 根据 position 返回对应边缘的坐标
+    switch (position) {
+      case 'top':
+        return { x: centerX, y }
+      case 'bottom':
+        return { x: centerX, y: y + height }
+      case 'left':
+        return { x, y: centerY }
+      case 'right':
+        return { x: x + width, y: centerY }
+      default:
+        return { x: centerX, y: y + height }  // 默认底部
+    }
   }
 
   /**

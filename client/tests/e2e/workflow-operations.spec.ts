@@ -29,8 +29,6 @@ test.describe('工作流创建和编辑测试', () => {
         // 注意：实际的工作流创建需要添加元素，这里只验证编辑器可用
         expect(await editor.count()).toBeGreaterThan(0);
       }
-    } else {
-      test.skip();
     }
   });
 
@@ -47,8 +45,6 @@ test.describe('工作流创建和编辑测试', () => {
         // 验证属性面板存在，可以用于编辑
         expect(await propertiesPanel.count()).toBeGreaterThan(0);
       }
-    } else {
-      test.skip();
     }
   });
 
@@ -65,23 +61,21 @@ test.describe('工作流创建和编辑测试', () => {
         const response = await request.post(`${BACKEND_URL}/api/workflows`, {
           data: {
             name: `Test Workflow ${Date.now()}`,
-            xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+            xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
           },
         });
         
         if (response.status() === 200 || response.status() === 201) {
           const body = await response.json();
           expect(body).toHaveProperty('id');
-        } else if (response.status() === 404) {
-          // API 可能不存在，跳过测试
-          test.skip();
+        } else {
+          // API 可能不存在（404）或服务不可用（503），这是允许的
+          expect([400, 404, 503]).toContain(response.status());
         }
       } catch (error) {
         // 如果后端不可用，跳过测试
-        test.skip();
+        throw error;
       }
-    } else {
-      test.skip();
     }
   });
 });
@@ -95,11 +89,12 @@ test.describe('工作流加载测试', () => {
         const body = await response.json();
         // 验证响应是数组或对象
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -111,7 +106,7 @@ test.describe('工作流加载测试', () => {
       const createResponse = await request.post(`${BACKEND_URL}/api/workflows`, {
         data: {
           name: `Test Workflow ${Date.now()}`,
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
       
@@ -131,11 +126,12 @@ test.describe('工作流加载测试', () => {
         if (workflowId) {
           await request.delete(`${BACKEND_URL}/api/workflows/${workflowId}`).catch(() => {});
         }
-      } else if (createResponse.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理
       if (workflowId) {
@@ -147,12 +143,12 @@ test.describe('工作流加载测试', () => {
   test('工作流 XML 解析', async ({ page }) => {
     // 测试加载包含有效 XML 的工作流
     const validXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL">
-  <bpmn2:process id="Process_1" isExecutable="true">
-    <bpmn2:startEvent id="StartEvent_1"/>
-    <bpmn2:endEvent id="EndEvent_1"/>
-  </bpmn2:process>
-</bpmn2:definitions>`;
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1"/>
+    <bpmn:endEvent id="EndEvent_1"/>
+  </bpmn:process>
+</bpmn:definitions>`;
     
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -168,8 +164,6 @@ test.describe('工作流加载测试', () => {
       if (await editor.count() > 0) {
         await expect(editor).toBeVisible({ timeout: 5000 });
       }
-    } else {
-      test.skip();
     }
   });
 
@@ -182,7 +176,7 @@ test.describe('工作流加载测试', () => {
       expect(response.status()).toBeGreaterThanOrEqual(400);
     } catch (error) {
       // 如果后端不可用，跳过测试
-      test.skip();
+      throw error;
     }
   });
 });
@@ -196,7 +190,7 @@ test.describe('工作流执行测试', () => {
       const createResponse = await request.post(`${BACKEND_URL}/api/workflows`, {
         data: {
           name: `Test Workflow ${Date.now()}`,
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn2:process id="Process_1" isExecutable="true"><bpmn2:startEvent id="StartEvent_1"/></bpmn2:process></bpmn2:definitions>',
+          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
         },
       });
       
@@ -212,14 +206,16 @@ test.describe('工作流执行测试', () => {
         if (executeResponse.status() === 200 || executeResponse.status() === 201) {
           const execution = await executeResponse.json();
           expect(execution).toHaveProperty('id');
-        } else if (executeResponse.status() === 404) {
-          test.skip();
-        }
-      } else if (createResponse.status() === 404) {
-        test.skip();
-      }
+        } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(executeResponse.status());
+}
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理
       if (workflowId) {
@@ -237,11 +233,12 @@ test.describe('工作流执行测试', () => {
         const body = await response.json();
         // 验证响应格式
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 });
@@ -264,11 +261,12 @@ test.describe('工作流实例管理测试', () => {
         if (instance.id) {
           await request.delete(`${BACKEND_URL}/api/workflow-instances/${instance.id}`).catch(() => {});
         }
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -279,11 +277,12 @@ test.describe('工作流实例管理测试', () => {
       if (response.status() === 200) {
         const body = await response.json();
         expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-      } else if (response.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(response.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     }
   });
 
@@ -314,11 +313,12 @@ test.describe('工作流实例管理测试', () => {
           const updated = await updateResponse.json();
           expect(updated).toHaveProperty('status');
         }
-      } else if (createResponse.status() === 404) {
-        test.skip();
-      }
+      } else {
+        // API 可能不存在（404）或服务不可用（503），这是允许的
+        expect([400, 404, 503]).toContain(createResponse.status());
+}
     } catch (error) {
-      test.skip();
+      throw error;
     } finally {
       // 清理
       if (instanceId) {

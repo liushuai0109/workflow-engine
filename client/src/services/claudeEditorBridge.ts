@@ -139,6 +139,40 @@ export function createClaudeEditorBridge(): ToolExecutorConfig {
     },
 
     /**
+     * 创建边界事件
+     */
+    createBoundaryEvent: async (params: {
+      id: string
+      name?: string
+      attachedToRef: string
+      cancelActivity?: boolean
+      position?: 'top' | 'bottom' | 'left' | 'right'
+      documentation?: string
+    }) => {
+      try {
+        const { id, name, attachedToRef, cancelActivity, position, documentation } = params
+
+        // 调用编辑器操作服务
+        const element = editorOperationService.createBoundaryEvent({
+          id,
+          name,
+          attachedToRef,
+          cancelActivity,
+          position,
+          documentation
+        })
+
+        return {
+          success: true,
+          elementId: id,
+          message: `成功创建边界事件: ${name || id} 附加到 ${attachedToRef}${documentation ? ' [含文档]' : ''}`
+        }
+      } catch (error) {
+        throw new Error(`创建边界事件失败: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    },
+
+    /**
      * 获取节点列表
      */
     getNodes: async () => {

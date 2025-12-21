@@ -4,48 +4,48 @@
 
     <!-- 缩放控制 -->
     <div class="io-zoom-controls">
-      <button 
+      <a-button 
         class="io-zoom-control" 
         @click="zoomIn" 
         title="放大"
       >
         <span class="entry-icon">+</span>
-      </button>
-      <button 
+      </a-button>
+      <a-button 
         class="io-zoom-control" 
         @click="zoomOut" 
         title="缩小"
       >
         <span class="entry-icon">−</span>
-      </button>
-      <button 
+      </a-button>
+      <a-button 
         class="io-zoom-control" 
         @click="zoomToFit" 
         title="适应画布"
       >
         <span class="entry-icon">⌂</span>
-      </button>
-      <button 
+      </a-button>
+      <a-button 
         class="io-zoom-control" 
         @click="zoomReset" 
         title="重置缩放"
       >
         <span class="entry-icon">1:1</span>
-      </button>
-      <button 
+      </a-button>
+      <a-button 
         class="io-zoom-control" 
         @click="togglePropertiesPanel" 
         :title="isPropertiesPanelVisible ? '隐藏属性面板' : '显示属性面板'"
       >
         <span class="entry-icon">{{ isPropertiesPanelVisible ? '◄' : '►' }}</span>
-      </button>
-      <button
+      </a-button>
+      <a-button
         class="io-zoom-control"
         @click="togglePalette"
         :title="isPaletteVisible ? '隐藏工具栏' : '显示工具栏'"
       >
         <span class="entry-icon">{{ isPaletteVisible ? '◄' : '►' }}</span>
-      </button>
+      </a-button>
     </div>
   </div>
 </template>

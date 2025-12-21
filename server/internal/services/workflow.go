@@ -34,7 +34,7 @@ func NewWorkflowService(db *database.Database, logger *zerolog.Logger) *Workflow
 
 // CreateWorkflow creates a new workflow
 func (s *WorkflowService) CreateWorkflow(ctx context.Context, name, description, xml string) (*models.Workflow, error) {
-	if s.db.DB == nil {
+	if !s.db.IsAvailable() {
 		return nil, fmt.Errorf("database not available")
 	}
 
@@ -87,9 +87,16 @@ func (s *WorkflowService) CreateWorkflow(ctx context.Context, name, description,
 
 // GetWorkflowByID retrieves a workflow by ID
 func (s *WorkflowService) GetWorkflowByID(ctx context.Context, workflowID string) (*models.Workflow, error) {
+	// Check in-memory store first (for database-free Mock mode)
+	workflow, err := s.store.GetWorkflow(workflowID)
+	if err == nil {
+		s.logger.Debug().Str("workflowId", workflowID).Msg("Workflow found in memory")
+		return workflow, nil
+	}
+
 	// Use in-memory store if database is not available
 	if s.useStore || s.db == nil || s.db.DB == nil {
-		return s.store.GetWorkflow(workflowID)
+		return nil, fmt.Errorf("%s: %s", models.ErrWorkflowNotFound, "workflow not found")
 	}
 
 	query := `
@@ -98,23 +105,23 @@ func (s *WorkflowService) GetWorkflowByID(ctx context.Context, workflowID string
 		WHERE id = $1
 	`
 
-	var workflow models.Workflow
+	var workflowDB models.Workflow
 	var createdBy sql.NullString
 
-	err := s.db.QueryRowContext(ctx, query, workflowID).Scan(
-		&workflow.Id,
-		&workflow.Name,
-		&workflow.Description,
-		&workflow.BpmnXml,
-		&workflow.Version,
-		&workflow.Status,
+	err = s.db.QueryRowContext(ctx, query, workflowID).Scan(
+		&workflowDB.Id,
+		&workflowDB.Name,
+		&workflowDB.Description,
+		&workflowDB.BpmnXml,
+		&workflowDB.Version,
+		&workflowDB.Status,
 		&createdBy,
-		&workflow.CreatedAt,
-		&workflow.UpdatedAt,
+		&workflowDB.CreatedAt,
+		&workflowDB.UpdatedAt,
 	)
 
 	if createdBy.Valid {
-		workflow.CreatedBy = createdBy.String
+		workflowDB.CreatedBy = createdBy.String
 	}
 
 	if err != nil {
@@ -126,12 +133,12 @@ func (s *WorkflowService) GetWorkflowByID(ctx context.Context, workflowID string
 		return nil, fmt.Errorf("failed to get workflow: %w", err)
 	}
 
-	return &workflow, nil
+	return &workflowDB, nil
 }
 
 // UpdateWorkflow updates a workflow
 func (s *WorkflowService) UpdateWorkflow(ctx context.Context, workflowID, name, description, xml string) (*models.Workflow, error) {
-	if s.db.DB == nil {
+	if !s.db.IsAvailable() {
 		return nil, fmt.Errorf("database not available")
 	}
 
@@ -199,7 +206,7 @@ func (s *WorkflowService) UpdateWorkflow(ctx context.Context, workflowID, name, 
 
 // ListWorkflows lists all workflows with pagination
 func (s *WorkflowService) ListWorkflows(ctx context.Context, page, pageSize int) ([]models.Workflow, *models.Metadata, error) {
-	if s.db.DB == nil {
+	if !s.db.IsAvailable() {
 		return nil, nil, fmt.Errorf("database not available")
 	}
 

@@ -2,10 +2,10 @@
 
 # BPMN Explorer 服务控制台脚本
 # 用法:
-#   ./console.sh start [client|server]   - 启动服务并进入日志监控模式
-#   ./console.sh stop [client|server]    - 停止服务
-#   ./console.sh restart [client|server] - 重启服务并进入日志监控模式
-#   ./console.sh status                  - 查看服务状态
+#   ./console.sh start [client|server|database]   - 启动服务并进入日志监控模式
+#   ./console.sh stop [client|server|database]    - 停止服务
+#   ./console.sh restart [client|server|database] - 重启服务并进入日志监控模式
+#   ./console.sh status                            - 查看服务状态
 
 set -e
 
@@ -219,6 +219,116 @@ start_client() {
     log_info "Client 日志: $CLIENT_LOG_FILE"
 }
 
+# 检查 PostgreSQL 是否运行
+is_database_running() {
+    # 检查端口 5432 是否被占用
+    if is_port_in_use 5432; then
+        return 0
+    fi
+    
+    # 检查 systemd 服务状态 (Linux)
+    if command -v systemctl &> /dev/null; then
+        if systemctl is-active --quiet postgresql 2>/dev/null; then
+            return 0
+        fi
+    fi
+    
+    # 检查 Homebrew 服务状态 (macOS)
+    if command -v brew &> /dev/null; then
+        if brew services list 2>/dev/null | grep -q "postgresql.*started"; then
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# 启动数据库
+start_database() {
+    if is_database_running; then
+        log_warning "PostgreSQL 已经在运行中"
+        return
+    fi
+
+    log_info "正在启动 PostgreSQL 数据库..."
+
+    # 检测操作系统并启动
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS - 使用 Homebrew
+        if command -v brew &> /dev/null; then
+            # 尝试启动 postgresql@15，如果不存在则尝试 postgresql
+            if brew services list 2>/dev/null | grep -q "postgresql@15"; then
+                brew services start postgresql@15 2>/dev/null || log_error "无法启动 PostgreSQL (postgresql@15)"
+            elif brew services list 2>/dev/null | grep -q "postgresql"; then
+                brew services start postgresql 2>/dev/null || log_error "无法启动 PostgreSQL"
+            else
+                log_error "未找到 PostgreSQL 服务，请先安装: brew install postgresql@15"
+                return 1
+            fi
+            sleep 2  # 等待服务启动
+        else
+            log_error "Homebrew 未安装，无法自动启动 PostgreSQL"
+            log_info "请手动启动: brew services start postgresql@15"
+            return 1
+        fi
+    else
+        # Linux - 使用 systemd
+        if command -v systemctl &> /dev/null; then
+            if sudo systemctl start postgresql 2>/dev/null; then
+                sleep 2  # 等待服务启动
+            else
+                log_error "无法启动 PostgreSQL，可能需要 sudo 权限"
+                log_info "请手动启动: sudo systemctl start postgresql"
+                return 1
+            fi
+        else
+            log_error "systemctl 未找到，无法自动启动 PostgreSQL"
+            log_info "请手动启动 PostgreSQL 服务"
+            return 1
+        fi
+    fi
+
+    # 验证是否启动成功
+    if is_database_running; then
+        log_success "PostgreSQL 已启动"
+        log_info "数据库端口: 5432"
+    else
+        log_error "PostgreSQL 启动失败，请检查日志"
+        return 1
+    fi
+}
+
+# 停止数据库
+stop_database() {
+    if ! is_database_running; then
+        log_info "PostgreSQL 未运行"
+        return
+    fi
+
+    log_info "正在停止 PostgreSQL 数据库..."
+
+    # 检测操作系统并停止
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS - 使用 Homebrew
+        if command -v brew &> /dev/null; then
+            if brew services list 2>/dev/null | grep -q "postgresql@15.*started"; then
+                brew services stop postgresql@15 2>/dev/null || log_warning "无法停止 PostgreSQL (postgresql@15)"
+            elif brew services list 2>/dev/null | grep -q "postgresql.*started"; then
+                brew services stop postgresql 2>/dev/null || log_warning "无法停止 PostgreSQL"
+            fi
+        fi
+    else
+        # Linux - 使用 systemd
+        if command -v systemctl &> /dev/null; then
+            if sudo systemctl stop postgresql 2>/dev/null; then
+                log_success "PostgreSQL 已停止"
+            else
+                log_warning "无法停止 PostgreSQL，可能需要 sudo 权限"
+            fi
+        fi
+    fi
+}
+
 # 启动 Server
 start_server() {
     if is_running "$SERVER_PID_FILE"; then
@@ -312,11 +422,21 @@ stop_all() {
     log_header "正在停止所有服务"
     stop_client
     stop_server
+    # 注意：默认不停止数据库，因为可能被其他应用使用
+    # 如需停止数据库，请使用: ./console.sh stop database
 }
 
 # 启动所有服务
 start_all() {
     log_header "正在启动所有服务"
+    # 先启动数据库（如果未运行）
+    if ! is_database_running; then
+        log_info "检测到数据库未运行，正在启动..."
+        start_database
+        sleep 2  # 等待数据库启动
+    else
+        log_info "数据库已在运行"
+    fi
     start_server
     sleep 2  # 等待 server 启动
     start_client
@@ -348,6 +468,13 @@ restart_service() {
             # 进入 watch 模式
             watch_logs "server"
             ;;
+        database)
+            log_header "正在重启 Database"
+            stop_database
+            sleep 2
+            start_database
+            log_success "数据库已重启"
+            ;;
         *)
             log_header "正在重启所有服务"
             stop_all
@@ -361,6 +488,21 @@ restart_service() {
 show_status() {
     echo ""
     log_header "服务状态"
+    echo ""
+
+    # 数据库状态
+    if is_database_running; then
+        local db_pid=$(get_port_pid 5432)
+        if [ -n "$db_pid" ]; then
+            echo -e "${GREEN}  ✓${NC} Database 运行中 (PID: $db_pid)"
+        else
+            echo -e "${GREEN}  ✓${NC} Database 运行中"
+        fi
+        echo -e "    ${CYAN}→${NC} 端口: 5432"
+    else
+        echo -e "${RED}  ✗${NC} Database 未运行"
+    fi
+
     echo ""
 
     if is_running "$CLIENT_PID_FILE"; then
@@ -422,6 +564,11 @@ watch_logs() {
     
     cat > "$client_script" << 'CLIENT_EOF'
 #!/bin/bash
+# 将 stdin 重定向到 /dev/null，防止键盘输入被处理
+exec < /dev/null
+# 禁用终端回显，防止键盘输入显示为乱码
+stty -echo -icanon 2>/dev/null || true
+
 echo "╔════════════════════════════════════════════╗"
 echo "║  Client 日志监控 (Vue + Vite, 端口 8000)"
 echo "╚════════════════════════════════════════════╝"
@@ -430,13 +577,19 @@ echo "访问地址: http://LOCAL_IP_PLACEHOLDER:8000"
 echo "日志文件: CLIENT_LOG_PLACEHOLDER"
 echo "PID: CLIENT_PID_PLACEHOLDER"
 echo ""
-echo "按 Ctrl+C 退出监控，按 Ctrl+B 然后按 D 退出 tmux"
+echo "按 Ctrl+B 然后按 D 退出 tmux（不要按 Ctrl+C）"
 echo ""
+# tail -f 会自动从重定向的 stdin 读取（但不会读取到任何内容）
 tail -f CLIENT_LOG_PLACEHOLDER
 CLIENT_EOF
 
     cat > "$server_script" << 'SERVER_EOF'
 #!/bin/bash
+# 将 stdin 重定向到 /dev/null，防止键盘输入被处理
+exec < /dev/null
+# 禁用终端回显，防止键盘输入显示为乱码
+stty -echo -icanon 2>/dev/null || true
+
 echo "╔════════════════════════════════════════════╗"
 echo "║  Server 日志监控 (Go, 端口 3000)"
 echo "╚════════════════════════════════════════════╝"
@@ -445,19 +598,33 @@ echo "访问地址: http://LOCAL_IP_PLACEHOLDER:3000"
 echo "日志文件: SERVER_LOG_PLACEHOLDER"
 echo "PID: SERVER_PID_PLACEHOLDER"
 echo ""
-echo "按 Ctrl+C 退出监控，按 Ctrl+B 然后按 D 退出 tmux"
+echo "按 Ctrl+B 然后按 D 退出 tmux（不要按 Ctrl+C）"
 echo ""
+# tail -f 会自动从重定向的 stdin 读取（但不会读取到任何内容）
 tail -f SERVER_LOG_PLACEHOLDER
 SERVER_EOF
 
     # 替换占位符
-    sed -i "s|LOCAL_IP_PLACEHOLDER|$LOCAL_IP|g" "$client_script" "$server_script"
-    sed -i "s|CLIENT_LOG_PLACEHOLDER|$CLIENT_LOG_FILE|g" "$client_script"
-    sed -i "s|SERVER_LOG_PLACEHOLDER|$SERVER_LOG_FILE|g" "$server_script"
-    local client_pid=$(cat "$CLIENT_PID_FILE" 2>/dev/null || echo "N/A")
-    local server_pid=$(cat "$SERVER_PID_FILE" 2>/dev/null || echo "N/A")
-    sed -i "s|CLIENT_PID_PLACEHOLDER|$client_pid|g" "$client_script"
-    sed -i "s|SERVER_PID_PLACEHOLDER|$server_pid|g" "$server_script"
+    # macOS 的 sed 需要 -i '' 参数，Linux 的 sed 需要 -i 参数
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        sed -i '' "s|LOCAL_IP_PLACEHOLDER|$LOCAL_IP|g" "$client_script" "$server_script"
+        sed -i '' "s|CLIENT_LOG_PLACEHOLDER|$CLIENT_LOG_FILE|g" "$client_script"
+        sed -i '' "s|SERVER_LOG_PLACEHOLDER|$SERVER_LOG_FILE|g" "$server_script"
+        local client_pid=$(cat "$CLIENT_PID_FILE" 2>/dev/null || echo "N/A")
+        local server_pid=$(cat "$SERVER_PID_FILE" 2>/dev/null || echo "N/A")
+        sed -i '' "s|CLIENT_PID_PLACEHOLDER|$client_pid|g" "$client_script"
+        sed -i '' "s|SERVER_PID_PLACEHOLDER|$server_pid|g" "$server_script"
+    else
+        # Linux
+        sed -i "s|LOCAL_IP_PLACEHOLDER|$LOCAL_IP|g" "$client_script" "$server_script"
+        sed -i "s|CLIENT_LOG_PLACEHOLDER|$CLIENT_LOG_FILE|g" "$client_script"
+        sed -i "s|SERVER_LOG_PLACEHOLDER|$SERVER_LOG_FILE|g" "$server_script"
+        local client_pid=$(cat "$CLIENT_PID_FILE" 2>/dev/null || echo "N/A")
+        local server_pid=$(cat "$SERVER_PID_FILE" 2>/dev/null || echo "N/A")
+        sed -i "s|CLIENT_PID_PLACEHOLDER|$client_pid|g" "$client_script"
+        sed -i "s|SERVER_PID_PLACEHOLDER|$server_pid|g" "$server_script"
+    fi
     
     chmod +x "$client_script" "$server_script"
 
@@ -518,22 +685,26 @@ ${GREEN}命令 (command):${NC}
 ${GREEN}目标 (target):${NC}
     ${BLUE}client${NC}   - 仅操作前端服务 (Vue + Vite, 端口 8000)
     ${BLUE}server${NC}   - 仅操作后端服务 (Go, 端口 3000)
-    ${BLUE}(空)${NC}     - 操作所有服务 (默认)
+    ${BLUE}database${NC} - 仅操作数据库服务 (PostgreSQL, 端口 5432)
+    ${BLUE}(空)${NC}     - 操作所有服务 (默认，启动时会自动启动数据库)
 
 ${GREEN}示例:${NC}
-    $0 start              # 启动所有服务并进入日志监控模式
+    $0 start              # 启动所有服务（包括数据库）并进入日志监控模式
     $0 start client       # 只启动前端并进入日志监控模式
     $0 start server       # 只启动后端并进入日志监控模式
+    $0 start database     # 只启动数据库
 
-    $0 stop               # 停止所有服务
+    $0 stop               # 停止所有服务（不包括数据库）
     $0 stop client        # 只停止前端
     $0 stop server        # 只停止后端
+    $0 stop database      # 只停止数据库
 
     $0 restart            # 重启所有服务并进入日志监控模式
     $0 restart client     # 只重启前端并进入日志监控模式
     $0 restart server     # 只重启后端并进入日志监控模式
+    $0 restart database   # 只重启数据库
 
-    $0 status             # 查看服务状态
+    $0 status             # 查看服务状态（包括数据库）
 
 ${GREEN}日志文件:${NC}
     Client: $PROJECT_ROOT/.pids/client.log
@@ -569,10 +740,20 @@ main() {
                     ;;
                 server)
                     log_header "启动 Server"
+                    # 检查数据库是否运行，如果没有则启动
+                    if ! is_database_running; then
+                        log_info "检测到数据库未运行，正在启动..."
+                        start_database
+                        sleep 2
+                    fi
                     start_server
                     sleep 1
                     # 进入 watch 模式
                     watch_logs "server"
+                    ;;
+                database)
+                    log_header "启动 Database"
+                    start_database
                     ;;
                 all|*)
                     start_all
@@ -589,6 +770,10 @@ main() {
                 server)
                     log_header "停止 Server"
                     stop_server
+                    ;;
+                database)
+                    log_header "停止 Database"
+                    stop_database
                     ;;
                 all|*)
                     stop_all

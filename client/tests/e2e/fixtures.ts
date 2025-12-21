@@ -238,12 +238,12 @@ export async function createWorkflowTestData(
   workflowData: { name?: string; xml?: string }
 ): Promise<any> {
   const defaultXml = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn2:process id="Process_1" isExecutable="true">
-    <bpmn2:startEvent id="StartEvent_1"/>
-    <bpmn2:endEvent id="EndEvent_1"/>
-  </bpmn2:process>
-</bpmn2:definitions>`;
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1"/>
+    <bpmn:endEvent id="EndEvent_1"/>
+  </bpmn:process>
+</bpmn:definitions>`;
 
   const data = {
     name: workflowData.name || `Test Workflow ${Date.now()}`,

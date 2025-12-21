@@ -2,7 +2,7 @@
   <div class="mock-config-panel">
     <div class="panel-header">
       <h3>Mock 配置</h3>
-      <button class="close-btn" @click="$emit('close')">×</button>
+      <a-button type="text" @click="$emit('close')">×</a-button>
     </div>
 
     <div class="panel-content">
@@ -10,9 +10,9 @@
       <div class="config-list-section">
         <div class="section-header">
           <span>已保存的配置</span>
-          <button class="btn btn-small btn-primary" @click="handleCreateNew">
+          <a-button type="primary" size="small" @click="handleCreateNew">
             新建配置
-          </button>
+          </a-button>
         </div>
 
         <div v-if="configs.length === 0" class="empty-state">
@@ -29,20 +29,22 @@
           >
             <div class="config-name">{{ config.name }}</div>
             <div class="config-actions">
-              <button
-                class="btn-icon"
+              <a-button
+                type="text"
+                size="small"
                 @click.stop="handleEdit(config)"
                 title="编辑"
               >
                 ✏️
-              </button>
-              <button
-                class="btn-icon"
+              </a-button>
+              <a-button
+                size="small"
+                type="danger"
                 @click.stop="handleDelete(config.id!)"
                 title="删除"
               >
                 🗑️
-              </button>
+              </a-button>
             </div>
           </div>
         </div>
@@ -75,8 +77,8 @@
         </div>
 
         <div class="form-actions">
-          <button class="btn btn-secondary" @click="cancelEdit">取消</button>
-          <button class="btn btn-primary" @click="handleSave">保存</button>
+          <a-button @click="cancelEdit">取消</a-button>
+          <a-button type="primary" @click="handleSave">保存</a-button>
         </div>
       </div>
     </div>

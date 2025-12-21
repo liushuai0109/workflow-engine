@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/bpmn-explorer/server/internal/models"
 	"github.com/bpmn-explorer/server/internal/services"
@@ -46,17 +47,16 @@ func (h *ChatConversationHandler) CreateConversation(c *gin.Context) {
 	conv, err := h.convService.CreateConversation(c.Request.Context(), req.Title)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to create conversation")
-		
+
 		// 检查是否是数据库不可用错误
-		if err.Error() == "database not available" || 
-		   err.Error() == "failed to create conversation: database not available" {
+		if strings.Contains(err.Error(), "database not available") {
 			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
 				models.ErrDatabaseError,
 				"Database is not available. Please ensure PostgreSQL is running and configured.",
 			))
 			return
 		}
-		
+
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
 			models.ErrInternalError,
 			"Failed to create conversation",
@@ -78,6 +78,16 @@ func (h *ChatConversationHandler) GetConversations(c *gin.Context) {
 	conversations, total, err := h.convService.ListConversations(c.Request.Context(), page, pageSize, orderBy, order)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to list conversations")
+
+		// 检查是否是数据库不可用错误
+		if strings.Contains(err.Error(), "database not available") {
+			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
+				models.ErrDatabaseError,
+				"Database is not available. Please ensure PostgreSQL is running and configured.",
+			))
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
 			models.ErrInternalError,
 			"Failed to list conversations",
@@ -200,6 +210,16 @@ func (h *ChatConversationHandler) AddMessage(c *gin.Context) {
 	msg, err := h.msgService.AddMessage(c.Request.Context(), conversationID, req.Role, req.Content, req.Metadata)
 	if err != nil {
 		h.logger.Error().Err(err).Str("conversationId", conversationID).Msg("Failed to add message")
+
+		// 检查是否是数据库不可用错误
+		if strings.Contains(err.Error(), "database not available") {
+			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
+				models.ErrDatabaseError,
+				"Database is not available. Please ensure PostgreSQL is running and configured.",
+			))
+			return
+		}
+
 		if err.Error() == "conversation not found" {
 			c.JSON(http.StatusNotFound, models.NewErrorResponse(
 				models.ErrConversationNotFound,
@@ -269,6 +289,16 @@ func (h *ChatConversationHandler) BatchAddMessages(c *gin.Context) {
 	messages, err := h.msgService.BatchAddMessages(c.Request.Context(), conversationID, serviceMessages)
 	if err != nil {
 		h.logger.Error().Err(err).Str("conversationId", conversationID).Msg("Failed to batch add messages")
+
+		// 检查是否是数据库不可用错误
+		if strings.Contains(err.Error(), "database not available") {
+			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
+				models.ErrDatabaseError,
+				"Database is not available. Please ensure PostgreSQL is running and configured.",
+			))
+			return
+		}
+
 		if err.Error() == "conversation not found" {
 			c.JSON(http.StatusNotFound, models.NewErrorResponse(
 				models.ErrConversationNotFound,

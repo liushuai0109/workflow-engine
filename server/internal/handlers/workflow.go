@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/bpmn-explorer/server/internal/models"
 	"github.com/bpmn-explorer/server/internal/services"
@@ -44,6 +45,14 @@ func (h *WorkflowHandler) CreateWorkflow(c *gin.Context) {
 	workflow, err := h.service.CreateWorkflow(c.Request.Context(), req.Name, req.Description, req.BpmnXml)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to create workflow")
+		// Check if it's a database availability issue
+		if strings.Contains(err.Error(), "database not available") {
+			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
+				models.ErrDatabaseError,
+				"Database is not available. Please ensure PostgreSQL is running and configured.",
+			))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
 			models.ErrInternalError,
 			"Failed to create workflow",
@@ -61,6 +70,14 @@ func (h *WorkflowHandler) GetWorkflow(c *gin.Context) {
 	workflow, err := h.service.GetWorkflowByID(c.Request.Context(), workflowID)
 	if err != nil {
 		h.logger.Error().Err(err).Str("workflowId", workflowID).Msg("Failed to get workflow")
+		// Check if it's a database availability issue
+		if strings.Contains(err.Error(), "database not available") {
+			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
+				models.ErrDatabaseError,
+				"Database is not available. Please ensure PostgreSQL is running and configured.",
+			))
+			return
+		}
 		c.JSON(http.StatusNotFound, models.NewErrorResponse(
 			models.ErrWorkflowNotFound,
 			"Workflow not found",
@@ -92,6 +109,14 @@ func (h *WorkflowHandler) UpdateWorkflow(c *gin.Context) {
 	workflow, err := h.service.UpdateWorkflow(c.Request.Context(), workflowID, req.Name, req.Description, req.BpmnXml)
 	if err != nil {
 		h.logger.Error().Err(err).Str("workflowId", workflowID).Msg("Failed to update workflow")
+		// Check if it's a database availability issue
+		if strings.Contains(err.Error(), "database not available") {
+			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
+				models.ErrDatabaseError,
+				"Database is not available. Please ensure PostgreSQL is running and configured.",
+			))
+			return
+		}
 		c.JSON(http.StatusNotFound, models.NewErrorResponse(
 			models.ErrWorkflowNotFound,
 			"Workflow not found",
@@ -121,6 +146,14 @@ func (h *WorkflowHandler) ListWorkflows(c *gin.Context) {
 	workflows, metadata, err := h.service.ListWorkflows(c.Request.Context(), page, pageSize)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to list workflows")
+		// Check if it's a database availability issue
+		if strings.Contains(err.Error(), "database not available") {
+			c.JSON(http.StatusServiceUnavailable, models.NewErrorResponse(
+				models.ErrDatabaseError,
+				"Database is not available. Please ensure PostgreSQL is running and configured.",
+			))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
 			models.ErrInternalError,
 			"Failed to list workflows",
