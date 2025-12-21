@@ -1,40 +1,156 @@
-<testsuites id="" name="" tests="57" failures="0" skipped="2" errors="0" time="24.272825">
-<testsuite name="headless-verification.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="headless-verification" tests="4" failures="0" skipped="0" time="10.324" errors="0">
-<testcase name="Headless Browser Verification › 应用可以正常加载" classname="headless-verification.spec.ts" time="3.918">
+<testsuites id="" name="" tests="328" failures="0" skipped="82" errors="0" time="126.655085">
+<testsuite name="headless-verification.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="headless-verification" tests="4" failures="0" skipped="0" time="10.37" errors="0">
+<testcase name="Headless Browser Verification › 应用可以正常加载" classname="headless-verification.spec.ts" time="4.027">
 </testcase>
-<testcase name="Headless Browser Verification › 主要路由可以访问" classname="headless-verification.spec.ts" time="1.584">
+<testcase name="Headless Browser Verification › 主要路由可以访问" classname="headless-verification.spec.ts" time="1.475">
 </testcase>
-<testcase name="Headless Browser Verification › 关键组件可以渲染" classname="headless-verification.spec.ts" time="0.93">
+<testcase name="Headless Browser Verification › 关键组件可以渲染" classname="headless-verification.spec.ts" time="0.919">
 </testcase>
-<testcase name="Headless Browser Verification › 无 JavaScript 运行时错误" classname="headless-verification.spec.ts" time="3.892">
-</testcase>
-</testsuite>
-<testsuite name="core-features.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="quick" tests="3" failures="0" skipped="0" time="4.876" errors="0">
-<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="1.867">
-</testcase>
-<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="0.97">
-</testcase>
-<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="2.039">
+<testcase name="Headless Browser Verification › 无 JavaScript 运行时错误" classname="headless-verification.spec.ts" time="3.949">
 </testcase>
 </testsuite>
-<testsuite name="api-integration.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="full" tests="9" failures="0" skipped="1" time="5.437" errors="0">
-<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.033">
+<testsuite name="api-integration.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="quick" tests="1" failures="0" skipped="0" time="0.025" errors="0">
+<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.025">
 </testcase>
-<testcase name="接口集成测试 › 前端可以调用后端API" classname="api-integration.spec.ts" time="3.911">
+</testsuite>
+<testsuite name="core-features.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="quick" tests="5" failures="0" skipped="0" time="11.197" errors="0">
+<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="2.395">
 </testcase>
-<testcase name="接口集成测试 › 错误处理 - 404错误" classname="api-integration.spec.ts" time="0.017">
+<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="1.058">
 </testcase>
-<testcase name="接口集成测试 › 错误处理 - 错误消息显示" classname="api-integration.spec.ts" time="1.433">
+<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="1.925">
 </testcase>
-<testcase name="接口集成测试 › 数据格式验证 - JSON响应" classname="api-integration.spec.ts" time="0.007">
+<testcase name="文件操作测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="2.917">
 </testcase>
-<testcase name="接口集成测试 › CORS配置正确" classname="api-integration.spec.ts" time="0.006">
+<testcase name="BPMN编辑器基本操作 › 编辑器加载和初始化 @quick" classname="core-features.spec.ts" time="2.902">
 </testcase>
-<testcase name="聊天API集成测试 › 可以创建聊天会话" classname="api-integration.spec.ts" time="0.007">
+</testsuite>
+<testsuite name="api-integration.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="api" tests="27" failures="0" skipped="10" time="5.695" errors="0">
+<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.026">
 </testcase>
-<testcase name="聊天API集成测试 › 可以获取聊天会话列表" classname="api-integration.spec.ts" time="0.007">
+<testcase name="接口集成测试 › 前端可以调用后端API" classname="api-integration.spec.ts" time="4.033">
 </testcase>
-<testcase name="聊天API集成测试 › 可以添加消息到会话" classname="api-integration.spec.ts" time="0.016">
+<testcase name="接口集成测试 › 错误处理 - 404错误" classname="api-integration.spec.ts" time="0.01">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 错误消息显示" classname="api-integration.spec.ts" time="1.372">
+</testcase>
+<testcase name="接口集成测试 › 数据格式验证 - JSON响应" classname="api-integration.spec.ts" time="0.011">
+</testcase>
+<testcase name="接口集成测试 › CORS配置正确" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以创建工作流 API" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以获取工作流 API" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以更新工作流 API" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以删除工作流 API" classname="api-integration.spec.ts" time="0.013">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以列出工作流 API" classname="api-integration.spec.ts" time="0.012">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以解析工作流 XML API" classname="api-integration.spec.ts" time="0.015">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以创建工作流执行 API" classname="api-integration.spec.ts" time="0.011">
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以获取执行状态 API" classname="api-integration.spec.ts" time="0.006">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以更新执行状态 API" classname="api-integration.spec.ts" time="0.008">
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以列出执行历史 API" classname="api-integration.spec.ts" time="0.007">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以创建实例 API" classname="api-integration.spec.ts" time="0.007">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以获取实例 API" classname="api-integration.spec.ts" time="0.018">
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以更新实例 API" classname="api-integration.spec.ts" time="0.024">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以列出实例 API" classname="api-integration.spec.ts" time="0.018">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Mock 执行 API" classname="api-integration.spec.ts" time="0.014">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Debug 会话 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Mock 配置 API" classname="api-integration.spec.ts" time="0.015">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="并发请求测试 › 可以处理多个并发 API 请求" classname="api-integration.spec.ts" time="0.035">
+</testcase>
+<testcase name="聊天API集成测试 › 可以创建聊天会话" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="聊天API集成测试 › 可以获取聊天会话列表" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="聊天API集成测试 › 可以添加消息到会话" classname="api-integration.spec.ts" time="0.007">
 <properties>
 <property name="skip" value="">
 </property>
@@ -43,58 +159,210 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="core-features.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="full" tests="10" failures="0" skipped="0" time="14.389" errors="0">
-<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="1.91">
+<testsuite name="performance.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="performance" tests="11" failures="0" skipped="1" time="41.398" errors="0">
+<testcase name="编辑器性能测试 › 编辑器加载时间应该小于 3 秒 @performance" classname="performance.spec.ts" time="2.554">
 </testcase>
-<testcase name="核心功能测试 › 路由导航正常" classname="core-features.spec.ts" time="1.792">
+<testcase name="编辑器性能测试 › 大文件加载性能" classname="performance.spec.ts" time="3.068">
 </testcase>
-<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="0.969">
+<testcase name="编辑器性能测试 › 元素添加响应时间" classname="performance.spec.ts" time="3.469">
 </testcase>
-<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="1.966">
+<testcase name="编辑器性能测试 › 连线创建响应时间" classname="performance.spec.ts" time="3.451">
 </testcase>
-<testcase name="核心功能测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="0.945">
+<testcase name="编辑器性能测试 › 属性编辑响应时间" classname="performance.spec.ts" time="2.9">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
 </testcase>
-<testcase name="核心功能测试 › 工具栏按钮可见" classname="core-features.spec.ts" time="0.878">
+<testcase name="API 性能测试 › API 响应时间应该小于 500ms @performance @api" classname="performance.spec.ts" time="0.011">
 </testcase>
-<testcase name="核心功能测试 › 状态栏显示正确" classname="core-features.spec.ts" time="0.967">
+<testcase name="API 性能测试 › 批量操作性能" classname="performance.spec.ts" time="0.022">
 </testcase>
-<testcase name="核心功能测试 › 数据持久化 - 本地存储" classname="core-features.spec.ts" time="1.093">
+<testcase name="API 性能测试 › 并发请求性能" classname="performance.spec.ts" time="0.044">
 </testcase>
-<testcase name="BPMN编辑器基本操作 › 编辑器加载后可以交互" classname="core-features.spec.ts" time="2.963">
+<testcase name="内存泄漏测试 › 长时间运行后内存使用应该稳定" classname="performance.spec.ts" time="11.218">
 </testcase>
-<testcase name="BPMN编辑器基本操作 › 可以访问属性面板区域" classname="core-features.spec.ts" time="0.906">
+<testcase name="内存泄漏测试 › 多次加载/卸载后内存使用应该稳定" classname="performance.spec.ts" time="9.122">
 </testcase>
-</testsuite>
-<testsuite name="regression.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="full" tests="6" failures="0" skipped="0" time="14.07" errors="0">
-<testcase name="回归测试 › 应用启动时不会出现白屏" classname="regression.spec.ts" time="1.89">
-</testcase>
-<testcase name="回归测试 › 路由导航不会导致页面崩溃" classname="regression.spec.ts" time="2.021">
-</testcase>
-<testcase name="回归测试 › BPMN编辑器加载不会导致内存泄漏" classname="regression.spec.ts" time="4.071">
-</testcase>
-<testcase name="回归测试 › API调用失败时不会导致应用崩溃" classname="regression.spec.ts" time="2.919">
-</testcase>
-<testcase name="回归测试 › 本地存储操作不会导致错误" classname="regression.spec.ts" time="0.227">
-</testcase>
-<testcase name="回归测试 › 窗口大小改变不会导致布局问题" classname="regression.spec.ts" time="2.942">
+<testcase name="内存泄漏测试 › 编辑器实例应该正确清理" classname="performance.spec.ts" time="5.539">
 </testcase>
 </testsuite>
-<testsuite name="api-integration.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="e2e" tests="9" failures="0" skipped="1" time="4.386" errors="0">
-<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.039">
+<testsuite name="chat.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="ui" tests="9" failures="0" skipped="2" time="22.142" errors="0">
+<testcase name="聊天界面测试 › 聊天框可以显示和隐藏" classname="chat.spec.ts" time="3.734">
 </testcase>
-<testcase name="接口集成测试 › 前端可以调用后端API" classname="api-integration.spec.ts" time="2.938">
+<testcase name="聊天界面测试 › 聊天框可以最小化和恢复" classname="chat.spec.ts" time="3.165">
 </testcase>
-<testcase name="接口集成测试 › 错误处理 - 404错误" classname="api-integration.spec.ts" time="0.006">
+<testcase name="聊天界面测试 › 聊天框可以拖拽" classname="chat.spec.ts" time="2.58">
 </testcase>
-<testcase name="接口集成测试 › 错误处理 - 错误消息显示" classname="api-integration.spec.ts" time="1.357">
+<testcase name="聊天界面测试 › 消息列表可以显示" classname="chat.spec.ts" time="2.025">
 </testcase>
-<testcase name="接口集成测试 › 数据格式验证 - JSON响应" classname="api-integration.spec.ts" time="0.025">
+<testcase name="消息交互测试 › 可以发送用户消息" classname="chat.spec.ts" time="2.453">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
 </testcase>
-<testcase name="接口集成测试 › CORS配置正确" classname="api-integration.spec.ts" time="0.005">
+<testcase name="消息交互测试 › 可以接收 AI 响应" classname="chat.spec.ts" time="2.113">
 </testcase>
-<testcase name="聊天API集成测试 › 可以创建聊天会话" classname="api-integration.spec.ts" time="0.005">
+<testcase name="消息交互测试 › 可以显示流式响应" classname="chat.spec.ts" time="2.045">
 </testcase>
-<testcase name="聊天API集成测试 › 可以获取聊天会话列表" classname="api-integration.spec.ts" time="0.006">
+<testcase name="消息交互测试 › 可以加载消息历史" classname="chat.spec.ts" time="2.011">
+</testcase>
+<testcase name="消息交互测试 › 消息时间戳可以显示" classname="chat.spec.ts" time="2.016">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="core-features.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="ui" tests="2" failures="0" skipped="0" time="6.602" errors="0">
+<testcase name="BPMN编辑器基本操作 › 编辑器加载后可以交互" classname="core-features.spec.ts" time="3.031">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器画布交互 - 点击和拖拽" classname="core-features.spec.ts" time="3.571">
+</testcase>
+</testsuite>
+<testsuite name="api-integration.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="full" tests="33" failures="0" skipped="10" time="4.609" errors="0">
+<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.023">
+</testcase>
+<testcase name="接口集成测试 › 前端可以调用后端API" classname="api-integration.spec.ts" time="3.048">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 404错误" classname="api-integration.spec.ts" time="0.027">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 错误消息显示" classname="api-integration.spec.ts" time="1.318">
+</testcase>
+<testcase name="接口集成测试 › 数据格式验证 - JSON响应" classname="api-integration.spec.ts" time="0.007">
+</testcase>
+<testcase name="接口集成测试 › CORS配置正确" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以创建工作流 API" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以获取工作流 API" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以更新工作流 API" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以删除工作流 API" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以列出工作流 API" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以解析工作流 XML API" classname="api-integration.spec.ts" time="0.006">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以创建工作流执行 API" classname="api-integration.spec.ts" time="0.008">
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以获取执行状态 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以更新执行状态 API" classname="api-integration.spec.ts" time="0.009">
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以列出执行历史 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以创建实例 API" classname="api-integration.spec.ts" time="0.01">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以获取实例 API" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以更新实例 API" classname="api-integration.spec.ts" time="0.007">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以列出实例 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Mock 执行 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Debug 会话 API" classname="api-integration.spec.ts" time="0.003">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Mock 配置 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="错误处理测试 › 可以处理 400 错误响应" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="错误处理测试 › 可以处理 404 错误响应" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="错误处理测试 › 可以处理 500 错误响应" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="错误处理测试 › 错误消息格式正确" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="错误处理测试 › CORS 配置正确" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="并发请求测试 › 可以处理多个并发 API 请求" classname="api-integration.spec.ts" time="0.027">
+</testcase>
+<testcase name="并发请求测试 › 可以处理请求限流" classname="api-integration.spec.ts" time="0.025">
+</testcase>
+<testcase name="聊天API集成测试 › 可以创建聊天会话" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="聊天API集成测试 › 可以获取聊天会话列表" classname="api-integration.spec.ts" time="0.004">
 </testcase>
 <testcase name="聊天API集成测试 › 可以添加消息到会话" classname="api-integration.spec.ts" time="0.005">
 <properties>
@@ -105,40 +373,922 @@
 </skipped>
 </testcase>
 </testsuite>
-<testsuite name="core-features.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="e2e" tests="10" failures="0" skipped="0" time="13.069" errors="0">
-<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="0.926">
+<testsuite name="chat.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="full" tests="14" failures="0" skipped="5" time="21.355" errors="0">
+<testcase name="聊天界面测试 › 聊天框可以显示和隐藏" classname="chat.spec.ts" time="2.555">
 </testcase>
-<testcase name="核心功能测试 › 路由导航正常" classname="core-features.spec.ts" time="1.471">
+<testcase name="聊天界面测试 › 聊天框可以最小化和恢复" classname="chat.spec.ts" time="3.113">
 </testcase>
-<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="1.021">
+<testcase name="聊天界面测试 › 聊天框可以拖拽" classname="chat.spec.ts" time="2.565">
 </testcase>
-<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="1.95">
+<testcase name="聊天界面测试 › 消息列表可以显示" classname="chat.spec.ts" time="2.049">
 </testcase>
-<testcase name="核心功能测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="1.121">
+<testcase name="聊天会话测试 › 可以创建新会话" classname="chat.spec.ts" time="0.129">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
 </testcase>
-<testcase name="核心功能测试 › 工具栏按钮可见" classname="core-features.spec.ts" time="0.915">
+<testcase name="聊天会话测试 › 可以获取会话列表" classname="chat.spec.ts" time="0.132">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
 </testcase>
-<testcase name="核心功能测试 › 状态栏显示正确" classname="core-features.spec.ts" time="0.927">
+<testcase name="聊天会话测试 › 可以切换会话" classname="chat.spec.ts" time="0.137">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
 </testcase>
-<testcase name="核心功能测试 › 数据持久化 - 本地存储" classname="core-features.spec.ts" time="0.986">
+<testcase name="聊天会话测试 › 可以删除会话" classname="chat.spec.ts" time="0.171">
 </testcase>
-<testcase name="BPMN编辑器基本操作 › 编辑器加载后可以交互" classname="core-features.spec.ts" time="2.889">
+<testcase name="聊天会话测试 › 会话可以持久化" classname="chat.spec.ts" time="0.128">
 </testcase>
-<testcase name="BPMN编辑器基本操作 › 可以访问属性面板区域" classname="core-features.spec.ts" time="0.863">
+<testcase name="消息交互测试 › 可以发送用户消息" classname="chat.spec.ts" time="2.331">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="消息交互测试 › 可以接收 AI 响应" classname="chat.spec.ts" time="2.006">
+</testcase>
+<testcase name="消息交互测试 › 可以显示流式响应" classname="chat.spec.ts" time="2">
+</testcase>
+<testcase name="消息交互测试 › 可以加载消息历史" classname="chat.spec.ts" time="1.98">
+</testcase>
+<testcase name="消息交互测试 › 消息时间戳可以显示" classname="chat.spec.ts" time="2.059">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
 </testcase>
 </testsuite>
-<testsuite name="regression.spec.ts" timestamp="2025-12-20T16:41:05.368Z" hostname="e2e" tests="6" failures="0" skipped="0" time="12.887" errors="0">
-<testcase name="回归测试 › 应用启动时不会出现白屏" classname="regression.spec.ts" time="0.934">
+<testsuite name="core-features.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="full" tests="29" failures="0" skipped="0" time="69.968" errors="0">
+<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="1.013">
 </testcase>
-<testcase name="回归测试 › 路由导航不会导致页面崩溃" classname="regression.spec.ts" time="2.088">
+<testcase name="核心功能测试 › 路由导航正常" classname="core-features.spec.ts" time="1.465">
 </testcase>
-<testcase name="回归测试 › BPMN编辑器加载不会导致内存泄漏" classname="regression.spec.ts" time="3.972">
+<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="0.903">
 </testcase>
-<testcase name="回归测试 › API调用失败时不会导致应用崩溃" classname="regression.spec.ts" time="2.858">
+<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="2.03">
 </testcase>
-<testcase name="回归测试 › 本地存储操作不会导致错误" classname="regression.spec.ts" time="0.243">
+<testcase name="核心功能测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="0.938">
 </testcase>
-<testcase name="回归测试 › 窗口大小改变不会导致布局问题" classname="regression.spec.ts" time="2.792">
+<testcase name="核心功能测试 › 工具栏按钮可见" classname="core-features.spec.ts" time="0.891">
+</testcase>
+<testcase name="核心功能测试 › 状态栏显示正确" classname="core-features.spec.ts" time="0.855">
+</testcase>
+<testcase name="核心功能测试 › 数据持久化 - 本地存储" classname="core-features.spec.ts" time="1.013">
+</testcase>
+<testcase name="文件操作测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="2.897">
+</testcase>
+<testcase name="文件操作测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="0.89">
+</testcase>
+<testcase name="文件操作测试 › 可以保存 BPMN 文件" classname="core-features.spec.ts" time="2.892">
+</testcase>
+<testcase name="文件操作测试 › 可以拖拽上传文件" classname="core-features.spec.ts" time="0.899">
+</testcase>
+<testcase name="文件操作测试 › 文件格式验证" classname="core-features.spec.ts" time="0.933">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以从调色板添加元素" classname="core-features.spec.ts" time="5.007">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以选择元素" classname="core-features.spec.ts" time="3.441">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以删除元素" classname="core-features.spec.ts" time="3.431">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以移动元素" classname="core-features.spec.ts" time="3.457">
+</testcase>
+<testcase name="连线操作测试 › 可以创建序列流连线" classname="core-features.spec.ts" time="2.939">
+</testcase>
+<testcase name="连线操作测试 › 可以删除连线" classname="core-features.spec.ts" time="3.45">
+</testcase>
+<testcase name="属性编辑测试 › 属性面板可以显示" classname="core-features.spec.ts" time="2.947">
+</testcase>
+<testcase name="属性编辑测试 › 可以编辑元素名称" classname="core-features.spec.ts" time="2.961">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器加载后可以交互" classname="core-features.spec.ts" time="3.133">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 可以访问属性面板区域" classname="core-features.spec.ts" time="1.027">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器加载和初始化 @quick" classname="core-features.spec.ts" time="2.949">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 调色板显示和隐藏" classname="core-features.spec.ts" time="3.444">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 属性面板显示和隐藏" classname="core-features.spec.ts" time="3.513">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 缩放控制 - 放大和缩小" classname="core-features.spec.ts" time="3.575">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 缩放控制 - 适应画布和重置" classname="core-features.spec.ts" time="3.535">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器画布交互 - 点击和拖拽" classname="core-features.spec.ts" time="3.54">
+</testcase>
+</testsuite>
+<testsuite name="mock-debug.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="full" tests="18" failures="0" skipped="14" time="45.775" errors="0">
+<testcase name="Mock 执行测试 › 可以启动 Mock 执行" classname="mock-debug.spec.ts" time="3.958">
+</testcase>
+<testcase name="Mock 执行测试 › 可以保存和加载 Mock 配置" classname="mock-debug.spec.ts" time="3.978">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以单步执行 Mock" classname="mock-debug.spec.ts" time="3.925">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以继续 Mock 执行" classname="mock-debug.spec.ts" time="3.951">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以停止 Mock 执行" classname="mock-debug.spec.ts" time="3.92">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以查询 Mock 执行状态" classname="mock-debug.spec.ts" time="3.944">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Debug 调试测试 › 可以启动 Debug 会话" classname="mock-debug.spec.ts" time="3.977">
+</testcase>
+<testcase name="Debug 调试测试 › 可以设置断点" classname="mock-debug.spec.ts" time="4.467">
+</testcase>
+<testcase name="Debug 调试测试 › 可以单步执行 Debug" classname="mock-debug.spec.ts" time="3.955">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Debug 调试测试 › 可以查看变量值" classname="mock-debug.spec.ts" time="3.98">
+</testcase>
+<testcase name="Debug 调试测试 › 可以停止 Debug 会话" classname="mock-debug.spec.ts" time="3.958">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以保存 Mock 配置" classname="mock-debug.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以获取 Mock 配置列表" classname="mock-debug.spec.ts" time="0.003">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以获取 Mock 配置详情" classname="mock-debug.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以更新 Mock 配置" classname="mock-debug.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以删除 Mock 配置" classname="mock-debug.spec.ts" time="0.003">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="执行时间线测试 › 执行时间线可以显示" classname="mock-debug.spec.ts" time="0.875">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="执行时间线测试 › 可以点击时间线节点" classname="mock-debug.spec.ts" time="0.869">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="regression.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="full" tests="6" failures="0" skipped="0" time="12.902" errors="0">
+<testcase name="回归测试 › 应用启动时不会出现白屏" classname="regression.spec.ts" time="0.901">
+</testcase>
+<testcase name="回归测试 › 路由导航不会导致页面崩溃" classname="regression.spec.ts" time="1.823">
+</testcase>
+<testcase name="回归测试 › BPMN编辑器加载不会导致内存泄漏" classname="regression.spec.ts" time="3.942">
+</testcase>
+<testcase name="回归测试 › API调用失败时不会导致应用崩溃" classname="regression.spec.ts" time="2.898">
+</testcase>
+<testcase name="回归测试 › 本地存储操作不会导致错误" classname="regression.spec.ts" time="0.451">
+</testcase>
+<testcase name="回归测试 › 窗口大小改变不会导致布局问题" classname="regression.spec.ts" time="2.887">
+</testcase>
+</testsuite>
+<testsuite name="workflow-operations.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="full" tests="12" failures="0" skipped="4" time="11.82" errors="0">
+<testcase name="工作流创建和编辑测试 › 可以创建完整工作流" classname="workflow-operations.spec.ts" time="2.925">
+</testcase>
+<testcase name="工作流创建和编辑测试 › 可以编辑工作流元素" classname="workflow-operations.spec.ts" time="2.945">
+</testcase>
+<testcase name="工作流创建和编辑测试 › 工作流保存到后端" classname="workflow-operations.spec.ts" time="2.939">
+</testcase>
+<testcase name="工作流加载测试 › 可以从后端加载工作流列表" classname="workflow-operations.spec.ts" time="0.021">
+</testcase>
+<testcase name="工作流加载测试 › 可以加载特定工作流" classname="workflow-operations.spec.ts" time="0.009">
+</testcase>
+<testcase name="工作流加载测试 › 工作流 XML 解析" classname="workflow-operations.spec.ts" time="2.956">
+</testcase>
+<testcase name="工作流加载测试 › 加载错误处理" classname="workflow-operations.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流执行测试 › 可以启动工作流执行" classname="workflow-operations.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流执行测试 › 可以查询执行状态" classname="workflow-operations.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例管理测试 › 可以创建工作流实例" classname="workflow-operations.spec.ts" time="0.003">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例管理测试 › 可以获取工作流实例列表" classname="workflow-operations.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例管理测试 › 可以更新工作流实例状态" classname="workflow-operations.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="error-scenarios.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="error-scenarios" tests="14" failures="0" skipped="1" time="18.466" errors="0">
+<testcase name="网络错误测试 › 网络断开场景处理" classname="error-scenarios.spec.ts" time="1.936">
+</testcase>
+<testcase name="网络错误测试 › API 超时场景处理" classname="error-scenarios.spec.ts" time="2.883">
+</testcase>
+<testcase name="网络错误测试 › 慢网络场景处理" classname="error-scenarios.spec.ts" time="0.878">
+</testcase>
+<testcase name="网络错误测试 › 网络恢复后可以重试" classname="error-scenarios.spec.ts" time="2.92">
+</testcase>
+<testcase name="数据验证错误测试 › 无效 BPMN XML 处理" classname="error-scenarios.spec.ts" time="0.9">
+</testcase>
+<testcase name="数据验证错误测试 › 缺失必需字段处理" classname="error-scenarios.spec.ts" time="0.031">
+</testcase>
+<testcase name="数据验证错误测试 › 数据类型错误处理" classname="error-scenarios.spec.ts" time="0.005">
+</testcase>
+<testcase name="数据验证错误测试 › 数据范围错误处理" classname="error-scenarios.spec.ts" time="0.005">
+</testcase>
+<testcase name="边界条件测试 › 空工作流处理" classname="error-scenarios.spec.ts" time="2.886">
+</testcase>
+<testcase name="边界条件测试 › 超大工作流处理" classname="error-scenarios.spec.ts" time="0.887">
+</testcase>
+<testcase name="边界条件测试 › 特殊字符处理" classname="error-scenarios.spec.ts" time="0.166">
+</testcase>
+<testcase name="边界条件测试 › Unicode 字符处理" classname="error-scenarios.spec.ts" time="0.13">
+</testcase>
+<testcase name="错误恢复机制测试 › API 错误后可以重试" classname="error-scenarios.spec.ts" time="1.915">
+</testcase>
+<testcase name="错误恢复机制测试 › 数据验证错误后可以修正" classname="error-scenarios.spec.ts" time="2.924">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="regression.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="error-scenarios" tests="6" failures="0" skipped="0" time="12.987" errors="0">
+<testcase name="回归测试 › 应用启动时不会出现白屏" classname="regression.spec.ts" time="0.987">
+</testcase>
+<testcase name="回归测试 › 路由导航不会导致页面崩溃" classname="regression.spec.ts" time="1.816">
+</testcase>
+<testcase name="回归测试 › BPMN编辑器加载不会导致内存泄漏" classname="regression.spec.ts" time="4.003">
+</testcase>
+<testcase name="回归测试 › API调用失败时不会导致应用崩溃" classname="regression.spec.ts" time="2.86">
+</testcase>
+<testcase name="回归测试 › 本地存储操作不会导致错误" classname="regression.spec.ts" time="0.486">
+</testcase>
+<testcase name="回归测试 › 窗口大小改变不会导致布局问题" classname="regression.spec.ts" time="2.835">
+</testcase>
+</testsuite>
+<testsuite name="api-integration.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="33" failures="0" skipped="10" time="4.453" errors="0">
+<testcase name="接口集成测试 › 健康检查接口可用 @quick" classname="api-integration.spec.ts" time="0.026">
+</testcase>
+<testcase name="接口集成测试 › 前端可以调用后端API" classname="api-integration.spec.ts" time="2.918">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 404错误" classname="api-integration.spec.ts" time="0.007">
+</testcase>
+<testcase name="接口集成测试 › 错误处理 - 错误消息显示" classname="api-integration.spec.ts" time="1.316">
+</testcase>
+<testcase name="接口集成测试 › 数据格式验证 - JSON响应" classname="api-integration.spec.ts" time="0.01">
+</testcase>
+<testcase name="接口集成测试 › CORS配置正确" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以创建工作流 API" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以获取工作流 API" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以更新工作流 API" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以删除工作流 API" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以列出工作流 API" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="工作流管理 API 测试 › 可以解析工作流 XML API" classname="api-integration.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以创建工作流执行 API" classname="api-integration.spec.ts" time="0.006">
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以获取执行状态 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以更新执行状态 API" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流执行 API 测试 › 可以列出执行历史 API" classname="api-integration.spec.ts" time="0.003">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以创建实例 API" classname="api-integration.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以获取实例 API" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以更新实例 API" classname="api-integration.spec.ts" time="0.006">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例 API 测试 › 可以列出实例 API" classname="api-integration.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Mock 执行 API" classname="api-integration.spec.ts" time="0.006">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Debug 会话 API" classname="api-integration.spec.ts" time="0.006">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 和 Debug API 测试 › 可以调用 Mock 配置 API" classname="api-integration.spec.ts" time="0.014">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="错误处理测试 › 可以处理 400 错误响应" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="错误处理测试 › 可以处理 404 错误响应" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="错误处理测试 › 可以处理 500 错误响应" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="错误处理测试 › 错误消息格式正确" classname="api-integration.spec.ts" time="0.007">
+</testcase>
+<testcase name="错误处理测试 › CORS 配置正确" classname="api-integration.spec.ts" time="0.004">
+</testcase>
+<testcase name="并发请求测试 › 可以处理多个并发 API 请求" classname="api-integration.spec.ts" time="0.011">
+</testcase>
+<testcase name="并发请求测试 › 可以处理请求限流" classname="api-integration.spec.ts" time="0.026">
+</testcase>
+<testcase name="聊天API集成测试 › 可以创建聊天会话" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="聊天API集成测试 › 可以获取聊天会话列表" classname="api-integration.spec.ts" time="0.005">
+</testcase>
+<testcase name="聊天API集成测试 › 可以添加消息到会话" classname="api-integration.spec.ts" time="0.006">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="chat.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="14" failures="0" skipped="5" time="21.519" errors="0">
+<testcase name="聊天界面测试 › 聊天框可以显示和隐藏" classname="chat.spec.ts" time="2.502">
+</testcase>
+<testcase name="聊天界面测试 › 聊天框可以最小化和恢复" classname="chat.spec.ts" time="3.099">
+</testcase>
+<testcase name="聊天界面测试 › 聊天框可以拖拽" classname="chat.spec.ts" time="2.677">
+</testcase>
+<testcase name="聊天界面测试 › 消息列表可以显示" classname="chat.spec.ts" time="2.026">
+</testcase>
+<testcase name="聊天会话测试 › 可以创建新会话" classname="chat.spec.ts" time="0.163">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="聊天会话测试 › 可以获取会话列表" classname="chat.spec.ts" time="0.147">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="聊天会话测试 › 可以切换会话" classname="chat.spec.ts" time="0.145">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="聊天会话测试 › 可以删除会话" classname="chat.spec.ts" time="0.184">
+</testcase>
+<testcase name="聊天会话测试 › 会话可以持久化" classname="chat.spec.ts" time="0.131">
+</testcase>
+<testcase name="消息交互测试 › 可以发送用户消息" classname="chat.spec.ts" time="2.28">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="消息交互测试 › 可以接收 AI 响应" classname="chat.spec.ts" time="2.037">
+</testcase>
+<testcase name="消息交互测试 › 可以显示流式响应" classname="chat.spec.ts" time="2.059">
+</testcase>
+<testcase name="消息交互测试 › 可以加载消息历史" classname="chat.spec.ts" time="2.041">
+</testcase>
+<testcase name="消息交互测试 › 消息时间戳可以显示" classname="chat.spec.ts" time="2.028">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="core-features.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="29" failures="0" skipped="0" time="69.051" errors="0">
+<testcase name="核心功能测试 › 应用可以正常启动 @quick" classname="core-features.spec.ts" time="0.936">
+</testcase>
+<testcase name="核心功能测试 › 路由导航正常" classname="core-features.spec.ts" time="1.456">
+</testcase>
+<testcase name="核心功能测试 › BPMN编辑器可以加载 @quick" classname="core-features.spec.ts" time="0.883">
+</testcase>
+<testcase name="核心功能测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="2.081">
+</testcase>
+<testcase name="核心功能测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="0.92">
+</testcase>
+<testcase name="核心功能测试 › 工具栏按钮可见" classname="core-features.spec.ts" time="0.875">
+</testcase>
+<testcase name="核心功能测试 › 状态栏显示正确" classname="core-features.spec.ts" time="0.891">
+</testcase>
+<testcase name="核心功能测试 › 数据持久化 - 本地存储" classname="core-features.spec.ts" time="1.03">
+</testcase>
+<testcase name="文件操作测试 › 可以创建新图表 @quick" classname="core-features.spec.ts" time="2.878">
+</testcase>
+<testcase name="文件操作测试 › 可以打开文件选择对话框" classname="core-features.spec.ts" time="0.965">
+</testcase>
+<testcase name="文件操作测试 › 可以保存 BPMN 文件" classname="core-features.spec.ts" time="2.976">
+</testcase>
+<testcase name="文件操作测试 › 可以拖拽上传文件" classname="core-features.spec.ts" time="0.989">
+</testcase>
+<testcase name="文件操作测试 › 文件格式验证" classname="core-features.spec.ts" time="0.886">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以从调色板添加元素" classname="core-features.spec.ts" time="4.987">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以选择元素" classname="core-features.spec.ts" time="3.459">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以删除元素" classname="core-features.spec.ts" time="3.517">
+</testcase>
+<testcase name="编辑器元素操作测试 › 可以移动元素" classname="core-features.spec.ts" time="3.465">
+</testcase>
+<testcase name="连线操作测试 › 可以创建序列流连线" classname="core-features.spec.ts" time="2.853">
+</testcase>
+<testcase name="连线操作测试 › 可以删除连线" classname="core-features.spec.ts" time="3.402">
+</testcase>
+<testcase name="属性编辑测试 › 属性面板可以显示" classname="core-features.spec.ts" time="2.855">
+</testcase>
+<testcase name="属性编辑测试 › 可以编辑元素名称" classname="core-features.spec.ts" time="2.887">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器加载后可以交互" classname="core-features.spec.ts" time="2.873">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 可以访问属性面板区域" classname="core-features.spec.ts" time="0.858">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器加载和初始化 @quick" classname="core-features.spec.ts" time="2.866">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 调色板显示和隐藏" classname="core-features.spec.ts" time="3.405">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 属性面板显示和隐藏" classname="core-features.spec.ts" time="3.364">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 缩放控制 - 放大和缩小" classname="core-features.spec.ts" time="3.494">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 缩放控制 - 适应画布和重置" classname="core-features.spec.ts" time="3.489">
+</testcase>
+<testcase name="BPMN编辑器基本操作 › 编辑器画布交互 - 点击和拖拽" classname="core-features.spec.ts" time="3.511">
+</testcase>
+</testsuite>
+<testsuite name="error-scenarios.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="14" failures="0" skipped="1" time="18.825" errors="0">
+<testcase name="网络错误测试 › 网络断开场景处理" classname="error-scenarios.spec.ts" time="1.918">
+</testcase>
+<testcase name="网络错误测试 › API 超时场景处理" classname="error-scenarios.spec.ts" time="2.904">
+</testcase>
+<testcase name="网络错误测试 › 慢网络场景处理" classname="error-scenarios.spec.ts" time="0.918">
+</testcase>
+<testcase name="网络错误测试 › 网络恢复后可以重试" classname="error-scenarios.spec.ts" time="2.931">
+</testcase>
+<testcase name="数据验证错误测试 › 无效 BPMN XML 处理" classname="error-scenarios.spec.ts" time="0.869">
+</testcase>
+<testcase name="数据验证错误测试 › 缺失必需字段处理" classname="error-scenarios.spec.ts" time="0.042">
+</testcase>
+<testcase name="数据验证错误测试 › 数据类型错误处理" classname="error-scenarios.spec.ts" time="0.006">
+</testcase>
+<testcase name="数据验证错误测试 › 数据范围错误处理" classname="error-scenarios.spec.ts" time="0.011">
+</testcase>
+<testcase name="边界条件测试 › 空工作流处理" classname="error-scenarios.spec.ts" time="2.946">
+</testcase>
+<testcase name="边界条件测试 › 超大工作流处理" classname="error-scenarios.spec.ts" time="0.972">
+</testcase>
+<testcase name="边界条件测试 › 特殊字符处理" classname="error-scenarios.spec.ts" time="0.157">
+</testcase>
+<testcase name="边界条件测试 › Unicode 字符处理" classname="error-scenarios.spec.ts" time="0.139">
+</testcase>
+<testcase name="错误恢复机制测试 › API 错误后可以重试" classname="error-scenarios.spec.ts" time="1.967">
+</testcase>
+<testcase name="错误恢复机制测试 › 数据验证错误后可以修正" classname="error-scenarios.spec.ts" time="3.045">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="mock-debug.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="18" failures="0" skipped="14" time="45.858" errors="0">
+<testcase name="Mock 执行测试 › 可以启动 Mock 执行" classname="mock-debug.spec.ts" time="3.977">
+</testcase>
+<testcase name="Mock 执行测试 › 可以保存和加载 Mock 配置" classname="mock-debug.spec.ts" time="4.142">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以单步执行 Mock" classname="mock-debug.spec.ts" time="3.958">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以继续 Mock 执行" classname="mock-debug.spec.ts" time="3.941">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以停止 Mock 执行" classname="mock-debug.spec.ts" time="3.963">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 执行测试 › 可以查询 Mock 执行状态" classname="mock-debug.spec.ts" time="3.925">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Debug 调试测试 › 可以启动 Debug 会话" classname="mock-debug.spec.ts" time="3.936">
+</testcase>
+<testcase name="Debug 调试测试 › 可以设置断点" classname="mock-debug.spec.ts" time="4.467">
+</testcase>
+<testcase name="Debug 调试测试 › 可以单步执行 Debug" classname="mock-debug.spec.ts" time="3.957">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Debug 调试测试 › 可以查看变量值" classname="mock-debug.spec.ts" time="3.953">
+</testcase>
+<testcase name="Debug 调试测试 › 可以停止 Debug 会话" classname="mock-debug.spec.ts" time="3.9">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以保存 Mock 配置" classname="mock-debug.spec.ts" time="0.007">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以获取 Mock 配置列表" classname="mock-debug.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以获取 Mock 配置详情" classname="mock-debug.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以更新 Mock 配置" classname="mock-debug.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Mock 配置管理测试 › 可以删除 Mock 配置" classname="mock-debug.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="执行时间线测试 › 执行时间线可以显示" classname="mock-debug.spec.ts" time="0.861">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="执行时间线测试 › 可以点击时间线节点" classname="mock-debug.spec.ts" time="0.853">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="performance.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="11" failures="0" skipped="1" time="39.384" errors="0">
+<testcase name="编辑器性能测试 › 编辑器加载时间应该小于 3 秒 @performance" classname="performance.spec.ts" time="0.944">
+</testcase>
+<testcase name="编辑器性能测试 › 大文件加载性能" classname="performance.spec.ts" time="2.902">
+</testcase>
+<testcase name="编辑器性能测试 › 元素添加响应时间" classname="performance.spec.ts" time="3.417">
+</testcase>
+<testcase name="编辑器性能测试 › 连线创建响应时间" classname="performance.spec.ts" time="3.496">
+</testcase>
+<testcase name="编辑器性能测试 › 属性编辑响应时间" classname="performance.spec.ts" time="2.938">
+<properties>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="API 性能测试 › API 响应时间应该小于 500ms @performance @api" classname="performance.spec.ts" time="0.007">
+</testcase>
+<testcase name="API 性能测试 › 批量操作性能" classname="performance.spec.ts" time="0.018">
+</testcase>
+<testcase name="API 性能测试 › 并发请求性能" classname="performance.spec.ts" time="0.023">
+</testcase>
+<testcase name="内存泄漏测试 › 长时间运行后内存使用应该稳定" classname="performance.spec.ts" time="11.137">
+</testcase>
+<testcase name="内存泄漏测试 › 多次加载/卸载后内存使用应该稳定" classname="performance.spec.ts" time="8.987">
+</testcase>
+<testcase name="内存泄漏测试 › 编辑器实例应该正确清理" classname="performance.spec.ts" time="5.515">
+</testcase>
+</testsuite>
+<testsuite name="regression.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="6" failures="0" skipped="0" time="12.92" errors="0">
+<testcase name="回归测试 › 应用启动时不会出现白屏" classname="regression.spec.ts" time="0.905">
+</testcase>
+<testcase name="回归测试 › 路由导航不会导致页面崩溃" classname="regression.spec.ts" time="1.812">
+</testcase>
+<testcase name="回归测试 › BPMN编辑器加载不会导致内存泄漏" classname="regression.spec.ts" time="3.951">
+</testcase>
+<testcase name="回归测试 › API调用失败时不会导致应用崩溃" classname="regression.spec.ts" time="2.936">
+</testcase>
+<testcase name="回归测试 › 本地存储操作不会导致错误" classname="regression.spec.ts" time="0.467">
+</testcase>
+<testcase name="回归测试 › 窗口大小改变不会导致布局问题" classname="regression.spec.ts" time="2.849">
+</testcase>
+</testsuite>
+<testsuite name="workflow-operations.spec.ts" timestamp="2025-12-21T03:13:37.110Z" hostname="e2e" tests="12" failures="0" skipped="4" time="11.681" errors="0">
+<testcase name="工作流创建和编辑测试 › 可以创建完整工作流" classname="workflow-operations.spec.ts" time="2.928">
+</testcase>
+<testcase name="工作流创建和编辑测试 › 可以编辑工作流元素" classname="workflow-operations.spec.ts" time="2.872">
+</testcase>
+<testcase name="工作流创建和编辑测试 › 工作流保存到后端" classname="workflow-operations.spec.ts" time="2.978">
+</testcase>
+<testcase name="工作流加载测试 › 可以从后端加载工作流列表" classname="workflow-operations.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流加载测试 › 可以加载特定工作流" classname="workflow-operations.spec.ts" time="0.007">
+</testcase>
+<testcase name="工作流加载测试 › 工作流 XML 解析" classname="workflow-operations.spec.ts" time="2.863">
+</testcase>
+<testcase name="工作流加载测试 › 加载错误处理" classname="workflow-operations.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流执行测试 › 可以启动工作流执行" classname="workflow-operations.spec.ts" time="0.005">
+</testcase>
+<testcase name="工作流执行测试 › 可以查询执行状态" classname="workflow-operations.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例管理测试 › 可以创建工作流实例" classname="workflow-operations.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例管理测试 › 可以获取工作流实例列表" classname="workflow-operations.spec.ts" time="0.004">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
+</testcase>
+<testcase name="工作流实例管理测试 › 可以更新工作流实例状态" classname="workflow-operations.spec.ts" time="0.005">
+<properties>
+<property name="skip" value="">
+</property>
+<property name="skip" value="">
+</property>
+</properties>
+<skipped>
+</skipped>
 </testcase>
 </testsuite>
 </testsuites>

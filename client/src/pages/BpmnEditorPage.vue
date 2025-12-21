@@ -118,33 +118,6 @@
       @close="handleCloseChatBox"
     />
 
-    <!-- Mock 和 Debug 控制按钮 - 始终显示 -->
-    <div 
-      class="mock-debug-controls" 
-      style="position: fixed !important; bottom: 100px !important; right: 20px !important; z-index: 10000 !important; display: flex !important; flex-direction: column !important; gap: 12px !important; background: rgba(255, 255, 255, 0.95) !important; padding: 8px !important; border-radius: 8px !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;"
-    >
-      <button
-        class="control-btn mock-btn"
-        @click="toggleMockPanel"
-        :class="{ active: showMockPanel }"
-        :disabled="!currentDiagram"
-        title="Mock 执行（需要先加载流程图）"
-        style="padding: 12px 20px !important; border: 2px solid #52c41a !important; border-radius: 8px !important; background: #52c41a !important; color: white !important; font-size: 14px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important; min-width: 100px !important; opacity: 1 !important;"
-      >
-        <span style="margin-right: 4px;">🎭</span> Mock
-      </button>
-      <button
-        class="control-btn debug-btn"
-        @click="toggleDebugPanel"
-        :class="{ active: showDebugPanel }"
-        :disabled="!currentDiagram"
-        title="Debug 调试（需要先加载流程图）"
-        style="padding: 12px 20px !important; border: 2px solid #faad14 !important; border-radius: 8px !important; background: #faad14 !important; color: white !important; font-size: 14px !important; font-weight: 600 !important; cursor: pointer !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important; min-width: 100px !important; opacity: 1 !important;"
-      >
-        <span style="margin-right: 4px;">🐛</span> Debug
-      </button>
-    </div>
-
     <!-- Mock 控制面板 -->
     <MockControlPanel
       :bpmnXml="currentDiagram"

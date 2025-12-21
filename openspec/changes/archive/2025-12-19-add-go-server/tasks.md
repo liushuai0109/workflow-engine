@@ -302,4 +302,4 @@ server-go/
 - ✅ 完整的文档和配置文件
 - ✅ 可通过 `pnpm run start:server-go` 启动
 
-**下一步**: 可使用 `npx openspec archive add-go-server` 归档此变更
+**下一步**: 可使用 `openspec archive add-go-server` 归档此变更

@@ -15,12 +15,12 @@
 **测试分类：**
 
 - **前端 E2E 测试**：使用 Playwright 的 `page` API 测试浏览器中的前端应用
-  - 文件：`core-features.spec.ts`、`regression.spec.ts` 等
-  - 测试内容：UI 交互、路由导航、组件渲染等
+  - 文件：`core-features.spec.ts`、`regression.spec.ts`、`workflow-operations.spec.ts`、`mock-debug.spec.ts`、`chat.spec.ts`、`performance.spec.ts`、`error-scenarios.spec.ts` 等
+  - 测试内容：UI 交互、路由导航、组件渲染、工作流操作、Mock/Debug 功能、聊天功能、性能测试、错误场景等
 
 - **后端 API E2E 测试**：使用 Playwright 的 `request` API 测试后端 HTTP API
-  - 文件：`api-integration.spec.ts`
-  - 测试内容：API 端点、错误处理、数据格式验证等
+  - 文件：`api-integration.spec.ts`、`workflow-operations.spec.ts`、`mock-debug.spec.ts`、`chat.spec.ts` 等
+  - 测试内容：API 端点、错误处理、数据格式验证、工作流管理 API、执行 API、Mock/Debug API、聊天 API 等
   - **注意**：这是从外部视角测试 API，不是后端内部的单元测试
 
 - **后端单元/集成测试**：使用 Go testing 框架（在 `server/` 目录下）
@@ -31,13 +31,18 @@
 
 ```
 client/tests/e2e/
-├── core-features.spec.ts          # 核心功能测试
-├── api-integration.spec.ts         # 接口集成测试
+├── core-features.spec.ts          # 核心功能测试（扩展）
+├── api-integration.spec.ts         # 接口集成测试（扩展）
 ├── regression.spec.ts              # 回归测试
 ├── headless-verification.spec.ts  # Headless浏览器验证
+├── workflow-operations.spec.ts    # 工作流操作测试（新增）
+├── mock-debug.spec.ts              # Mock 和 Debug 功能测试（新增）
+├── chat.spec.ts                    # 聊天功能测试（新增）
+├── performance.spec.ts             # 性能测试（新增）
+├── error-scenarios.spec.ts         # 错误场景测试（新增）
 ├── global-setup.ts                 # 全局设置
 ├── global-teardown.ts              # 全局清理
-├── fixtures.ts                     # 测试Fixtures
+├── fixtures.ts                     # 测试Fixtures（扩展）
 └── README.md                       # 本文档
 ```
 
@@ -73,12 +78,48 @@ npm run test:e2e
 #### 快速测试模式（< 2分钟）
 ```bash
 cd client
+npm run test:e2e:quick
+# 或
 npx playwright test --project=quick
+```
+
+#### API 测试模式（< 5分钟）
+```bash
+cd client
+npm run test:e2e:api
+# 或
+npx playwright test --project=api
+```
+
+#### 性能测试模式（< 5分钟）
+```bash
+cd client
+npm run test:e2e:performance
+# 或
+npx playwright test --project=performance
+```
+
+#### UI 测试模式（< 10分钟）
+```bash
+cd client
+npm run test:e2e:ui
+# 或
+npx playwright test --project=ui
+```
+
+#### 错误场景测试模式（< 5分钟）
+```bash
+cd client
+npm run test:e2e:errors
+# 或
+npx playwright test --project=error-scenarios
 ```
 
 #### 完整测试模式（< 10分钟）
 ```bash
 cd client
+npm run test:e2e:full
+# 或
 npx playwright test --project=full
 ```
 
@@ -86,11 +127,15 @@ npx playwright test --project=full
 ```bash
 cd client
 npm run test:e2e:headless
+# 或
+npx playwright test --project=headless-verification
 ```
 
 #### 完整测试套件（< 30分钟）
 ```bash
 cd client
+npm run test:e2e:all
+# 或
 npx playwright test --project=e2e
 ```
 
@@ -105,7 +150,30 @@ npx playwright test tests/e2e/core-features.spec.ts
 
 ```bash
 cd client
-npm run test:e2e:ui
+npm run test:e2e:ui-mode
+# 或
+npx playwright test --ui
+```
+
+### 测试标签说明
+
+测试用例可以使用以下标签进行分类：
+
+- `@quick` - 快速测试，通常 < 30秒
+- `@performance` - 性能测试
+- `@api` - API 相关测试
+- `@ui` - UI 交互测试
+
+使用标签运行测试：
+```bash
+# 运行所有 @quick 标签的测试
+npx playwright test --grep @quick
+
+# 运行所有 @performance 标签的测试
+npx playwright test --grep @performance
+
+# 运行多个标签的测试
+npx playwright test --grep "@quick|@api"
 ```
 
 ## 测试环境配置
@@ -113,15 +181,71 @@ npm run test:e2e:ui
 ### 环境变量
 
 - `FRONTEND_URL`: 前端服务器URL（默认：http://localhost:8000）
-- `BACKEND_URL`: 后端服务器URL（默认：http://localhost:8080）
+- `BACKEND_URL`: 后端服务器URL（默认：http://localhost:3000）
 - `CI`: 是否在CI环境中运行（影响重试和并行策略）
-- `START_BACKEND`: 是否自动启动后端服务器（默认：false）
+- `AUTO_START_BACKEND`: 是否自动启动后端服务器（默认：false）
 - `E2E_SETUP`: 是否启用全局设置（默认：false）
 - `E2E_TEARDOWN`: 是否启用全局清理（默认：false）
 
 ### 配置文件
 
 测试配置在 `client/playwright.config.ts` 中定义。
+
+#### 测试项目配置
+
+Playwright 配置了多个测试项目，每个项目针对不同的测试场景：
+
+1. **headless-verification** - Headless 浏览器验证（< 1分钟）
+   - 超时：10 秒
+   - 用途：快速验证应用可以正常加载
+
+2. **quick** - 快速测试（< 2分钟）
+   - 超时：20 秒
+   - 匹配：所有 `@quick` 标签的测试
+   - 用途：快速验证核心功能
+
+3. **api** - API 测试（< 5分钟）
+   - 超时：30 秒
+   - 匹配：API 相关测试文件
+   - 用途：测试后端 API 集成
+
+4. **performance** - 性能测试（< 5分钟）
+   - 超时：60 秒
+   - 匹配：性能测试文件
+   - 用途：测试性能和响应时间
+
+5. **ui** - UI 测试（< 10分钟）
+   - 超时：30 秒
+   - 匹配：UI 交互测试
+   - 用途：测试前端交互功能
+
+6. **error-scenarios** - 错误场景测试（< 5分钟）
+   - 超时：30 秒
+   - 匹配：错误场景和回归测试
+   - 用途：测试错误处理和边界条件
+
+7. **full** - 完整测试（< 10分钟）
+   - 超时：30 秒
+   - 匹配：核心测试套件
+   - 用途：运行完整的核心测试
+
+8. **e2e** - 完整测试套件（< 30分钟）
+   - 超时：60 秒
+   - 匹配：所有测试文件
+   - 用途：运行所有 E2E 测试
+
+#### 超时设置
+
+- **默认超时**：30 秒
+- **断言超时**：5 秒
+- **全局超时**：CI 环境 1 小时，本地环境 30 分钟
+- **项目级超时**：根据项目类型调整（见上方配置）
+
+#### 并行执行策略
+
+- **CI 环境**：1 个 worker（避免资源竞争）
+- **本地环境**：自动根据 CPU 核心数调整
+- **最大失败数**：本地环境最多失败 10 个测试后停止
 
 ## 测试数据管理
 

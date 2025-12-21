@@ -304,13 +304,13 @@ gantt
 ### 命令
 ```bash
 # 查看变更
-npx openspec show add-lifecycle-operations-foundation
+openspec show add-lifecycle-operations-foundation
 
 # 验证
-npx openspec validate add-lifecycle-operations-foundation --strict
+openspec validate add-lifecycle-operations-foundation --strict
 
 # 归档 (实现后)
-npx openspec archive add-lifecycle-operations-foundation --yes
+openspec archive add-lifecycle-operations-foundation --yes
 ```
 
 ---

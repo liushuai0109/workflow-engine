@@ -8,7 +8,7 @@ tags: [openspec, apply]
 **防护栏**
 - 优先采用直接、最小化的实现，仅在被要求或明确需要时添加复杂性。
 - 保持变更紧密聚焦于请求的结果。
-- 如果需要额外的 OpenSpec 约定或澄清，请参考 `openspec/AGENTS.md`（位于 `openspec/` 目录内——如果看不到，运行 `ls openspec` 或 `npx openspec update`）。
+- 如果需要额外的 OpenSpec 约定或澄清，请参考 `openspec/AGENTS.md`（位于 `openspec/` 目录内——如果看不到，运行 `ls openspec` 或 `openspec update`）。
 
 **步骤**
 将这些步骤作为待办事项跟踪，并逐一完成。
@@ -16,8 +16,8 @@ tags: [openspec, apply]
 2. 按顺序完成任务，保持编辑最小化并专注于请求的变更。
 3. 在更新状态之前确认完成——确保 `tasks.md` 中的每一项都已完成。
 4. 所有工作完成后更新检查清单，使每个任务标记为 `- [x]` 并反映实际情况。
-5. 当需要额外上下文时，参考 `npx openspec list` 或 `npx openspec show <item>`。
+5. 当需要额外上下文时，参考 `openspec list` 或 `openspec show <item>`。
 
 **参考**
-- 如果在实施时需要来自提案的额外上下文，使用 `npx openspec show <id> --json --deltas-only`。
+- 如果在实施时需要来自提案的额外上下文，使用 `openspec show <id> --json --deltas-only`。
 <!-- OPENSPEC:END -->
