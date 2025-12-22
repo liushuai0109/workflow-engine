@@ -33,6 +33,13 @@
   - `variables`: 当前工作流变量
   - `businessResponse`: 业务响应（如果有）
   - `engineResponse`: 引擎响应
+  - `interceptorCalls`: 拦截器调用列表（数组），每个元素包含：
+    - `name`: 拦截器名称
+    - `order`: 调用顺序（序号）
+    - `timestamp`: 调用时间戳
+    - `input`: 拦截器函数的入参（JSON）
+    - `output`: 拦截器函数的出参（JSON）
+  - `requestParams`: 请求的入参（完整的请求体）
 
 #### Scenario: 继续 Mock 执行（下一步）
 
@@ -108,4 +115,37 @@
   - `status`: 响应状态（成功或失败）
   - `data`: 响应数据（从 Mock 配置获取）
   - `error`: 错误信息（如果模拟失败）
+
+### Requirement: Mock 执行拦截器调用跟踪
+
+系统 SHALL 在 Mock 执行过程中跟踪和记录拦截器的调用信息。
+
+#### Scenario: 记录拦截器调用
+
+- **当** Mock 执行过程中调用拦截器时
+- **则** 系统应记录每次拦截器调用的详细信息
+- **并且** 记录信息应包含：
+  - `name`: 拦截器名称
+  - `order`: 调用顺序（从 1 开始递增）
+  - `timestamp`: 调用时间戳（ISO 8601 格式）
+  - `input`: 拦截器函数的入参（JSON 对象）
+  - `output`: 拦截器函数的出参（JSON 对象）
+- **并且** 拦截器调用记录应按调用顺序存储
+
+#### Scenario: 返回拦截器调用信息
+
+- **当** Mock 执行完成或单步执行完成时
+- **则** API 响应应包含 `interceptorCalls` 字段
+- **并且** `interceptorCalls` 应为数组，包含所有拦截器调用记录
+- **并且** 如果没有拦截器调用，应返回空数组
+
+#### Scenario: 支持多种拦截器类型
+
+- **当** Mock 执行调用不同类型的拦截器时
+- **则** 系统应跟踪：
+  - 前置拦截器（pre-interceptors）
+  - 后置拦截器（post-interceptors）
+  - 错误处理拦截器（error-interceptors）
+- **并且** 每种拦截器类型应在 `name` 字段中标识
+
 

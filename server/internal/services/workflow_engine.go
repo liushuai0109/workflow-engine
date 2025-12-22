@@ -78,6 +78,17 @@ func NewWorkflowEngineServiceWithMockInstance(
 type ExecuteResult struct {
 	BusinessResponse *BusinessResponse `json:"businessResponse,omitempty"`
 	EngineResponse   *EngineResponse   `json:"engineResponse"`
+	InterceptorCalls []InterceptorCall `json:"interceptorCalls,omitempty"`
+	RequestParams    map[string]interface{} `json:"requestParams,omitempty"`
+}
+
+// InterceptorCall represents a single interceptor call record
+type InterceptorCall struct {
+	Name      string                 `json:"name"`
+	Order     int                    `json:"order"`
+	Timestamp string                 `json:"timestamp"`
+	Input     map[string]interface{} `json:"input"`
+	Output    map[string]interface{} `json:"output"`
 }
 
 // BusinessResponse represents the response from business API
@@ -104,6 +115,23 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 	fromNodeId string,
 	businessParams map[string]interface{},
 ) (*ExecuteResult, error) {
+	// Create interceptor call recorder and add to context
+	recorder := NewInterceptorCallRecorder()
+	ctx = WithInterceptorRecorder(ctx, recorder)
+
+	// Add call recorder callback to context for interceptor package
+	recorderFunc := interceptor.CallRecorderFunc(func(name string, input, output map[string]interface{}) {
+		recorder.Record(name, input, output)
+	})
+	ctx = context.WithValue(ctx, interceptor.CallRecorderKey, recorderFunc)
+
+	// Store request params for later inclusion in response
+	requestParams := map[string]interface{}{
+		"instanceId":     instanceId,
+		"fromNodeId":     fromNodeId,
+		"businessParams": businessParams,
+	}
+
 	// 1. 获取工作流实例 (使用拦截器支持 Mock 实例和真实实例)
 	instance, err := interceptor.Intercept(ctx,
 		fmt.Sprintf("GetInstance:%s", instanceId),
@@ -470,6 +498,8 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 			ExecutionId:    execution.Id,
 			Variables:      execution.Variables,
 		},
+		InterceptorCalls: recorder.GetCalls(),
+		RequestParams:    requestParams,
 	}
 
 	return result, nil

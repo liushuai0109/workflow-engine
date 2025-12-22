@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -24,6 +25,8 @@ type contextKey string
 const (
 	// InterceptSessionKey is the context key for InterceptSession
 	InterceptSessionKey contextKey = "intercept_session"
+	// CallRecorderKey is the context key for call recorder callback
+	CallRecorderKey contextKey = "call_recorder"
 )
 
 // InterceptSession represents an interception session
@@ -46,6 +49,9 @@ type ExecutionLogEntry struct {
 	Error     string      `json:"error,omitempty"`
 }
 
+// CallRecorderFunc is a function type for recording interceptor calls
+type CallRecorderFunc func(name string, input, output map[string]interface{})
+
 // Intercept is the core interceptor function that intercepts function calls
 // and returns mock data or executes the real function based on the mode
 func Intercept[T any](
@@ -55,11 +61,22 @@ func Intercept[T any](
 ) (T, error) {
 	var zero T
 
+	// Helper function to record call if recorder is present
+	recordCall := func(input, output interface{}, isMocked bool) {
+		if recorder, ok := ctx.Value(CallRecorderKey).(CallRecorderFunc); ok && recorder != nil {
+			inputMap := toMapInterface(input)
+			outputMap := toMapInterface(output)
+			recorder(operation, inputMap, outputMap)
+		}
+	}
+
 	// Get intercept session from context
 	session := GetInterceptSession(ctx)
 	if session == nil || session.Mode == InterceptModeDisabled {
 		// No session or disabled mode, execute real function
-		return realFn(ctx)
+		result, err := realFn(ctx)
+		recordCall(nil, result, false)
+		return result, err
 	}
 
 	// Record mode: execute real function and store result
@@ -68,8 +85,10 @@ func Intercept[T any](
 		if err == nil {
 			session.DataStore.Set(operation, result)
 			session.LogExecution(operation, nil, result, false, "")
+			recordCall(nil, result, false)
 		} else {
 			session.LogExecution(operation, nil, nil, false, err.Error())
+			recordCall(nil, nil, false)
 		}
 		return result, err
 	}
@@ -83,10 +102,12 @@ func Intercept[T any](
 			if !ok {
 				err := fmt.Errorf("mock data type mismatch for operation: %s", operation)
 				session.LogExecution(operation, nil, nil, true, err.Error())
+				recordCall(nil, nil, true)
 				return zero, err
 			}
 
 			session.LogExecution(operation, nil, result, true, "")
+			recordCall(nil, result, true)
 			return result, nil
 		}
 
@@ -97,11 +118,39 @@ func Intercept[T any](
 			errMsg = err.Error()
 		}
 		session.LogExecution(operation, nil, result, false, errMsg)
+		recordCall(nil, result, false)
 		return result, err
 	}
 
 	// Default: execute real function
-	return realFn(ctx)
+	result, err := realFn(ctx)
+	recordCall(nil, result, false)
+	return result, err
+}
+
+// toMapInterface converts any value to map[string]interface{} for recording
+func toMapInterface(v interface{}) map[string]interface{} {
+	if v == nil {
+		return nil
+	}
+
+	// Try direct type assertion first
+	if m, ok := v.(map[string]interface{}); ok {
+		return m
+	}
+
+	// Try JSON marshaling/unmarshaling as fallback
+	data, err := json.Marshal(v)
+	if err != nil {
+		return map[string]interface{}{"_value": fmt.Sprintf("%v", v)}
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return map[string]interface{}{"_value": fmt.Sprintf("%v", v)}
+	}
+
+	return result
 }
 
 // WithInterceptSession creates a new context with the given InterceptSession

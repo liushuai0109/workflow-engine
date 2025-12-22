@@ -43,6 +43,15 @@ export interface MockInstance {
   updatedAt: string
 }
 
+// Interceptor call record structure
+export interface InterceptorCall {
+  name: string
+  order: number
+  timestamp: string
+  input: Record<string, any>
+  output: Record<string, any>
+}
+
 // Execution result structure (matches backend ExecuteResult)
 export interface ExecuteResult {
   businessResponse?: {
@@ -58,6 +67,8 @@ export interface ExecuteResult {
     executionId: string
     variables: Record<string, any>
   }
+  interceptorCalls?: InterceptorCall[]
+  requestParams?: Record<string, any>
 }
 
 // Legacy MockExecution for backwards compatibility
