@@ -151,8 +151,6 @@ const loadWorkflows = async () => {
       pagination.value.pageSize || 20
     )
 
-    console.log('API Response:', response) // Debug log
-
     // Handle response structure safely
     if (response && response.data) {
       workflows.value = Array.isArray(response.data) ? response.data : []

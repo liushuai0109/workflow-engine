@@ -7,9 +7,9 @@ import (
 	"github.com/bpmn-explorer/server/internal/interceptor"
 )
 
-// Example_InterceptorWithStructParams demonstrates how to use the new interceptor
+// TestInterceptorWithStructParams demonstrates how to use the new interceptor
 // with struct parameters for improved type safety and ID generation
-func Example_InterceptorWithStructParams() {
+func TestInterceptorWithStructParams(t *testing.T) {
 	// This is a conceptual example showing how the new architecture works
 
 	ctx := context.Background()

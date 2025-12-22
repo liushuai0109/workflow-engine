@@ -198,7 +198,20 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		return nil, fmt.Errorf("failed to parse BPMN XML: %w", err)
 	}
 
-	// 3.5 补全 current_node_ids（如果为空）
+	// 3.5 处理空 fromNodeId：使用 current_node_ids
+	if fromNodeId == "" {
+		if len(instance.CurrentNodeIds) == 0 {
+			return nil, fmt.Errorf("%s: No current nodes in workflow instance", models.ErrInvalidRequest)
+		}
+		// 使用第一个当前节点作为起始节点
+		fromNodeId = instance.CurrentNodeIds[0]
+		s.logger.Info().
+			Str("instanceId", instanceId).
+			Str("fromNodeId", fromNodeId).
+			Msg("Empty fromNodeId provided, using first current node")
+	}
+
+	// 3.6 补全 current_node_ids（如果为空且 fromNodeId 已提供）
 	if len(instance.CurrentNodeIds) == 0 {
 		if len(wd.StartEvents) == 0 {
 			return nil, fmt.Errorf("workflow has no start events")

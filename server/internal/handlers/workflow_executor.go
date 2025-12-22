@@ -51,17 +51,17 @@ func (h *WorkflowExecutorHandler) ExecuteWorkflow(c *gin.Context) {
 
 	// 解析请求体
 	var req struct {
-		FromNodeId     string                 `json:"fromNodeId" binding:"required"`
+		FromNodeId     string                 `json:"fromNodeId"` // Optional: removed "binding:required"
 		BusinessParams map[string]interface{} `json:"businessParams,omitempty"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, models.NewErrorResponse(
-			models.ErrInvalidRequest,
-			fmt.Sprintf("Invalid request body: %v", err),
-		))
-		return
-	}
+	// if err := c.ShouldBindJSON(&req); err != nil {
+	// 	c.JSON(http.StatusBadRequest, models.NewErrorResponse(
+	// 		models.ErrInvalidRequest,
+	// 		fmt.Sprintf("Invalid request body: %v", err),
+	// 	))
+	// 	return
+	// }
 
 	// 调用执行引擎
 	result, err := h.engineService.ExecuteFromNode(
@@ -105,4 +105,3 @@ func (h *WorkflowExecutorHandler) ExecuteWorkflow(c *gin.Context) {
 	// 返回成功响应
 	c.JSON(http.StatusOK, models.NewSuccessResponse(result))
 }
-

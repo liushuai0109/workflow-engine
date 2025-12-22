@@ -82,6 +82,44 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
    - 接口正常返回业务结果
 
 3. **查看拦截器调用列表**
+
+   前端有两种方式获取拦截器调用列表：
+
+   **方式一: 从执行响应中直接获取** (推荐用于实时展示)
+   - 执行 API 的响应中包含 `interceptorCalls` 字段
+   - 响应格式:
+     ```json
+     {
+       "businessResponse": {...},
+       "engineResponse": {
+         "instanceId": "workflow-001_instance_abc123",
+         "currentNodeIds": ["node-1"],
+         "status": "running",
+         "executionId": "exec-001",
+         "variables": {}
+       },
+       "interceptorCalls": [
+         {
+           "name": "GetWorkflow:workflow-123",
+           "order": 1,
+           "timestamp": "2025-01-15T10:30:00Z",
+           "input": {"workflowId": "workflow-123"},
+           "output": {...}
+         },
+         {
+           "name": "GetInstance:instance-456",
+           "order": 2,
+           "timestamp": "2025-01-15T10:30:01Z",
+           "input": {"instanceId": "instance-456"},
+           "output": {...}
+         }
+       ],
+       "requestParams": {...}
+     }
+     ```
+   - 前端直接从 `result.interceptorCalls` 读取并展示在 UI 中
+
+   **方式二: 通过 API 查询历史记录** (用于查询过往执行)
    - 前端调用 `GET /api/interceptor/records?executionId={id}` 获取本次执行的所有拦截器记录
    - 后端查询 `interceptor_records` 表,返回拦截器列表:
      ```json
@@ -104,6 +142,8 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
        }
      ]
      ```
+
+   **当前前端实现**: MockControlPanel 使用方式一,从执行响应的 `result.interceptorCalls` 直接获取并展示
 
 4. **选择启用的拦截器**
    - 前端展示拦截器调用列表

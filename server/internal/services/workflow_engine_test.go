@@ -909,3 +909,136 @@ func TestExecuteFromNode_NoStartEvents_ReturnsError(t *testing.T) {
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err)
 }
+
+func TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_UsesCurrentNodeIds(t *testing.T) {
+	engineSvc, mock, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	// Create a test HTTP server to mock business API
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"result": "success",
+			"data":   "test data",
+		})
+	}))
+	defer server.Close()
+
+	// Update BPMN to use test server URL
+	bpmnXML := `<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <bpmn:process id="Process_1" name="Test Process">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="ServiceTask_1" name="Service Task">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <xflow:url xmlns:xflow="http://example.com/bpmn/xflow-extension" value="` + server.URL + `"/>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_1" name="End">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="ServiceTask_1"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="ServiceTask_1" targetRef="EndEvent_1"/>
+  </bpmn:process>
+</bpmn:definitions>`
+
+	ctx := context.Background()
+	instanceId := "test-instance-id"
+	workflowId := "test-workflow-id"
+	fromNodeId := "" // Empty fromNodeId - should use current_node_ids
+	now := time.Now()
+
+	// Mock: Get workflow instance (with ServiceTask_1 in current_node_ids)
+	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
+		WithArgs(instanceId).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
+			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{"ServiceTask_1"}), 1, now, now))
+
+	// Mock: Get workflow definition
+	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
+		WithArgs(workflowId).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
+			AddRow(workflowId, "Test Workflow", "", bpmnXML, "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+
+	// Mock: Get instance version (for CreateWorkflowExecution)
+	mock.ExpectQuery(`SELECT instance_version FROM workflow_instances WHERE id`).
+		WithArgs(instanceId).
+		WillReturnRows(sqlmock.NewRows([]string{"instance_version"}).AddRow(1))
+
+	// Mock: Create execution
+	mock.ExpectQuery(`INSERT INTO workflow_executions`).
+		WithArgs(sqlmock.AnyArg(), instanceId, workflowId, models.ExecutionStatusPending, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "instance_id", "workflow_id", "status", "variables", "execution_version", "started_at", "completed_at", "error_message"}).
+			AddRow("exec-1", instanceId, workflowId, models.ExecutionStatusPending, []byte("{}"), 1, now, sql.NullTime{Valid: false}, sql.NullString{Valid: false}))
+
+	// Mock: Update execution to Running
+	mock.ExpectQuery(`UPDATE workflow_executions`).
+		WithArgs(sqlmock.AnyArg(), models.ExecutionStatusRunning, sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "instance_id", "workflow_id", "status", "variables", "execution_version", "started_at", "completed_at", "error_message"}).
+			AddRow("exec-1", instanceId, workflowId, models.ExecutionStatusRunning, []byte("{}"), 1, now, sql.NullTime{}, sql.NullString{}))
+
+	// Mock: Update execution to Completed
+	mock.ExpectQuery(`UPDATE workflow_executions`).
+		WithArgs(sqlmock.AnyArg(), models.ExecutionStatusCompleted, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "instance_id", "workflow_id", "status", "variables", "execution_version", "started_at", "completed_at", "error_message"}).
+			AddRow("exec-1", instanceId, workflowId, models.ExecutionStatusCompleted, []byte("{}"), 1, now, sql.NullTime{Valid: true, Time: now}, sql.NullString{}))
+
+	// Mock: Update instance to Completed (workflow reaches EndEvent)
+	mock.ExpectQuery(`UPDATE workflow_instances`).
+		WithArgs(sqlmock.AnyArg(), models.InstanceStatusCompleted, sqlmock.AnyArg(), instanceId).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
+			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusCompleted, pq.Array([]string{}), 2, now, now))
+
+	// Execute with empty fromNodeId - should use ServiceTask_1 from current_node_ids
+	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, map[string]interface{}{"param": "value"})
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.NotNil(t, result.BusinessResponse)
+	assert.Equal(t, http.StatusOK, result.BusinessResponse.StatusCode)
+	assert.NotNil(t, result.EngineResponse)
+	assert.Equal(t, instanceId, result.EngineResponse.InstanceId)
+	assert.Equal(t, models.InstanceStatusCompleted, result.EngineResponse.Status)
+	assert.Empty(t, result.EngineResponse.CurrentNodeIds)
+
+	err = mock.ExpectationsWereMet()
+	assert.NoError(t, err)
+}
+
+func TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_EmptyCurrentNodeIds(t *testing.T) {
+	engineSvc, mock, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	instanceId := "test-instance-id"
+	workflowId := "test-workflow-id"
+	fromNodeId := "" // Empty fromNodeId
+	now := time.Now()
+
+	// Mock: Get workflow instance (with EMPTY current_node_ids)
+	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
+		WithArgs(instanceId).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
+			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{}), 1, now, now))
+
+	// Mock: Get workflow definition
+	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
+		WithArgs(workflowId).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
+			AddRow(workflowId, "Test Workflow", "", createTestBPMN(), "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+
+	// Execute with empty fromNodeId and empty current_node_ids - should return error
+	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, nil)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "No current nodes in workflow instance")
+
+	err = mock.ExpectationsWereMet()
+	assert.NoError(t, err)
+}

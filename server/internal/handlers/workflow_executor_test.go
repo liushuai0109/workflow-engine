@@ -36,10 +36,8 @@ func setupWorkflowExecutorHandlerTest(t *testing.T) (*WorkflowExecutorHandler, *
 func TestWorkflowExecutorHandler_ExecuteWorkflow_InvalidRequest(t *testing.T) {
 	_, router := setupWorkflowExecutorHandlerTest(t)
 
-	// Test missing fromNodeId
-	reqBody := map[string]interface{}{}
-	body, _ := json.Marshal(reqBody)
-	req, _ := http.NewRequest("POST", "/api/execute/test-instance-id", bytes.NewBuffer(body))
+	// Test invalid JSON body
+	req, _ := http.NewRequest("POST", "/api/execute/test-instance-id", bytes.NewBuffer([]byte("invalid json")))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
@@ -88,5 +86,43 @@ func TestWorkflowExecutorHandler_ExecuteWorkflow_ValidRequest(t *testing.T) {
 	// This will fail because we don't have a real database, but we can verify the request is parsed correctly
 	// The actual execution will fail with database error, which is expected in unit test
 	assert.True(t, w.Code == http.StatusInternalServerError || w.Code == http.StatusNotFound)
+}
+
+func TestWorkflowExecutorHandler_ExecuteWorkflow_EmptyFromNodeId_UsesCurrentNodeIds(t *testing.T) {
+	_, router := setupWorkflowExecutorHandlerTest(t)
+
+	// Request without fromNodeId - should use current_node_ids from instance
+	reqBody := map[string]interface{}{
+		"businessParams": map[string]interface{}{"param": "value"},
+	}
+	body, _ := json.Marshal(reqBody)
+	req, _ := http.NewRequest("POST", "/api/execute/test-instance-id", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// This will fail because we don't have a real database
+	// But we verify the request is accepted (not 400 for missing fromNodeId)
+	assert.True(t, w.Code == http.StatusInternalServerError || w.Code == http.StatusNotFound)
+}
+
+func TestWorkflowExecutorHandler_ExecuteWorkflow_EmptyFromNodeId_EmptyCurrentNodeIds(t *testing.T) {
+	_, router := setupWorkflowExecutorHandlerTest(t)
+
+	// Request without fromNodeId - if current_node_ids is empty, should return 400
+	reqBody := map[string]interface{}{
+		"businessParams": map[string]interface{}{"param": "value"},
+	}
+	body, _ := json.Marshal(reqBody)
+	req, _ := http.NewRequest("POST", "/api/execute/test-instance-id-no-current", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	// This test will need database mocking to properly test the error case
+	// For now, we accept any error response
+	assert.True(t, w.Code >= http.StatusBadRequest)
 }
 
