@@ -8,50 +8,50 @@
         </div>
       </template>
 
-      <t-form :data="form" @submit="handleSubmit" label-width="100px">
-        <t-form-item label="用户ID" name="userId" :rules="[{ required: true, message: '请输入用户ID' }]">
+      <a-form :data="form" @submit="handleSubmit" label-width="100px">
+        <a-form-item label="用户ID" name="userId" :rules="[{ required: true, message: '请输入用户ID' }]">
           <t-input
             v-model="form.userId"
             placeholder="请输入用户ID"
             clearable
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="真实姓名" name="realName" :rules="[{ required: true, message: '请输入真实姓名' }]">
+        <a-form-item label="真实姓名" name="realName" :rules="[{ required: true, message: '请输入真实姓名' }]">
           <t-input
             v-model="form.realName"
             placeholder="请输入真实姓名"
             clearable
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="身份证号" name="idCard" :rules="idCardRules">
+        <a-form-item label="身份证号" name="idCard" :rules="idCardRules">
           <t-input
             v-model="form.idCard"
             placeholder="请输入身份证号"
             clearable
             :maxlength="18"
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="银行卡号" name="bankCard" :rules="bankCardRules">
+        <a-form-item label="银行卡号" name="bankCard" :rules="bankCardRules">
           <t-input
             v-model="form.bankCard"
             placeholder="请输入银行卡号"
             clearable
             :maxlength="19"
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="银行名称" name="bankName" :rules="[{ required: true, message: '请输入银行名称' }]">
+        <a-form-item label="银行名称" name="bankName" :rules="[{ required: true, message: '请输入银行名称' }]">
           <t-input
             v-model="form.bankName"
             placeholder="请输入银行名称"
             clearable
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item>
+        <a-form-item>
           <t-button
             theme="primary"
             type="submit"
@@ -61,8 +61,8 @@
           >
             提交开户
           </t-button>
-        </t-form-item>
-      </t-form>
+        </a-form-item>
+      </a-form>
 
       <t-message
         v-if="error"

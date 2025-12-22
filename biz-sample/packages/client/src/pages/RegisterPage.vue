@@ -8,8 +8,8 @@
         </div>
       </template>
       
-      <t-form :data="form" @submit="handleSubmit" label-width="80px">
-        <t-form-item label="手机号" name="phone" :rules="phoneRules">
+      <a-form :data="form" @submit="handleSubmit" label-width="80px">
+        <a-form-item label="手机号" name="phone" :rules="phoneRules">
           <t-input
             v-model="form.phone"
             type="tel"
@@ -17,26 +17,26 @@
             clearable
             :maxlength="11"
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="密码" name="password" :rules="passwordRules">
+        <a-form-item label="密码" name="password" :rules="passwordRules">
           <t-input
             v-model="form.password"
             type="password"
             placeholder="请输入密码（至少6位）"
             clearable
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="验证码" name="verifyCode">
+        <a-form-item label="验证码" name="verifyCode">
           <t-input
             v-model="form.verifyCode"
             placeholder="请输入验证码（可选）"
             clearable
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item>
+        <a-form-item>
           <t-button
             theme="primary"
             type="submit"
@@ -46,8 +46,8 @@
           >
             注册
           </t-button>
-        </t-form-item>
-      </t-form>
+        </a-form-item>
+      </a-form>
 
       <t-message
         v-if="error"

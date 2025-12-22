@@ -76,7 +76,38 @@
               {{ message.role === 'user' ? '👤' : '🤖' }}
             </div>
             <div class="message-content">
-              <div class="message-text">{{ message.content }}</div>
+              <!-- 流式消息：显示进度日志 + loading -->
+              <div v-if="message.isStreaming" class="streaming-content">
+                <div v-if="message.progressLogs && message.progressLogs.length > 0" class="progress-logs-section">
+                  <div v-for="(log, logIndex) in message.progressLogs" :key="logIndex" class="log-line">
+                    {{ log }}
+                  </div>
+                </div>
+                <!-- 流式消息的 loading 指示器 -->
+                <div class="streaming-loading-section">
+                  <a-spin size="small" />
+                  <span class="loading-text">AI 正在处理...</span>
+                </div>
+                <!-- 如果有最终内容，也显示出来（追加模式） -->
+                <div v-if="message.content" class="markdown-section">
+                  <div v-html="renderMarkdown(message.content)"></div>
+                </div>
+              </div>
+              <!-- 非流式消息：显示内容 -->
+              <div v-else class="message-text" :class="{ 'markdown-content': message.role === 'assistant' }">
+                <!-- 如果有进度日志，先显示 -->
+                <div v-if="message.progressLogs && message.progressLogs.length > 0" class="progress-logs-section">
+                  <div v-for="(log, logIndex) in message.progressLogs" :key="logIndex" class="log-line">
+                    {{ log }}
+                  </div>
+                </div>
+                <!-- Assistant 消息：渲染 Markdown -->
+                <div v-if="message.role === 'assistant' && message.content" class="markdown-section">
+                  <div v-html="renderMarkdown(message.content)"></div>
+                </div>
+                <!-- 用户消息：纯文本 -->
+                <template v-else-if="message.role === 'user'">{{ message.content }}</template>
+              </div>
               <div class="message-time">{{ formatTime(message.timestamp) }}</div>
             </div>
           </div>
@@ -86,17 +117,6 @@
             <div class="welcome-icon">👋</div>
             <div class="welcome-text">你好！我是 AI 助手</div>
             <div class="welcome-subtitle">有什么我可以帮助你的吗？</div>
-          </div>
-
-          <!-- 加载指示器 -->
-          <div v-if="isLoading" class="message assistant">
-            <div class="message-avatar">🤖</div>
-            <div class="message-content">
-              <div class="loading-container">
-                <a-spin size="small" />
-                <span class="loading-text">AI 正在思考...</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -134,16 +154,20 @@
 import { ref, reactive, nextTick, watch, onMounted, computed } from 'vue'
 import { Modal } from 'ant-design-vue'
 import { chatApiService, type ChatConversation } from '../services/chatApiService'
+import { renderMarkdown } from '../utils/markdown'
 
 // 定义消息类型
 interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  // 进度日志（AI 操作过程）
+  progressLogs?: string[]
+  // 是否正在流式输出
+  isStreaming?: boolean
 }
 
 // 响应式数据
-const isLoading = ref(false)
 const inputMessage = ref('')
 const messages = ref<Message[]>([])
 const messagesContainer = ref<HTMLElement>()
@@ -162,20 +186,17 @@ const emit = defineEmits<{
 
 // 计算是否可以发送
 const canSend = computed(() => {
-  return inputMessage.value.trim().length > 0 && !isLoading.value
+  return inputMessage.value.trim().length > 0
 })
 
 // 发送消息
 const sendMessage = async () => {
   const message = inputMessage.value.trim()
-  if (!message || isLoading.value) return
+  if (!message) return
 
-  // 不在这里添加用户消息，由父组件的 Claude 服务统一管理
+  // 不在这里添加用户消息,由父组件的 Claude 服务统一管理
   // 只清空输入框
   inputMessage.value = ''
-
-  // 设置加载状态
-  isLoading.value = true
 
   // 滚动到底部
   await nextTick()
@@ -209,10 +230,51 @@ const addAssistantMessage = (content: string) => {
   })
 }
 
-// 设置加载状态（供外部调用）
-const setLoading = (loading: boolean) => {
-  isLoading.value = loading
-  if (!loading) {
+// 添加流式消息（用于显示 AI 操作过程）
+const addStreamingMessage = () => {
+  const message: Message = {
+    role: 'assistant',
+    content: '',
+    timestamp: new Date(),
+    progressLogs: [],
+    isStreaming: true
+  }
+  messages.value.push(message)
+  nextTick(() => {
+    scrollToBottom()
+  })
+  return message
+}
+
+// 追加进度日志到当前流式消息
+const appendProgressLog = (log: string) => {
+  // 找到最后一条 isStreaming 的消息
+  const streamingMessage = messages.value
+    .slice()
+    .reverse()
+    .find(msg => msg.isStreaming)
+
+  if (streamingMessage && streamingMessage.progressLogs) {
+    streamingMessage.progressLogs.push(log)
+    nextTick(() => {
+      scrollToBottom()
+    })
+  }
+}
+
+// 完成流式消息，追加 Markdown 内容（不删除进度日志）
+const finalizeMessage = (content: string) => {
+  // 找到最后一条 isStreaming 的消息
+  const streamingMessage = messages.value
+    .slice()
+    .reverse()
+    .find(msg => msg.isStreaming)
+
+  if (streamingMessage) {
+    // 追加 Markdown 内容，保留进度日志
+    streamingMessage.content = content
+    streamingMessage.isStreaming = false
+    // 不清空 progressLogs，让用户可以看到完整的操作历史
     nextTick(() => {
       scrollToBottom()
     })
@@ -368,7 +430,9 @@ onMounted(async () => {
 defineExpose({
   addUserMessage,
   addAssistantMessage,
-  setLoading,
+  addStreamingMessage,
+  appendProgressLog,
+  finalizeMessage,
   messages, // 暴露 messages 以便父组件可以直接访问
   scrollToBottom // 暴露滚动方法
 })
@@ -599,22 +663,6 @@ defineExpose({
   color: rgba(0, 0, 0, 0.45);
 }
 
-/* 加载指示器 - Ant Design 风格 */
-.loading-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #ffffff;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px 8px 8px 2px;
-}
-
-.loading-text {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.65);
-}
-
 /* 输入区域 - Ant Design 风格 */
 .chat-input-area {
   border-top: 1px solid #f0f0f0;
@@ -759,5 +807,177 @@ defineExpose({
 .chat-box-container.show-conversations .messages-container {
   flex: 1;
   min-width: 0;
+}
+
+/* 统一消息气泡外层 - T9.2 */
+.message.assistant .message-text {
+  background: #ffffff;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px 8px 8px 2px;
+  padding: 0;  /* 外层不加 padding，由内部区域控制 */
+  overflow: hidden;  /* 确保内部圆角不溢出 */
+}
+
+.message.assistant .streaming-content {
+  width: 100%;
+}
+
+/* 过程日志区域 - T9.3 移除独立边框 */
+.progress-logs-section {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  /* 移除 border、border-radius 和 margin-bottom */
+}
+
+/* 日志行样式 - T9.4 */
+.log-line {
+  color: rgba(0, 0, 0, 0.75);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+
+.log-line:last-child {
+  margin-bottom: 0;
+}
+
+/* Loading 区域 - T9.3 移除独立边框 */
+.streaming-loading-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;  /* 与上方区域的分隔线 */
+  /* 移除 border、border-radius 和 margin-bottom */
+}
+
+.streaming-loading-section .loading-text {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+/* Markdown 内容区域 - T9.3 */
+.markdown-section {
+  padding: 12px 16px;
+  background: transparent;
+  border-top: 1px solid #f0f0f0;  /* 与上方区域的分隔线 */
+}
+
+/* 如果是第一个区域，移除顶部分隔线 - T9.3 */
+.progress-logs-section:first-child,
+.streaming-loading-section:first-child,
+.markdown-section:first-child {
+  border-top: none;
+}
+
+/* Markdown 内容样式（参考 GitHub 风格） */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-content :deep(h1) {
+  font-size: 1.5em;
+  border-bottom: 1px solid #d9d9d9;
+  padding-bottom: 8px;
+}
+
+.markdown-content :deep(h2) {
+  font-size: 1.25em;
+  border-bottom: 1px solid #e8e8e8;
+  padding-bottom: 6px;
+}
+
+.markdown-content :deep(h3) {
+  font-size: 1.1em;
+}
+
+.markdown-content :deep(p) {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  padding-left: 24px;
+  margin-bottom: 12px;
+}
+
+.markdown-content :deep(li) {
+  margin-bottom: 4px;
+}
+
+.markdown-content :deep(code) {
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content :deep(pre) {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.markdown-content :deep(pre code) {
+  background: transparent;
+  padding: 0;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 4px solid #d9d9d9;
+  padding-left: 16px;
+  margin-left: 0;
+  color: rgba(0, 0, 0, 0.65);
+  margin-bottom: 12px;
+}
+
+.markdown-content :deep(a) {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.markdown-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.markdown-content :deep(table) {
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  border: 1px solid #d9d9d9;
+  padding: 8px 12px;
+}
+
+.markdown-content :deep(th) {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.markdown-content :deep(hr) {
+  border: none;
+  border-top: 1px solid #e8e8e8;
+  margin: 16px 0;
 }
 </style>

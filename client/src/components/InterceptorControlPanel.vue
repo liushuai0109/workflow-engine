@@ -6,30 +6,30 @@
 
     <div class="panel-content">
       <!-- 会话状态 -->
-      <t-form :label-width="80">
-        <t-form-item label="会话状态">
-          <t-tag :theme="statusTagTheme" variant="light-outline">
+      <a-form :label-width="80">
+        <a-form-item label="会话状态">
+          <a-tag :theme="statusTagTheme" variant="light-outline">
             {{ sessionStatus || '未启动' }}
-          </t-tag>
-        </t-form-item>
+          </a-tag>
+        </a-form-item>
 
         <!-- 当前节点 -->
-        <t-form-item v-if="currentNodeIds.length > 0" label="当前节点">
+        <a-form-item v-if="currentNodeIds.length > 0" label="当前节点">
           <div class="value">{{ currentNodeIds.join(', ') }}</div>
-        </t-form-item>
+        </a-form-item>
 
         <!-- 会话ID -->
-        <t-form-item v-if="currentSessionId" label="会话ID">
+        <a-form-item v-if="currentSessionId" label="会话ID">
           <div class="value-small">{{ currentSessionId }}</div>
-        </t-form-item>
+        </a-form-item>
 
         <!-- 实例ID -->
-        <t-form-item v-if="currentInstanceId" label="实例ID">
+        <a-form-item v-if="currentInstanceId" label="实例ID">
           <div class="value-small">{{ currentInstanceId }}</div>
-        </t-form-item>
+        </a-form-item>
 
         <!-- Mock 数据配置 -->
-        <t-form-item v-if="!currentSessionId" label="Mock 数据">
+        <a-form-item v-if="!currentSessionId" label="Mock 数据">
           <a-textarea
             v-model="mockDataJson"
             placeholder='{"nodeId": {"statusCode": 200, "body": {...}}}'
@@ -37,8 +37,8 @@
             :status="mockDataError ? 'error' : undefined"
             :tips="mockDataError"
           />
-        </t-form-item>
-      </t-form>
+        </a-form-item>
+      </a-form>
 
       <!-- 控制按钮 -->
       <div class="control-buttons">
@@ -81,18 +81,18 @@
       </div>
 
       <!-- 错误信息 -->
-      <t-alert v-if="errorMessage" type="error" :message="errorMessage" close />
+      <a-alert v-if="errorMessage" type="error" :message="errorMessage" close />
 
       <!-- 执行结果 -->
       <div v-if="lastResult" class="result-section">
-        <t-collapse :default-value="[]">
-          <t-collapse-panel header="Business Response" value="business">
+        <a-collapse :default-value="[]">
+          <a-collapse-panel header="Business Response" value="business">
             <pre>{{ JSON.stringify(lastResult.result.businessResponse, null, 2) }}</pre>
-          </t-collapse-panel>
-          <t-collapse-panel header="Engine Response" value="engine">
+          </a-collapse-panel>
+          <a-collapse-panel header="Engine Response" value="engine">
             <pre>{{ JSON.stringify(lastResult.result.engineResponse, null, 2) }}</pre>
-          </t-collapse-panel>
-        </t-collapse>
+          </a-collapse-panel>
+        </a-collapse>
       </div>
 
       <!-- 执行日志 -->
@@ -106,9 +106,9 @@
             :class="{ 'log-mocked': entry.isMocked }"
           >
             <div class="log-header">
-              <t-tag type="primary" size="small" variant="light">{{ entry.operation }}</t-tag>
+              <a-tag type="primary" size="small" variant="light">{{ entry.operation }}</a-tag>
               <span class="log-timestamp">{{ formatTimestamp(entry.timestamp) }}</span>
-              <t-tag v-if="entry.isMocked" type="warning" size="small">Mock</t-tag>
+              <a-tag v-if="entry.isMocked" type="warning" size="small">Mock</a-tag>
             </div>
             <div v-if="entry.input" class="log-detail">
               <strong>输入:</strong> {{ JSON.stringify(entry.input) }}

@@ -10,33 +10,33 @@
             </div>
           </template>
 
-          <t-form :data="buyForm" @submit="handleBuy" label-width="100px">
-            <t-form-item label="账户ID" name="accountId" :rules="[{ required: true, message: '请输入账户ID' }]">
+          <a-form :data="buyForm" @submit="handleBuy" label-width="100px">
+            <a-form-item label="账户ID" name="accountId" :rules="[{ required: true, message: '请输入账户ID' }]">
               <t-input
                 v-model="buyForm.accountId"
                 placeholder="请输入账户ID"
                 clearable
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item label="股票代码" name="stockCode" :rules="[{ required: true, message: '请输入股票代码' }]">
+            <a-form-item label="股票代码" name="stockCode" :rules="[{ required: true, message: '请输入股票代码' }]">
               <t-input
                 v-model="buyForm.stockCode"
                 placeholder="如：000001"
                 clearable
                 :maxlength="6"
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item label="股票名称" name="stockName" :rules="[{ required: true, message: '请输入股票名称' }]">
+            <a-form-item label="股票名称" name="stockName" :rules="[{ required: true, message: '请输入股票名称' }]">
               <t-input
                 v-model="buyForm.stockName"
                 placeholder="如：平安银行"
                 clearable
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item label="买入数量" name="quantity" :rules="quantityRules">
+            <a-form-item label="买入数量" name="quantity" :rules="quantityRules">
               <t-input-number
                 v-model="buyForm.quantity"
                 placeholder="请输入数量"
@@ -44,9 +44,9 @@
                 :step="100"
                 style="width: 100%"
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item label="买入价格" name="price" :rules="priceRules">
+            <a-form-item label="买入价格" name="price" :rules="priceRules">
               <t-input-number
                 v-model="buyForm.price"
                 placeholder="请输入价格"
@@ -55,9 +55,9 @@
                 :decimal-places="2"
                 style="width: 100%"
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item>
+            <a-form-item>
               <t-button
                 theme="primary"
                 type="submit"
@@ -68,8 +68,8 @@
               >
                 买入
               </t-button>
-            </t-form-item>
-          </t-form>
+            </a-form-item>
+          </a-form>
 
           <t-message
             v-if="buyError"
@@ -106,25 +106,25 @@
             </div>
           </template>
 
-          <t-form :data="sellForm" @submit="handleSell" label-width="100px">
-            <t-form-item label="账户ID" name="accountId" :rules="[{ required: true, message: '请输入账户ID' }]">
+          <a-form :data="sellForm" @submit="handleSell" label-width="100px">
+            <a-form-item label="账户ID" name="accountId" :rules="[{ required: true, message: '请输入账户ID' }]">
               <t-input
                 v-model="sellForm.accountId"
                 placeholder="请输入账户ID"
                 clearable
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item label="股票代码" name="stockCode" :rules="[{ required: true, message: '请输入股票代码' }]">
+            <a-form-item label="股票代码" name="stockCode" :rules="[{ required: true, message: '请输入股票代码' }]">
               <t-input
                 v-model="sellForm.stockCode"
                 placeholder="如：000001"
                 clearable
                 :maxlength="6"
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item label="卖出数量" name="quantity" :rules="quantityRules">
+            <a-form-item label="卖出数量" name="quantity" :rules="quantityRules">
               <t-input-number
                 v-model="sellForm.quantity"
                 placeholder="请输入数量"
@@ -132,9 +132,9 @@
                 :step="100"
                 style="width: 100%"
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item label="卖出价格" name="price" :rules="priceRules">
+            <a-form-item label="卖出价格" name="price" :rules="priceRules">
               <t-input-number
                 v-model="sellForm.price"
                 placeholder="请输入价格"
@@ -143,9 +143,9 @@
                 :decimal-places="2"
                 style="width: 100%"
               />
-            </t-form-item>
+            </a-form-item>
 
-            <t-form-item>
+            <a-form-item>
               <t-button
                 theme="primary"
                 type="submit"
@@ -156,8 +156,8 @@
               >
                 卖出
               </t-button>
-            </t-form-item>
-          </t-form>
+            </a-form-item>
+          </a-form>
 
           <t-message
             v-if="sellError"

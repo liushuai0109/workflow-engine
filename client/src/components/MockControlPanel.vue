@@ -6,23 +6,23 @@
 
     <div class="panel-content">
       <!-- 执行状态 -->
-      <t-form :label-width="80">
-        <t-form-item label="执行状态">
-          <t-tag :theme="statusTagTheme" variant="light-outline">
+      <a-form :label-width="80">
+        <a-form-item label="执行状态">
+          <a-tag :theme="statusTagTheme" variant="light-outline">
             {{ executionStatus || '未开始' }}
-          </t-tag>
-        </t-form-item>
+          </a-tag>
+        </a-form-item>
 
         <!-- 当前节点 -->
-        <t-form-item v-if="currentNodeIds.length > 0" label="当前节点">
+        <a-form-item v-if="currentNodeIds.length > 0" label="当前节点">
           <div class="value">{{ currentNodeIds.join(', ') }}</div>
-        </t-form-item>
+        </a-form-item>
 
         <!-- 实例ID -->
-        <t-form-item v-if="currentInstanceId" label="实例ID">
+        <a-form-item v-if="currentInstanceId" label="实例ID">
           <div class="value-small">{{ currentInstanceId }}</div>
-        </t-form-item>
-      </t-form>
+        </a-form-item>
+      </a-form>
 
       <!-- 控制按钮 -->
       <div class="control-buttons">
@@ -47,18 +47,18 @@
       </div>
 
       <!-- 错误信息 -->
-      <t-alert v-if="errorMessage" type="error" :message="errorMessage" close />
+      <a-alert v-if="errorMessage" type="error" :message="errorMessage" close />
 
       <!-- 执行结果 -->
       <div v-if="lastResult" class="result-section">
-        <t-collapse :default-value="[]">
-          <t-collapse-panel header="Business Response" value="business">
+        <a-collapse :default-value="[]">
+          <a-collapse-panel header="Business Response" value="business">
             <pre>{{ JSON.stringify(lastResult.businessResponse, null, 2) }}</pre>
-          </t-collapse-panel>
-          <t-collapse-panel header="Engine Response" value="engine">
+          </a-collapse-panel>
+          <a-collapse-panel header="Engine Response" value="engine">
             <pre>{{ JSON.stringify(lastResult.engineResponse, null, 2) }}</pre>
-          </t-collapse-panel>
-        </t-collapse>
+          </a-collapse-panel>
+        </a-collapse>
       </div>
     </div>
   </div>

@@ -8,16 +8,16 @@
         </div>
       </template>
 
-      <t-form :data="form" @submit="handleSubmit" label-width="100px">
-        <t-form-item label="账户ID" name="accountId" :rules="[{ required: true, message: '请输入账户ID' }]">
+      <a-form :data="form" @submit="handleSubmit" label-width="100px">
+        <a-form-item label="账户ID" name="accountId" :rules="[{ required: true, message: '请输入账户ID' }]">
           <t-input
             v-model="form.accountId"
             placeholder="请输入账户ID"
             clearable
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="入金金额" name="amount" :rules="amountRules">
+        <a-form-item label="入金金额" name="amount" :rules="amountRules">
           <t-input-number
             v-model="form.amount"
             placeholder="请输入金额"
@@ -26,18 +26,18 @@
             :decimal-places="2"
             style="width: 100%"
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item label="银行卡号" name="bankCard" :rules="bankCardRules">
+        <a-form-item label="银行卡号" name="bankCard" :rules="bankCardRules">
           <t-input
             v-model="form.bankCard"
             placeholder="请输入银行卡号"
             clearable
             :maxlength="19"
           />
-        </t-form-item>
+        </a-form-item>
 
-        <t-form-item>
+        <a-form-item>
           <t-button
             theme="primary"
             type="submit"
@@ -47,8 +47,8 @@
           >
             确认入金
           </t-button>
-        </t-form-item>
-      </t-form>
+        </a-form-item>
+      </a-form>
 
       <t-message
         v-if="error"

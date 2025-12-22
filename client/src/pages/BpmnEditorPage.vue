@@ -1144,13 +1144,8 @@ const handleChatMessage = async (message: string): Promise<void> => {
     rightPanelRef.value.addUserMessage(message)
   }
 
-  // 开启 Loading 状态
+  // 开启画布 Loading 状态（保留画布的 loading，只移除聊天框的独立 loading）
   isAIProcessing.value = true
-
-  // 设置 ChatBox 的 loading 状态
-  if (rightPanelRef.value && rightPanelRef.value.setChatLoading) {
-    rightPanelRef.value.setChatLoading(true)
-  }
 
   try {
     // 如果使用 Claude，走 Claude 处理流程
@@ -1187,13 +1182,8 @@ const handleChatMessage = async (message: string): Promise<void> => {
       rightPanelRef.value.addChatMessage('抱歉，处理您的请求时出现错误，请稍后重试。')
     }
   } finally {
-    // 清除 Loading 状态
+    // 清除画布 Loading 状态
     isAIProcessing.value = false
-
-    // 清除 ChatBox 的 loading 状态
-    if (rightPanelRef.value && rightPanelRef.value.setChatLoading) {
-      rightPanelRef.value.setChatLoading(false)
-    }
   }
 }
 
@@ -1228,22 +1218,52 @@ const handleChatWithClaude = async (message: string): Promise<void> => {
     console.log('✅ Claude 服务已初始化')
   }
 
+  // 添加流式消息以显示操作过程
+  if (rightPanelRef.value && rightPanelRef.value.addStreamingMessage) {
+    rightPanelRef.value.addStreamingMessage()
+  }
+
+  // 监听编辑器操作事件
+  const unsubscribe = editorOperationService.onOperation((operationMessage: string) => {
+    if (rightPanelRef.value && rightPanelRef.value.appendProgressLog) {
+      rightPanelRef.value.appendProgressLog(operationMessage)
+    }
+  })
+
   try {
     // 调用 Claude API，自动处理工具调用
     const response = await claudeService.sendMessage(message)
 
-    // 将 AI 响应添加到聊天界面
-    if (rightPanelRef.value && rightPanelRef.value.addChatMessage) {
+    // 将 AI 响应添加到聊天界面（使用 Markdown 替换流式消息）
+    if (rightPanelRef.value && rightPanelRef.value.finalizeMessage) {
       // 如果响应为空或只包含工具调用信息，则返回简短提示
-      const displayMessage = response.trim() || '操作已完成'
-      rightPanelRef.value.addChatMessage(displayMessage)
+      const displayMessage = response.trim() || '✅ 操作已完成'
+      rightPanelRef.value.finalizeMessage(displayMessage)
+
+      // 保存处理后的消息到数据库
+      // 确保数据库保存的是用户看到的内容，而不是原始 API 响应
+      await claudeService.saveAssistantMessage(displayMessage)
     }
 
     // 如果流程图发生变化，更新状态
     showStatus('操作完成', 'success')
   } catch (error) {
     console.error('Claude API 调用失败:', error)
-    throw error
+
+    // 错误处理：确保流式消息的 loading 状态消失
+    if (rightPanelRef.value && rightPanelRef.value.finalizeMessage) {
+      const errorMessage = error instanceof Error ? error.message : '处理请求时出现错误'
+      const displayErrorMessage = `❌ 错误: ${errorMessage}`
+      rightPanelRef.value.finalizeMessage(displayErrorMessage)
+
+      // 保存错误消息到数据库
+      await claudeService.saveAssistantMessage(displayErrorMessage)
+    }
+
+    showStatus('AI 处理失败', 'error')
+  } finally {
+    // 取消监听
+    unsubscribe()
   }
 }
 

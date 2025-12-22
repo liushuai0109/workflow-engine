@@ -1,6 +1,11 @@
 /**
  * E2E Test: 聊天功能测试
- * 测试 AI 助手聊天界面、会话管理、消息交互等
+ * 测试 AI 助手聊天界面在右侧 Tab Panel 中的集成、会话管理、消息交互等
+ *
+ * 架构说明：
+ * - ChatBox 组件集成在 RightPanelContainer 的 Tab Panel 中
+ * - 作为"AI 助手" Tab 存在，与属性、Mock、Debug、拦截器等面板并列
+ * - 不再是独立的悬浮对话框，因此不支持显示/隐藏、最小化、拖拽等窗口操作
  */
 
 /// <reference types="node" />
@@ -8,157 +13,117 @@ import { test, expect } from '@playwright/test';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
-test.describe('聊天界面测试', () => {
+/**
+ * 辅助函数：切换到 AI 助手 Tab
+ * 在右侧面板的 Tabs 中定位并点击"AI 助手" Tab
+ */
+async function switchToAIChatTab(page: any) {
+  // 使用文本内容定位 AI 助手 Tab
+  const aiTab = page.locator('.ant-tabs-tab').filter({ hasText: 'AI 助手' });
+  await aiTab.click();
+  await page.waitForTimeout(500); // 等待 Tab 切换动画完成
+}
+
+/**
+ * 辅助函数：获取 Tab Panel 中的 ChatBox
+ * 返回位于激活的 Tab Panel 中的 ChatBox 组件
+ */
+function getChatBoxInTab(page: any) {
+  // ChatBox 位于激活的 Tab Panel 中
+  return page.locator('.ant-tabs-tabpane-active .chat-box-container');
+}
+
+test.describe('聊天界面测试 - Tab Panel 集成', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
 
-  test('聊天框可以显示和隐藏', async ({ page }) => {
-    // 查找聊天触发按钮
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"], button[title*="助手"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
-    
-    // 点击打开聊天框
-    await chatToggleBtn.click();
-    await page.waitForTimeout(1000);
-    
-    // 验证聊天框显示
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
+  test('可以切换到 AI 助手 Tab', async ({ page }) => {
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
+
+    // 验证 Tab 被激活
+    const aiTab = page.locator('.ant-tabs-tab').filter({ hasText: 'AI 助手' });
+    await expect(aiTab).toHaveClass(/ant-tabs-tab-active/);
+
+    // 验证 ChatBox 组件可见
+    const chatBox = getChatBoxInTab(page);
     await expect(chatBox).toBeVisible({ timeout: 5000 });
-    
-    // 查找关闭按钮
-    const closeButton = chatBox.locator('.close-btn, button:has-text("×"), button[title*="关闭"]').first();
-    if (await closeButton.count() > 0) {
-      await closeButton.click();
-      await page.waitForTimeout(500);
-      
-      // 验证聊天框隐藏
-      // 注意：聊天框可能完全移除或只是隐藏
-    }
   });
 
-  test('聊天框可以最小化和恢复', async ({ page }) => {
-    // 打开聊天框
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
-    
-    await chatToggleBtn.click();
-    await page.waitForTimeout(1000);
-    
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
-    
-    // 查找最小化按钮（使用 title 属性更可靠）
-    const minimizeButton = chatBox.locator('button[title*="最小化"], button[title*="展开"]').first();
-    expect(await minimizeButton.count()).not.toBe(0);
-    
-    // 第一次点击：最小化
-    await minimizeButton.click();
-    await page.waitForTimeout(500);
-    
-    // 验证聊天框最小化（检查 minimized 类）
-    const isMinimized = await chatBox.evaluate((el) => {
-      return el.classList.contains('minimized');
-    });
-    expect(isMinimized).toBeTruthy();
-    
-    // 恢复聊天框（按钮文本现在应该是 "展开"）
-    // 重新查找按钮，因为 title 可能已经改变
-    const restoreButton = chatBox.locator('button[title*="展开"], button[title*="最小化"]').first();
-    expect(await restoreButton.count()).not.toBe(0);
-    
-    await restoreButton.click();
-    await page.waitForTimeout(500);
-    
-    // 验证聊天框恢复
-    const isRestored = !(await chatBox.evaluate((el) => {
-      return el.classList.contains('minimized');
-    }));
-    expect(isRestored).toBeTruthy();
+  test('AI 助手 Tab 内容可见性', async ({ page }) => {
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
+
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
+
+    // 验证聊天头部可见
+    const chatHeader = chatBox.locator('.chat-header');
+    await expect(chatHeader).toBeVisible();
+
+    // 验证消息容器可见
+    const messagesContainer = chatBox.locator('.messages-container');
+    await expect(messagesContainer).toBeVisible();
+
+    // 验证输入区域可见
+    const inputArea = chatBox.locator('.chat-input-area');
+    await expect(inputArea).toBeVisible();
   });
 
-  test('聊天框可以拖拽', async ({ page }) => {
-    // 打开聊天框
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
+  test('Tab 间切换保持聊天状态', async ({ page }) => {
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
 
-    await chatToggleBtn.click();
-    await page.waitForTimeout(1000);
+    // 等待 ChatBox 加载
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
 
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    await expect(chatBox).toBeVisible({ timeout: 5000 });
-    
-    // 获取初始位置
-    const initialPosition = await chatBox.boundingBox();
-    expect(initialPosition).not.toBeNull();
-    
-    // 查找聊天框头部（拖拽是从头部开始的）
-    const chatHeader = chatBox.locator('.chat-header').first();
-    expect(await chatHeader.count()).not.toBe(0);
-    
-    // 获取头部的位置
-    const headerBox = await chatHeader.boundingBox();
-    expect(headerBox).not.toBeNull();
-    
-    // 在头部中间位置开始拖拽
-    const startX = headerBox!.x + headerBox!.width / 2;
-    const startY = headerBox!.y + headerBox!.height / 2;
-    
-    // 目标位置（向右下移动 100px）
-    const targetX = startX + 100;
-    const targetY = startY + 100;
-    
-    // 执行拖拽操作
-    await page.mouse.move(startX, startY);
-    await page.mouse.down();
-    await page.mouse.move(targetX, targetY, { steps: 10 }); // 使用 steps 模拟平滑移动
-    await page.mouse.up();
-    await page.waitForTimeout(500); // 等待拖拽完成和位置更新
-    
-    // 验证位置改变（如果支持拖拽）
-    const newPosition = await chatBox.boundingBox();
-    expect(newPosition).not.toBeNull();
-    
-    // 位置应该改变（允许一些误差，因为可能有边界限制）
-    const xChanged = Math.abs(newPosition!.x - initialPosition!.x) > 10;
-    const yChanged = Math.abs(newPosition!.y - initialPosition!.y) > 10;
-    expect(xChanged || yChanged).toBeTruthy();
+    // 记录当前消息数量（如果有）
+    const messagesBeforeSwitch = await chatBox.locator('.message').count();
+
+    // 切换到属性 Tab
+    const propertiesTab = page.locator('.ant-tabs-tab').filter({ hasText: '属性' });
+    await propertiesTab.click();
+    await page.waitForTimeout(500);
+
+    // 再次切换回 AI 助手 Tab
+    await switchToAIChatTab(page);
+
+    // 验证 ChatBox 重新可见
+    await expect(chatBox).toBeVisible();
+
+    // 验证消息数量保持不变
+    const messagesAfterSwitch = await chatBox.locator('.message').count();
+    expect(messagesAfterSwitch).toBe(messagesBeforeSwitch);
   });
 
   test('消息列表可以显示', async ({ page }) => {
-    // 打开聊天框
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
-    
-    await chatToggleBtn.click();
-    await page.waitForTimeout(1000);
-    
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
-    
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
+
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
+
     // 查找消息容器
-    const messagesContainer = chatBox.locator('.messages-container, [class*="messages"]').first();
-    expect(await messagesContainer.count()).not.toBe(0);
-    
+    const messagesContainer = chatBox.locator('.messages-container');
+    await expect(messagesContainer).toBeVisible();
+
     // 验证消息容器存在
     expect(await messagesContainer.count()).toBeGreaterThan(0);
   });
 });
 
-test.describe('聊天会话测试', () => {
+test.describe('聊天会话测试 - 会话管理功能', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
 
   test('可以创建新会话', async ({ page, request }) => {
-    // 打开聊天框
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
-
-    await chatToggleBtn.click();
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
     await page.waitForTimeout(1000);
 
     // 尝试创建新会话（通过 API）
@@ -187,11 +152,8 @@ test.describe('聊天会话测试', () => {
   });
 
   test('可以获取会话列表', async ({ page, request }) => {
-    // 打开聊天框
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
-
-    await chatToggleBtn.click();
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
     await page.waitForTimeout(1000);
 
     // 尝试获取会话列表
@@ -208,15 +170,12 @@ test.describe('聊天会话测试', () => {
   });
 
   test('可以切换会话', async ({ page }) => {
-    // 打开聊天框
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
-
-    await chatToggleBtn.click();
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
     await page.waitForTimeout(1000);
 
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
 
     // 点击会话列表切换按钮 (☰)
     const conversationListToggle = chatBox.locator('button[title*="会话列表"]').first();
@@ -320,43 +279,41 @@ test.describe('聊天会话测试', () => {
   });
 });
 
-test.describe('消息交互测试', () => {
+test.describe('消息交互测试 - 消息发送和接收', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // 打开聊天框
-    const chatToggleBtn = page.locator('.chat-toggle-btn, button[title*="AI"]').first();
-    expect(await chatToggleBtn.count()).not.toBe(0);
-    await chatToggleBtn.click();
+    // 切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
     await page.waitForTimeout(1000);
   });
 
   test('可以发送用户消息', async ({ page }) => {
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
-    
-    // 查找消息输入框
-    const messageInput = chatBox.locator('input[type="text"], textarea, [contenteditable="true"]').first();
-    expect(await messageInput.count()).not.toBe(0);
-    
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
+
+    // 查找消息输入框（使用 textarea 选择器，因为 Ant Design 的 a-textarea）
+    const messageInput = chatBox.locator('textarea').first();
+    await expect(messageInput).toBeVisible();
+
     // 输入消息
     await messageInput.fill('Test message');
     await page.waitForTimeout(300);
-    
-    // 查找发送按钮
-    const sendButton = chatBox.locator('button:has-text("Send"), button:has-text("发送"), button[type="submit"]').first();
-    if (await sendButton.count() === 0) {
-      // 如果没有发送按钮，尝试按 Enter
-      await messageInput.press('Enter');
-    } else {
+
+    // 查找发送按钮（圆形按钮）
+    const sendButton = chatBox.locator('button[type="button"].ant-btn-circle, button.ant-btn-primary').first();
+    if (await sendButton.count() > 0 && await sendButton.isEnabled()) {
       await sendButton.click();
+    } else {
+      // 如果没有发送按钮或按钮禁用，尝试按 Enter
+      await messageInput.press('Enter');
     }
-    
+
     await page.waitForTimeout(1000);
-    
+
     // 验证消息已发送（检查消息列表）
-    const messages = chatBox.locator('.message, [class*="message"]');
+    const messages = chatBox.locator('.message');
     // 应该至少有一条消息
     expect(await messages.count()).toBeGreaterThanOrEqual(0);
   });
@@ -411,14 +368,13 @@ test.describe('消息交互测试', () => {
   });
 
   test('可以显示流式响应', async ({ page }) => {
-    // 这个测试需要实际的流式响应支持
-    // 由于流式响应通常通过 WebSocket 或 Server-Sent Events，这里只验证 UI 可以显示
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
-    
+    // 这个测试验证 UI 可以显示流式内容
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
+
     // 验证消息容器存在，可以显示流式内容
-    const messagesContainer = chatBox.locator('.messages-container, [class*="messages"]').first();
-    expect(await messagesContainer.count()).not.toBe(0);
+    const messagesContainer = chatBox.locator('.messages-container');
+    await expect(messagesContainer).toBeVisible();
     expect(await messagesContainer.count()).toBeGreaterThan(0);
   });
 
@@ -481,11 +437,11 @@ test.describe('消息交互测试', () => {
   });
 
   test('消息时间戳可以显示', async ({ page }) => {
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
-    
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
+
     // 查找消息时间戳（如果有消息的话）
-    const messageTime = chatBox.locator('.message-time, [class*="time"]').first();
+    const messageTime = chatBox.locator('.message-time').first();
     // 时间戳可能不存在（如果没有消息），所以这里只验证如果存在则正确显示
     if (await messageTime.count() > 0) {
       expect(await messageTime.count()).toBeGreaterThan(0);
@@ -493,15 +449,15 @@ test.describe('消息交互测试', () => {
   });
 
   test('聊天记录可以持久化并在刷新后加载', async ({ page }) => {
-    const chatBox = page.locator('.chat-box-container, [class*="chat-box"]').first();
-    expect(await chatBox.count()).not.toBe(0);
+    const chatBox = getChatBoxInTab(page);
+    await expect(chatBox).toBeVisible();
 
     // 等待聊天框完全加载
     await expect(chatBox).toBeVisible({ timeout: 5000 });
 
     // 查找输入框
-    const input = chatBox.locator('textarea.chat-input, textarea[placeholder*="消息"], textarea[placeholder*="输入"]').first();
-    expect(await input.count()).not.toBe(0);
+    const input = chatBox.locator('textarea').first();
+    await expect(input).toBeVisible();
 
     // 发送第一条消息
     const testMessage = `Test message for persistence ${Date.now()}`;
@@ -509,8 +465,8 @@ test.describe('消息交互测试', () => {
     await page.waitForTimeout(500);
 
     // 点击发送按钮或按 Enter
-    const sendButton = chatBox.locator('button.send-btn, button[title*="发送"]').first();
-    if (await sendButton.count() > 0) {
+    const sendButton = chatBox.locator('button.ant-btn-primary').first();
+    if (await sendButton.count() > 0 && await sendButton.isEnabled()) {
       await sendButton.click();
     } else {
       await input.press('Enter');
@@ -518,14 +474,14 @@ test.describe('消息交互测试', () => {
 
     // 等待消息发送（检查用户消息是否显示）
     await page.waitForTimeout(1000);
-    
+
     // 验证用户消息已显示
-    const userMessages = chatBox.locator('.message.user, [class*="message"][class*="user"]');
+    const userMessages = chatBox.locator('.message.user');
     await expect(userMessages.first()).toBeVisible({ timeout: 5000 });
-    
+
     // 检查消息内容
     const firstUserMessage = userMessages.first();
-    const messageText = await firstUserMessage.locator('.message-text').textContent();
+    const messageText = await firstUserMessage.locator('.message-content').textContent();
     expect(messageText).toContain(testMessage);
 
     // 等待 AI 回复（如果有）
@@ -535,7 +491,7 @@ test.describe('消息交互测试', () => {
     const conversationId = await page.evaluate(() => {
       return localStorage.getItem('claude_conversation_id');
     });
-    
+
     console.log('Conversation ID in localStorage:', conversationId);
     expect(conversationId).toBeTruthy();
 
@@ -549,13 +505,12 @@ test.describe('消息交互测试', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
-    // 再次打开聊天框
-    const chatToggleBtnAfterReload = page.locator('.chat-toggle-btn, button[title*="AI"], button[title*="助手"]').first();
-    await chatToggleBtnAfterReload.click();
+    // 再次切换到 AI 助手 Tab
+    await switchToAIChatTab(page);
     await page.waitForTimeout(2000);
 
     // 等待聊天框加载
-    const chatBoxAfterReload = page.locator('.chat-box-container, [class*="chat-box"]').first();
+    const chatBoxAfterReload = getChatBoxInTab(page);
     await expect(chatBoxAfterReload).toBeVisible({ timeout: 5000 });
 
     // 等待历史消息加载（最多等待 5 秒）
@@ -571,9 +526,9 @@ test.describe('消息交互测试', () => {
     // 验证之前发送的消息是否还在
     const messagesAfterReloadList = await chatBoxAfterReload.locator('.message').all();
     let foundTestMessage = false;
-    
+
     for (const msg of messagesAfterReloadList) {
-      const text = await msg.locator('.message-text').textContent();
+      const text = await msg.locator('.message-content').textContent();
       if (text && text.includes(testMessage)) {
         foundTestMessage = true;
         break;
@@ -591,4 +546,3 @@ test.describe('消息交互测试', () => {
     console.log('✅ Conversation ID persisted:', conversationIdAfterReload);
   });
 });
-

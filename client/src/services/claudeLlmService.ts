@@ -125,6 +125,21 @@ export class ClaudeLLMService {
   }
 
   /**
+   * 获取当前会话ID
+   */
+  getCurrentConversationId(): string | null {
+    return this.conversationId
+  }
+
+  /**
+   * 保存助手消息到数据库
+   * 供外部调用，用于保存处理后的显示内容
+   */
+  async saveAssistantMessage(content: string): Promise<void> {
+    await this.saveMessage('assistant', content)
+  }
+
+  /**
    * 从数据库加载会话
    */
   async loadConversation(conversationId: string): Promise<ConversationContext> {
@@ -277,13 +292,11 @@ export class ClaudeLLMService {
       if (!hasToolUse(response.content)) {
         // 没有工具调用，提取文本响应
         finalResponse = this.extractTextFromContent(response.content)
-        
-        // 保存助手响应到数据库
-        const assistantContent = typeof response.content === 'string' 
-          ? response.content 
-          : JSON.stringify(response.content)
-        await this.saveMessage('assistant', assistantContent)
-        
+
+        // ⚠️ 注意：不在这里保存助手响应
+        // 由调用方（BpmnEditorPage）在处理 displayMessage 后保存
+        // 确保数据库保存的是用户看到的最终内容，而不是原始 API 响应
+
         break
       }
 

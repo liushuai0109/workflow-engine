@@ -6,23 +6,23 @@
 
     <div class="panel-content">
       <!-- 会话状态 -->
-      <t-form :label-width="80">
-        <t-form-item label="会话状态">
-          <t-tag :theme="statusTagTheme" variant="light-outline">
+      <a-form :label-width="80">
+        <a-form-item label="会话状态">
+          <a-tag :theme="statusTagTheme" variant="light-outline">
             {{ sessionStatus || '未启动' }}
-          </t-tag>
-        </t-form-item>
+          </a-tag>
+        </a-form-item>
 
         <!-- 当前节点 -->
-        <t-form-item v-if="currentSession?.currentNodeId" label="当前节点">
+        <a-form-item v-if="currentSession?.currentNodeId" label="当前节点">
           <div class="value">{{ currentSession.currentNodeId }}</div>
-        </t-form-item>
+        </a-form-item>
 
         <!-- 断点数量 -->
-        <t-form-item v-if="currentSession" label="断点数量">
+        <a-form-item v-if="currentSession" label="断点数量">
           <div class="value">{{ currentSession.breakpoints.length }}</div>
-        </t-form-item>
-      </t-form>
+        </a-form-item>
+      </a-form>
 
       <!-- 控制按钮 -->
       <div class="control-buttons">
@@ -65,7 +65,7 @@
       </div>
 
       <!-- 错误信息 -->
-      <t-alert v-if="errorMessage" type="error" :message="errorMessage" close />
+      <a-alert v-if="errorMessage" type="error" :message="errorMessage" close />
     </div>
   </div>
 </template>

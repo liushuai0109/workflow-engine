@@ -184,11 +184,6 @@ const handleChatMessage = (message: string) => {
 // 暴露方法给父组件
 defineExpose({
   chatBoxRef,
-  setChatLoading: (loading: boolean) => {
-    if (chatBoxRef.value && chatBoxRef.value.setLoading) {
-      chatBoxRef.value.setLoading(loading)
-    }
-  },
   addUserMessage: (content: string) => {
     if (chatBoxRef.value && chatBoxRef.value.addUserMessage) {
       chatBoxRef.value.addUserMessage(content)
@@ -197,6 +192,21 @@ defineExpose({
   addChatMessage: (content: string) => {
     if (chatBoxRef.value && chatBoxRef.value.addAssistantMessage) {
       chatBoxRef.value.addAssistantMessage(content)
+    }
+  },
+  addStreamingMessage: () => {
+    if (chatBoxRef.value && chatBoxRef.value.addStreamingMessage) {
+      chatBoxRef.value.addStreamingMessage()
+    }
+  },
+  appendProgressLog: (log: string) => {
+    if (chatBoxRef.value && chatBoxRef.value.appendProgressLog) {
+      chatBoxRef.value.appendProgressLog(log)
+    }
+  },
+  finalizeMessage: (content: string) => {
+    if (chatBoxRef.value && chatBoxRef.value.finalizeMessage) {
+      chatBoxRef.value.finalizeMessage(content)
     }
   },
   scrollToBottom: () => {

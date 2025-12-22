@@ -6,6 +6,9 @@
 
 import type { BpmnModelerInstance } from '../types'
 
+// 操作事件监听器类型
+type OperationEventListener = (message: string) => void
+
 export interface NodePosition {
   x: number
   y: number
@@ -43,6 +46,34 @@ class EditorOperationService {
   private elementFactory: any = null
   private modeling: any = null
   private elementRegistry: any = null
+  private operationListeners: OperationEventListener[] = []
+
+  /**
+   * 添加操作事件监听器
+   */
+  onOperation(listener: OperationEventListener): () => void {
+    this.operationListeners.push(listener)
+    // 返回取消监听的函数
+    return () => {
+      const index = this.operationListeners.indexOf(listener)
+      if (index !== -1) {
+        this.operationListeners.splice(index, 1)
+      }
+    }
+  }
+
+  /**
+   * 发送操作事件
+   */
+  private emitOperation(message: string): void {
+    this.operationListeners.forEach(listener => {
+      try {
+        listener(message)
+      } catch (error) {
+        console.error('操作事件监听器错误:', error)
+      }
+    })
+  }
 
   /**
    * 初始化服务，绑定 modeler 实例
@@ -81,7 +112,11 @@ class EditorOperationService {
     }
 
     // 使用 bpmnFactory 创建 business object
-    const bpmnFactory = this.modeler.get('bpmnFactory')
+    const bpmnFactory = this.modeler?.get('bpmnFactory')
+    if (!bpmnFactory) {
+      throw new Error('无法获取 bpmnFactory')
+    }
+
     const businessObject = bpmnFactory.create(type, {
       id,
       name: name || '',
@@ -109,7 +144,9 @@ class EditorOperationService {
       rootElement
     )
 
-    console.log(`✅ 创建节点: ${name || id} (${type}) at (${position.x}, ${position.y})${documentation ? ' 📝 含文档' : ''}`)
+    const logMessage = `✅ 创建节点: ${name || id} (${type})`
+    console.log(`${logMessage} at (${position.x}, ${position.y})${documentation ? ' 📝 含文档' : ''}`)
+    this.emitOperation(logMessage)
 
     return newShape
   }
@@ -160,7 +197,11 @@ class EditorOperationService {
 
     // 步骤 3: 添加条件表达式（如果提供）
     if (condition) {
-      const bpmnFactory = this.modeler.get('bpmnFactory')
+      const bpmnFactory = this.modeler?.get('bpmnFactory')
+      if (!bpmnFactory) {
+        throw new Error('无法获取 bpmnFactory')
+      }
+
       const conditionExpression = bpmnFactory.create('bpmn:FormalExpression', {
         body: condition
       })
@@ -184,9 +225,13 @@ class EditorOperationService {
 
       // 更新连线路径
       this.modeling.updateWaypoints(connection, validatedWaypoints)
-      console.log(`✅ 创建连线（自定义路径）: ${sourceId} -> ${targetId}${name ? ` (${name})` : ''} [${validatedWaypoints.length} 个路径点]`)
+      const logMessage = `✅ 创建连线（自定义路径）: ${sourceId} -> ${targetId}${name ? ` (${name})` : ''}`
+      console.log(`${logMessage} [${validatedWaypoints.length} 个路径点]`)
+      this.emitOperation(logMessage)
     } else {
-      console.log(`✅ 创建连线: ${sourceId} -> ${targetId}${name ? ` (${name})` : ''}`)
+      const logMessage = `✅ 创建连线: ${sourceId} -> ${targetId}${name ? ` (${name})` : ''}`
+      console.log(logMessage)
+      this.emitOperation(logMessage)
     }
 
     return connection
@@ -213,7 +258,11 @@ class EditorOperationService {
     const boundaryPosition = this.calculateBoundaryPosition(attachedElement, position)
 
     // 3. 创建 business object
-    const bpmnFactory = this.modeler.get('bpmnFactory')
+    const bpmnFactory = this.modeler?.get('bpmnFactory')
+    if (!bpmnFactory) {
+      throw new Error('无法获取 bpmnFactory')
+    }
+
     const boundaryEventBO = bpmnFactory.create('bpmn:BoundaryEvent', {
       id,
       name: name || '',
@@ -242,7 +291,10 @@ class EditorOperationService {
       { attach: true }  // 标记为附加形状
     )
 
-    console.log(`✅ 创建边界事件: ${name || id} 附加到 ${attachedToRef} (${position} 位置, cancelActivity=${cancelActivity})`)
+    const logMessage = `✅ 创建边界事件: ${name || id} 附加到 ${attachedToRef}`
+    console.log(`${logMessage} (${position} 位置, cancelActivity=${cancelActivity})`)
+    this.emitOperation(logMessage)
+
     return newBoundary
   }
 
@@ -311,26 +363,30 @@ class EditorOperationService {
     // 修正起点：确保在源节点边缘上
     const firstPoint = result[0]
     const secondPoint = result[1]
-    const fixedStart = this.snapToNodeEdge(firstPoint, secondPoint, sourceBounds, 'source')
-    if (fixedStart) {
-      result[0] = fixedStart
-      console.log(`🔧 修正起点: (${firstPoint.x}, ${firstPoint.y}) -> (${fixedStart.x}, ${fixedStart.y})`)
+    if (firstPoint && secondPoint) {
+      const fixedStart = this.snapToNodeEdge(firstPoint, secondPoint, sourceBounds, 'source')
+      if (fixedStart) {
+        result[0] = fixedStart
+        console.log(`🔧 修正起点: (${firstPoint.x}, ${firstPoint.y}) -> (${fixedStart.x}, ${fixedStart.y})`)
+      }
     }
 
     // 修正终点：确保在目标节点边缘上
     const lastPoint = result[result.length - 1]
     const secondLastPoint = result[result.length - 2]
-    const fixedEnd = this.snapToNodeEdge(lastPoint, secondLastPoint, targetBounds, 'target')
-    if (fixedEnd) {
-      result[result.length - 1] = fixedEnd
-      console.log(`🔧 修正终点: (${lastPoint.x}, ${lastPoint.y}) -> (${fixedEnd.x}, ${fixedEnd.y})`)
+    if (lastPoint && secondLastPoint) {
+      const fixedEnd = this.snapToNodeEdge(lastPoint, secondLastPoint, targetBounds, 'target')
+      if (fixedEnd) {
+        result[result.length - 1] = fixedEnd
+        console.log(`🔧 修正终点: (${lastPoint.x}, ${lastPoint.y}) -> (${fixedEnd.x}, ${fixedEnd.y})`)
+      }
     }
 
     // 确保中间waypoints遵循正交路由（横平竖直）
-    if (result.length === 3) {
+    if (result.length === 3 && result[0] && result[2]) {
       // 最常见情况：3个点（起点、中间点、终点）
       const orthogonalMiddle = this.calculateOrthogonalMiddlePoint(result[0], result[2])
-      if (orthogonalMiddle) {
+      if (orthogonalMiddle && waypoints[1]) {
         result[1] = orthogonalMiddle
         console.log(`🔧 修正中间点为正交路径: (${waypoints[1].x}, ${waypoints[1].y}) -> (${orthogonalMiddle.x}, ${orthogonalMiddle.y})`)
       }
@@ -340,6 +396,8 @@ class EditorOperationService {
         const prev = result[i - 1]
         const curr = result[i]
         const next = result[i + 1]
+
+        if (!prev || !curr || !next) continue
 
         // 判断应该水平对齐还是垂直对齐
         const dxPrev = Math.abs(curr.x - prev.x)
@@ -447,7 +505,9 @@ class EditorOperationService {
     }
 
     this.modeling.removeElements([element])
-    console.log(`🗑️ 删除节点: ${nodeId}`)
+    const logMessage = `🗑️ 删除节点: ${nodeId}`
+    console.log(logMessage)
+    this.emitOperation(logMessage)
   }
 
   /**
@@ -462,7 +522,9 @@ class EditorOperationService {
     }
 
     this.modeling.updateProperties(element, properties)
-    console.log(`✏️ 更新节点: ${nodeId}`, properties)
+    const logMessage = `✏️ 更新节点: ${nodeId}`
+    console.log(logMessage, properties)
+    this.emitOperation(logMessage)
   }
 
   /**
