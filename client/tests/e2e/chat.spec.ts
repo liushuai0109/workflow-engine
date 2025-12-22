@@ -14,6 +14,24 @@ import { test, expect } from '@playwright/test';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 /**
+ * 辅助函数：创建新的 BPMN 图表
+ * 点击 "Create New Diagram" 按钮并等待编辑器加载完成
+ * 这是访问右侧 Tab Panel 的前置条件
+ */
+async function createNewDiagram(page: any) {
+  // 定位并点击 "Create New Diagram" 按钮
+  const createButton = page.locator('button').filter({ hasText: 'Create New Diagram' });
+  await createButton.click();
+
+  // 等待编辑器加载完成 - 右侧面板和 Tab 会在编辑器加载后出现
+  await page.waitForTimeout(1000);
+
+  // 等待右侧 Tab Panel 出现
+  const tabsContainer = page.locator('.ant-tabs');
+  await tabsContainer.waitFor({ state: 'visible', timeout: 5000 });
+}
+
+/**
  * 辅助函数：切换到 AI 助手 Tab
  * 在右侧面板的 Tabs 中定位并点击"AI 助手" Tab
  */
@@ -37,6 +55,9 @@ test.describe('聊天界面测试 - Tab Panel 集成', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+
+    // 创建新图表以显示右侧 Tab Panel
+    await createNewDiagram(page);
   });
 
   test('可以切换到 AI 助手 Tab', async ({ page }) => {
@@ -119,6 +140,9 @@ test.describe('聊天会话测试 - 会话管理功能', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+
+    // 创建新图表以显示右侧 Tab Panel
+    await createNewDiagram(page);
   });
 
   test('可以创建新会话', async ({ page, request }) => {
@@ -283,6 +307,9 @@ test.describe('消息交互测试 - 消息发送和接收', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+
+    // 创建新图表以显示右侧 Tab Panel
+    await createNewDiagram(page);
 
     // 切换到 AI 助手 Tab
     await switchToAIChatTab(page);

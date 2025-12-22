@@ -166,3 +166,4 @@ build/
 # Test outputs
 test-results/
 coverage/
+reports/
