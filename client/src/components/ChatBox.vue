@@ -611,7 +611,6 @@ defineExpose({
   overflow-wrap: break-word;
   line-height: 1.5715;
   max-width: 100%;
-  white-space: pre-wrap;
   font-size: 14px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.09);
 }

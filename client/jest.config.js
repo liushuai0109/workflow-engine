@@ -1,9 +1,12 @@
 module.exports = {
   // 测试环境
   testEnvironment: 'jsdom',
-  
+
   // 预设配置
   preset: 'ts-jest',
+
+  // Setup files
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   
   // 模块文件扩展名
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'vue'],

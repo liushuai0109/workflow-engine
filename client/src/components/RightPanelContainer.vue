@@ -1,5 +1,5 @@
 <template>
-  <div class="right-panel-container">
+  <div class="right-panel-container" @keydown="handleKeyDown" tabindex="0">
     <!-- Ant Design Tab 导航 -->
     <a-tabs
       v-model:activeKey="localActiveTab"
@@ -131,6 +131,27 @@ const handleTabChange = (value: string | number) => {
   emit('tab-change', value as string)
 }
 
+// 支持键盘导航
+const tabKeys = ['properties', 'chat', 'mock', 'debug', 'interceptor']
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    const currentIndex = tabKeys.indexOf(localActiveTab.value)
+    if (currentIndex === -1) return
+
+    let newIndex: number
+    if (event.key === 'ArrowLeft') {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : tabKeys.length - 1
+    } else {
+      newIndex = currentIndex < tabKeys.length - 1 ? currentIndex + 1 : 0
+    }
+
+    localActiveTab.value = tabKeys[newIndex]
+    emit('tab-change', tabKeys[newIndex])
+    event.preventDefault()
+  }
+}
+
 // 当前面板的 Props
 const currentPanelProps = computed(() => {
   const baseProps = {
@@ -225,6 +246,12 @@ defineExpose({
   display: flex;
   flex-direction: column;
   height: 100%;
+  outline: none; /* 移除默认焦点样式 */
+}
+
+.right-panel-container:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: -2px;
 }
 
 :deep(.ant-tabs .ant-tabs-tab+.ant-tabs-tab) {
