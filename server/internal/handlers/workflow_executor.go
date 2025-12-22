@@ -97,7 +97,7 @@ func (h *WorkflowExecutorHandler) ExecuteWorkflow(c *gin.Context) {
 		// 其他错误返回 500
 		c.JSON(http.StatusInternalServerError, models.NewErrorResponse(
 			models.ErrInternalError,
-			"Failed to execute workflow",
+			"Failed to execute workflow for unknown reason",
 		))
 		return
 	}
