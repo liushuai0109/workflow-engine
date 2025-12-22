@@ -55,13 +55,13 @@ func (h *WorkflowExecutorHandler) ExecuteWorkflow(c *gin.Context) {
 		BusinessParams map[string]interface{} `json:"businessParams,omitempty"`
 	}
 
-	// if err := c.ShouldBindJSON(&req); err != nil {
-	// 	c.JSON(http.StatusBadRequest, models.NewErrorResponse(
-	// 		models.ErrInvalidRequest,
-	// 		fmt.Sprintf("Invalid request body: %v", err),
-	// 	))
-	// 	return
-	// }
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.NewErrorResponse(
+			models.ErrInvalidRequest,
+			fmt.Sprintf("Invalid request body: %v", err),
+		))
+		return
+	}
 
 	// 调用执行引擎
 	result, err := h.engineService.ExecuteFromNode(

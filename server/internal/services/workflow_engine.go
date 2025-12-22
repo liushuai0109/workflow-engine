@@ -170,16 +170,6 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		return nil, fmt.Errorf("%s: %w", models.ErrWorkflowInstanceNotFound, err)
 	}
 
-	// Load Mock data from old mock config if available (backward compatibility)
-	if isMockInstance(instanceId) {
-		if mockConfig, ok := GetMockConfig(ctx); ok && mockConfig.NodeMockData != nil {
-			s.mockCaller.SetMockData(mockConfig.NodeMockData)
-			s.logger.Info().
-				Int("nodeDataCount", len(mockConfig.NodeMockData)).
-				Msg("Loaded Mock data configuration from context (legacy)")
-		}
-	}
-
 	// 2. 获取工作流定义 (使用拦截器)
 	workflow, err := interceptor.Intercept(ctx,
 		"GetWorkflow",
