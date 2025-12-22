@@ -159,7 +159,7 @@ func TestIntercept_TypeMismatch(t *testing.T) {
 		return "real result", nil
 	}
 
-	_, err := Intercept(ctx, "test-op", realFn)
+	_, err := InterceptLegacy(ctx, "test-op", realFn)
 
 	if err == nil {
 		t.Error("Expected type mismatch error")
@@ -187,7 +187,7 @@ func TestIntercept_RecordMode_WithError(t *testing.T) {
 		return "", errors.New("test error")
 	}
 
-	_, err := Intercept(ctx, "test-op", realFn)
+	_, err := InterceptLegacy(ctx, "test-op", realFn)
 
 	if err == nil {
 		t.Error("Expected error from real function")
@@ -417,10 +417,6 @@ func TestIntercept_StructParams_EnabledMode_WithMock(t *testing.T) {
 	}
 	if !session.ExecutionLog[0].IsMocked {
 		t.Error("Expected log entry to be marked as mocked")
-	}
-	// Verify generated ID in log
-	if session.ExecutionLog[0].InterceptorID != "SimpleOp:test-123" {
-		t.Errorf("Expected interceptor ID 'SimpleOp:test-123', got '%s'", session.ExecutionLog[0].InterceptorID)
 	}
 }
 

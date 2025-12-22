@@ -162,7 +162,12 @@ func Intercept[T any, P any](
 		return zero, ErrDryRunMode
 	}
 
-	// 3. Get interceptor config
+	// 3. Check for InterceptSession (old approach, for backwards compatibility)
+	if session := GetInterceptSession(ctx); session != nil {
+		return interceptWithSession(ctx, interceptorID, operation, fn, params, session)
+	}
+
+	// 4. Get interceptor config (new approach, from HTTP headers)
 	config := GetInterceptConfig(ctx)
 	if config == nil {
 		// No config, execute real function
@@ -171,7 +176,7 @@ func Intercept[T any, P any](
 
 	mode := config.GetMode(interceptorID)
 
-	// 4. Execute based on mode
+	// 5. Execute based on mode
 	switch mode {
 	case InterceptModeDisabled:
 		// Disabled mode: execute directly without recording
@@ -210,6 +215,90 @@ func Intercept[T any, P any](
 		LogExecution(ctx, interceptorID, params, result, false, errString(err))
 		RecordCall(ctx, interceptorID, params, result)
 		return result, err
+	}
+}
+
+// interceptWithSession handles interception using InterceptSession (backwards compatibility)
+func interceptWithSession[T any, P any](
+	ctx context.Context,
+	interceptorID string,
+	operation string,
+	fn func(context.Context, P) (T, error),
+	params P,
+	session *InterceptSession,
+) (T, error) {
+	var zero T
+
+	// Record execution start time
+	startTime := time.Now()
+
+	// Execute based on session mode
+	switch session.Mode {
+	case InterceptModeDisabled:
+		// Disabled: just execute
+		return fn(ctx, params)
+
+	case InterceptModeEnabled:
+		// Enabled: try mock data first
+		mockData, exists := session.DataStore.Get(interceptorID)
+		if exists {
+			// Type check mock data
+			result, ok := mockData.(T)
+			if !ok {
+				err := fmt.Errorf("type mismatch: mock data type %T does not match expected type", mockData)
+				session.ExecutionLog = append(session.ExecutionLog, ExecutionLogEntry{
+					Timestamp: startTime,
+					Operation: operation,
+					Input:     params,
+					IsMocked:  true,
+					Error:     err.Error(),
+				})
+				return zero, err
+			}
+			// Return mock data
+			session.ExecutionLog = append(session.ExecutionLog, ExecutionLogEntry{
+				Timestamp: startTime,
+				Operation: operation,
+				Input:     params,
+				Output:    result,
+				IsMocked:  true,
+			})
+			RecordCall(ctx, interceptorID, params, result)
+			return result, nil
+		}
+		// Mock data not found, fallback to real
+		result, err := fn(ctx, params)
+		session.ExecutionLog = append(session.ExecutionLog, ExecutionLogEntry{
+			Timestamp: startTime,
+			Operation: operation,
+			Input:     params,
+			Output:    result,
+			IsMocked:  false,
+			Error:     errString(err),
+		})
+		RecordCall(ctx, interceptorID, params, result)
+		return result, err
+
+	case InterceptModeRecord:
+		// Record: execute and store result
+		result, err := fn(ctx, params)
+		if err == nil {
+			session.DataStore.Set(interceptorID, result)
+		}
+		session.ExecutionLog = append(session.ExecutionLog, ExecutionLogEntry{
+			Timestamp: startTime,
+			Operation: operation,
+			Input:     params,
+			Output:    result,
+			IsMocked:  false,
+			Error:     errString(err),
+		})
+		RecordCall(ctx, interceptorID, params, result)
+		return result, err
+
+	default:
+		// Default: just execute
+		return fn(ctx, params)
 	}
 }
 

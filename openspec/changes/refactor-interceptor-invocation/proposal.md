@@ -368,8 +368,68 @@ instance, err := interceptor.Intercept(ctx,
 - ✅ 确认 `workflow_engine.go` 是 services 目录中唯一使用拦截器的文件
 
 **后续任务**:
-- ⏳ Task 6: 编写单元测试,覆盖新拦截器函数
 - ⏳ Task 7: 编写集成测试,测试 HTTP Header → Context 完整流程
 - ⏳ Tasks 8-10: 前端实现 (API 客户端、UI 配置界面)
 - ⏳ Tasks 11-15: 文档、性能测试、回归测试
+
+### 2025-01-XX - Task 6 完成: 单元测试
+
+**实施内容**:
+1. ✅ **添加结构体参数测试** (13+ 新测试用例)
+   - 单一 ID 字段结构体测试 (`SimpleParams`)
+   - 多 ID 字段结构体测试 (`MultiIDParams` with multiple `intercept:"id"` tags)
+   - 无 ID 标签结构体测试 (`NoIDParams`)
+   - 复杂类型结构体测试 (`ComplexParams` with maps, slices)
+
+2. ✅ **ID 生成逻辑测试** (`TestGenerateInterceptorID`)
+   - 验证单个 ID 字段生成格式: `"Operation:value"`
+   - 验证多个 ID 字段生成格式: `"Operation:value1:value2"`
+   - 验证无 ID 字段时只返回 operation 名称
+   - 验证复杂类型（map, slice）的哈希处理
+
+3. ✅ **三种模式完整测试**
+   - Enabled 模式: 使用 mock 数据，不执行真实函数
+   - Record 模式: 执行真实函数并记录结果为 mock 数据
+   - Disabled 模式: 直接执行真实函数（通过 InterceptLegacy）
+
+4. ✅ **错误处理和边界情况**
+   - 类型不匹配: mock 数据类型与期望返回类型不一致
+   - 函数执行错误: 真实函数返回错误
+   - Mock 数据不存在时的降级逻辑
+
+5. ✅ **兼容性改进**
+   - 更新旧的 closure-based 测试使用 `InterceptLegacy`
+   - 新增 `interceptWithSession` helper 函数，使新 `Intercept` 支持旧的 `InterceptSession`
+   - 确保新旧两种方式都能正常工作
+
+**测试结果**:
+- ✅ 所有 28 个测试用例全部通过
+- ✅ 核心功能测试覆盖率:
+  - `interceptWithSession`: 92.0%
+  - `generateInterceptorID`: 86.7%
+  - `InterceptLegacy`: 83.3%
+- ✅ 总体测试覆盖率: 62.1%
+  - HTTP middleware 相关函数 (0% coverage) 将在 Task 7 集成测试中验证
+
+**关键测试示例**:
+```go
+// 测试结构体参数和自动 ID 生成
+func TestIntercept_StructParams_EnabledMode_WithMock(t *testing.T) {
+    session := &InterceptSession{
+        Mode: InterceptModeEnabled,
+        DataStore: NewInterceptDataStore(),
+    }
+    // Mock 数据使用自动生成的 ID "SimpleOp:test-123"
+    session.DataStore.Set("SimpleOp:test-123", "mocked-result")
+
+    ctx := WithInterceptSession(context.Background(), session)
+
+    // 调用新的 Intercept 函数，传入结构体参数
+    result, err := Intercept(ctx, "SimpleOp", mockableOp, SimpleParams{ID: "test-123"})
+
+    // 验证: 返回 mock 数据，真实函数未被调用
+    assert.Equal(t, "mocked-result", result)
+    assert.False(t, realCalled)
+}
+```
 
