@@ -27,9 +27,9 @@ test.describe('BoundaryEvent 创建功能测试', () => {
     await aiTab.click();
     await page.waitForTimeout(500);
 
-    // 在聊天框中请求创建带审批的 UserTask
+    // 等待聊天输入框可见（重要：等待 Tab 切换完成）
     const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
+    await chatInput.waitFor({ state: 'visible', timeout: 5000 });
     await chatInput.fill('创建一个简单的审批流程：开始 → 提交申请(UserTask) → 审批(UserTask，通过和拒绝两个 BoundaryEvent) → 结束');
     await chatInput.press('Enter');
 
@@ -62,8 +62,9 @@ test.describe('BoundaryEvent 创建功能测试', () => {
     await aiTab.click();
     await page.waitForTimeout(500);
 
+    // 等待聊天输入框可见
     const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
+    await chatInput.waitFor({ state: 'visible', timeout: 5000 });
     await chatInput.fill('创建请假流程：开始 → 提交请假(UserTask) → 结束。提交请假完成后要有一个 BoundaryEvent 连接到结束');
     await chatInput.press('Enter');
     await page.waitForTimeout(5000);
@@ -274,8 +275,9 @@ test.describe('LLM 生成符合约束的流程图', () => {
     await aiTab.click();
     await page.waitForTimeout(500);
 
+    // 等待聊天输入框可见
     const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
+    await chatInput.waitFor({ state: 'visible', timeout: 5000 });
 
     // 测试多种场景
     const testScenarios = [
@@ -328,6 +330,9 @@ test.describe('LLM 生成符合约束的流程图', () => {
   });
 
   test('LLM 生成的 UserTask 包含 BoundaryEvent', async ({ page }) => {
+    // 设置更长的超时时间，因为 AI 生成需要时间
+    test.setTimeout(120000); // 2 分钟
+
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -341,12 +346,35 @@ test.describe('LLM 生成符合约束的流程图', () => {
     await aiTab.click();
     await page.waitForTimeout(500);
 
+    // 等待聊天输入框可见
     const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
+    await chatInput.waitFor({ state: 'visible', timeout: 5000 });
     await chatInput.fill('创建一个审批流程：开始 → 提交申请 → 主管审批 → 结束。审批有通过和拒绝两个结果');
     await chatInput.press('Enter');
 
-    await page.waitForTimeout(6000);
+    // 等待 AI 助手响应完成（查找助手消息或 loading 消失）
+    // 等待 streaming 完成的标志
+    await page.waitForTimeout(3000); // 先等待开始
+
+    // 等待 AI 响应完成（最多 90 秒）
+    const maxWaitTime = 90000;
+    const startTime = Date.now();
+    let aiResponseComplete = false;
+
+    while (Date.now() - startTime < maxWaitTime) {
+      // 检查是否有 loading 指示器
+      const loadingIndicator = page.locator('.streaming-loading-section, .ant-spin').first();
+      const loadingVisible = await loadingIndicator.isVisible().catch(() => false);
+
+      if (!loadingVisible) {
+        // Loading 消失了，等待一下确保渲染完成
+        await page.waitForTimeout(2000);
+        aiResponseComplete = true;
+        break;
+      }
+
+      await page.waitForTimeout(1000);
+    }
 
     // 检查 SVG 中是否包含 BoundaryEvent 元素
     const boundaryEvents = page.locator('svg [data-element-id*="Boundary"], svg .djs-element[data-element-id*="Boundary"]');
