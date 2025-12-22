@@ -21,32 +21,30 @@ test.describe('BoundaryEvent 创建功能测试', () => {
     await newButton.click();
     await page.waitForTimeout(1000);
 
-    // 打开聊天面板
-    const chatButton = page.locator('button:has-text("Chat"), button:has-text("聊天")').first();
-    if (await chatButton.count() > 0) {
-      await chatButton.click();
-      await page.waitForTimeout(500);
-    }
+    // 切换到 AI 助手 Tab（右侧面板）
+    const aiTab = page.locator('.ant-tabs-tab:has-text("AI 助手")').first();
+    await expect(aiTab).toHaveCount(1, { timeout: 5000 });
+    await aiTab.click();
+    await page.waitForTimeout(500);
 
     // 在聊天框中请求创建带审批的 UserTask
     const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-    if (await chatInput.count() > 0) {
-      await chatInput.fill('创建一个简单的审批流程：开始 → 提交申请(UserTask) → 审批(UserTask，通过和拒绝两个 BoundaryEvent) → 结束');
-      await chatInput.press('Enter');
+    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
+    await chatInput.fill('创建一个简单的审批流程：开始 → 提交申请(UserTask) → 审批(UserTask，通过和拒绝两个 BoundaryEvent) → 结束');
+    await chatInput.press('Enter');
 
-      // 等待 LLM 响应和流程图生成
-      await page.waitForTimeout(5000);
+    // 等待 LLM 响应和流程图生成
+    await page.waitForTimeout(5000);
 
-      // 验证流程图中包含 BoundaryEvent
-      const canvas = page.locator('.bpmn-container, .djs-container').first();
-      expect(await canvas.count()).toBeGreaterThan(0);
+    // 验证流程图中包含 BoundaryEvent
+    const canvas = page.locator('.bpmn-container, .djs-container').first();
+    expect(await canvas.count()).toBeGreaterThan(0);
 
-      // 检查是否创建了 UserTask 和 BoundaryEvent（通过 DOM 或截图）
-      // 注意：bpmn-js 使用 SVG 渲染，可以检查 SVG 元素
-      const svgElements = page.locator('svg [data-element-id]');
-      const elementCount = await svgElements.count();
-      expect(elementCount).toBeGreaterThan(5); // 至少包含：开始、UserTask、BoundaryEvent、结束等
-    }
+    // 检查是否创建了 UserTask 和 BoundaryEvent（通过 DOM 或截图）
+    // 注意：bpmn-js 使用 SVG 渲染，可以检查 SVG 元素
+    const svgElements = page.locator('svg [data-element-id]');
+    const elementCount = await svgElements.count();
+    expect(elementCount).toBeGreaterThan(5); // 至少包含：开始、UserTask、BoundaryEvent、结束等
   });
 
   test('BoundaryEvent 正确附加到 UserTask', async ({ page }) => {
@@ -58,31 +56,29 @@ test.describe('BoundaryEvent 创建功能测试', () => {
     await newButton.click();
     await page.waitForTimeout(1000);
 
-    // 使用 LLM 创建符合约束的流程图
-    const chatButton = page.locator('button:has-text("Chat"), button:has-text("聊天")').first();
-    if (await chatButton.count() > 0) {
-      await chatButton.click();
-      await page.waitForTimeout(500);
+    // 切换到 AI 助手 Tab（右侧面板）
+    const aiTab = page.locator('.ant-tabs-tab:has-text("AI 助手")').first();
+    await expect(aiTab).toHaveCount(1, { timeout: 5000 });
+    await aiTab.click();
+    await page.waitForTimeout(500);
 
-      const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-      if (await chatInput.count() > 0) {
-        await chatInput.fill('创建请假流程：开始 → 提交请假(UserTask) → 结束。提交请假完成后要有一个 BoundaryEvent 连接到结束');
-        await chatInput.press('Enter');
-        await page.waitForTimeout(5000);
+    const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
+    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
+    await chatInput.fill('创建请假流程：开始 → 提交请假(UserTask) → 结束。提交请假完成后要有一个 BoundaryEvent 连接到结束');
+    await chatInput.press('Enter');
+    await page.waitForTimeout(5000);
 
-        // 验证可以保存（符合约束）
-        const saveButton = page.locator('button:has-text("Save"), button:has-text("保存")').first();
-        if (await saveButton.count() > 0) {
-          // 点击保存不应该弹出错误提示
-          const downloadPromise = page.waitForEvent('download', { timeout: 3000 }).catch(() => null);
-          await saveButton.click();
-          await page.waitForTimeout(1000);
+    // 验证可以保存（符合约束）
+    const saveButton = page.locator('button:has-text("Save"), button:has-text("保存")').first();
+    if (await saveButton.count() > 0) {
+      // 点击保存不应该弹出错误提示
+      const downloadPromise = page.waitForEvent('download', { timeout: 3000 }).catch(() => null);
+      await saveButton.click();
+      await page.waitForTimeout(1000);
 
-          // 检查是否有错误弹窗
-          const alertDialog = page.locator('text=/无法保存|Error|错误/').first();
-          expect(await alertDialog.count()).toBe(0);
-        }
-      }
+      // 检查是否有错误弹窗
+      const alertDialog = page.locator('text=/无法保存|Error|错误/').first();
+      expect(await alertDialog.count()).toBe(0);
     }
   });
 });
@@ -272,63 +268,62 @@ test.describe('LLM 生成符合约束的流程图', () => {
     await newButton.click();
     await page.waitForTimeout(1000);
 
-    // 打开聊天面板
-    const chatButton = page.locator('button:has-text("Chat"), button:has-text("聊天")').first();
-    if (await chatButton.count() > 0) {
-      await chatButton.click();
-      await page.waitForTimeout(500);
+    // 切换到 AI 助手 Tab（右侧面板）
+    const aiTab = page.locator('.ant-tabs-tab:has-text("AI 助手")').first();
+    await expect(aiTab).toHaveCount(1, { timeout: 5000 });
+    await aiTab.click();
+    await page.waitForTimeout(500);
 
-      const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-      if (await chatInput.count() > 0) {
-        // 测试多种场景
-        const testScenarios = [
-          '创建一个简单的审批流程',
-          '画一个请假流程，包含提交和审批两个环节',
-          '创建用户注册流程，需要邮箱验证'
-        ];
+    const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
+    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
 
-        for (const scenario of testScenarios) {
-          // 清空画布
-          const clearButton = page.locator('button:has-text("Clear"), button:has-text("清空")').first();
-          if (await clearButton.count() > 0) {
-            await clearButton.click();
-            await page.waitForTimeout(500);
-          }
+    // 测试多种场景
+    const testScenarios = [
+      '创建一个简单的审批流程',
+      '画一个请假流程，包含提交和审批两个环节',
+      '创建用户注册流程，需要邮箱验证'
+    ];
 
-          // 发送请求
-          await chatInput.fill(scenario);
-          await chatInput.press('Enter');
+    for (const scenario of testScenarios) {
+      // 清空画布
+      const clearButton = page.locator('button:has-text("Clear"), button:has-text("清空")').first();
+      if (await clearButton.count() > 0) {
+        await clearButton.click();
+        await page.waitForTimeout(500);
+      }
 
-          // 等待 LLM 生成
-          await page.waitForTimeout(6000);
+      // 发送请求
+      await chatInput.fill(scenario);
+      await chatInput.press('Enter');
 
-          // 尝试保存，验证符合约束
-          const saveButton = page.locator('button:has-text("Save"), button:has-text("保存")').first();
-          if (await saveButton.count() > 0) {
-            // 不应该有错误对话框
-            let dialogShown = false;
-            page.once('dialog', async dialog => {
-              dialogShown = true;
-              const message = dialog.message();
-              console.log(`Scenario "${scenario}" triggered dialog: ${message}`);
-              await dialog.accept();
-            });
+      // 等待 LLM 生成
+      await page.waitForTimeout(6000);
 
-            const downloadPromise = page.waitForEvent('download', { timeout: 3000 }).catch(() => null);
-            await saveButton.click();
-            await page.waitForTimeout(1500);
+      // 尝试保存，验证符合约束
+      const saveButton = page.locator('button:has-text("Save"), button:has-text("保存")').first();
+      if (await saveButton.count() > 0) {
+        // 不应该有错误对话框
+        let dialogShown = false;
+        page.once('dialog', async dialog => {
+          dialogShown = true;
+          const message = dialog.message();
+          console.log(`Scenario "${scenario}" triggered dialog: ${message}`);
+          await dialog.accept();
+        });
 
-            // 验证没有约束违规对话框
-            if (dialogShown) {
-              // 如果有对话框，记录日志但不失败（可能是其他原因）
-              console.warn(`Dialog shown for scenario: ${scenario}`);
-            }
-          }
+        const downloadPromise = page.waitForEvent('download', { timeout: 3000 }).catch(() => null);
+        await saveButton.click();
+        await page.waitForTimeout(1500);
 
-          // 等待下一个场景
-          await page.waitForTimeout(1000);
+        // 验证没有约束违规对话框
+        if (dialogShown) {
+          // 如果有对话框，记录日志但不失败（可能是其他原因）
+          console.warn(`Dialog shown for scenario: ${scenario}`);
         }
       }
+
+      // 等待下一个场景
+      await page.waitForTimeout(1000);
     }
   });
 
@@ -340,37 +335,36 @@ test.describe('LLM 生成符合约束的流程图', () => {
     await newButton.click();
     await page.waitForTimeout(1000);
 
-    const chatButton = page.locator('button:has-text("Chat"), button:has-text("聊天")').first();
-    if (await chatButton.count() > 0) {
-      await chatButton.click();
-      await page.waitForTimeout(500);
+    // 切换到 AI 助手 Tab（右侧面板）
+    const aiTab = page.locator('.ant-tabs-tab:has-text("AI 助手")').first();
+    await expect(aiTab).toHaveCount(1, { timeout: 5000 });
+    await aiTab.click();
+    await page.waitForTimeout(500);
 
-      const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
-      if (await chatInput.count() > 0) {
-        await chatInput.fill('创建一个审批流程：开始 → 提交申请 → 主管审批 → 结束。审批有通过和拒绝两个结果');
-        await chatInput.press('Enter');
+    const chatInput = page.locator('textarea[placeholder*="消息"], input[placeholder*="消息"]').first();
+    await expect(chatInput).toHaveCount(1, { timeout: 5000 });
+    await chatInput.fill('创建一个审批流程：开始 → 提交申请 → 主管审批 → 结束。审批有通过和拒绝两个结果');
+    await chatInput.press('Enter');
 
-        await page.waitForTimeout(6000);
+    await page.waitForTimeout(6000);
 
-        // 检查 SVG 中是否包含 BoundaryEvent 元素
-        const boundaryEvents = page.locator('svg [data-element-id*="Boundary"], svg .djs-element[data-element-id*="Boundary"]');
-        const count = await boundaryEvents.count();
+    // 检查 SVG 中是否包含 BoundaryEvent 元素
+    const boundaryEvents = page.locator('svg [data-element-id*="Boundary"], svg .djs-element[data-element-id*="Boundary"]');
+    const count = await boundaryEvents.count();
 
-        // 应该至少有 1-2 个 BoundaryEvent（审批通过/拒绝）
-        expect(count).toBeGreaterThanOrEqual(1);
+    // 应该至少有 1-2 个 BoundaryEvent（审批通过/拒绝）
+    expect(count).toBeGreaterThanOrEqual(1);
 
-        // 验证可以保存
-        const saveButton = page.locator('button:has-text("Save"), button:has-text("保存")').first();
-        if (await saveButton.count() > 0) {
-          const downloadPromise = page.waitForEvent('download', { timeout: 3000 }).catch(() => null);
-          await saveButton.click();
-          await page.waitForTimeout(1000);
+    // 验证可以保存
+    const saveButton = page.locator('button:has-text("Save"), button:has-text("保存")').first();
+    if (await saveButton.count() > 0) {
+      const downloadPromise = page.waitForEvent('download', { timeout: 3000 }).catch(() => null);
+      await saveButton.click();
+      await page.waitForTimeout(1000);
 
-          // 不应该有约束错误
-          const errorDialog = page.locator('text=/无法保存.*UserTask.*BoundaryEvent/i').first();
-          expect(await errorDialog.count()).toBe(0);
-        }
-      }
+      // 不应该有约束错误
+      const errorDialog = page.locator('text=/无法保存.*UserTask.*BoundaryEvent/i').first();
+      expect(await errorDialog.count()).toBe(0);
     }
   });
 });

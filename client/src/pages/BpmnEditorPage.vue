@@ -25,24 +25,6 @@
           {{ isFlowVisualizationEnabled ? '关闭流量' : '显示流量' }}
         </a-button>
       </div>
-      <div class="toolbar-right">
-        <a-button
-          @click="toggleMockPanel"
-          :type="activeRightPanelTab === 'mock' ? 'primary' : 'default'"
-          :disabled="!currentDiagram"
-          title="Mock 执行"
-        >
-          Mock
-        </a-button>
-        <a-button
-          @click="toggleDebugPanel"
-          :type="activeRightPanelTab === 'debug' ? 'primary' : 'default'"
-          :disabled="!currentDiagram"
-          title="Debug 调试"
-        >
-          Debug
-        </a-button>
-      </div>
     </div>
 
     <!-- 主内容区域 -->
