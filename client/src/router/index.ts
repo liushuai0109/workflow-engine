@@ -4,7 +4,21 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'Home',
+    redirect: '/workflows'
+  },
+  {
+    path: '/workflows',
+    name: 'Workflows',
+    component: () => import('../pages/WorkflowListPage.vue')
+  },
+  {
+    path: '/editor',
+    name: 'EditorNew',
+    component: () => import('../pages/BpmnEditorPage.vue')
+  },
+  {
+    path: '/editor/:workflowId',
+    name: 'EditorEdit',
     component: () => import('../pages/BpmnEditorPage.vue')
   },
   {

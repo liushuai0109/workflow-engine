@@ -32,7 +32,14 @@ export default defineConfig({
       'api.workflow.com',
       'editor.workflow.com',
       'localhost'
-    ]
+    ],
+    proxy: {
+      '/api': {
+        target: 'http://api.workflow.com:3000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
   build: {
     outDir: 'dist',

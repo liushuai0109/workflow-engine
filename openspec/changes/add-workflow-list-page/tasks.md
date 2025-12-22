@@ -2,7 +2,7 @@
 
 ## Phase 1: 前端基础设施 (3-4 天)
 
-- [ ] **T1.1** 创建前端工作流服务 (`client/src/services/workflowService.ts`)
+- [x] **T1.1** 创建前端工作流服务 (`client/src/services/workflowService.ts`)
   - 实现 `listWorkflows(page, pageSize)` 方法
   - 实现 `getWorkflow(workflowId)` 方法
   - 实现 `createWorkflow(name, description, bpmnXml)` 方法
@@ -10,14 +10,14 @@
   - 包含错误处理和类型定义
   - 验证: 编写单元测试,测试 API 调用逻辑
 
-- [ ] **T1.2** 创建 BPMN 解析工具函数
+- [x] **T1.2** 创建 BPMN 解析工具函数
   - 在 `workflowService.ts` 中实现 `extractWorkflowName(bpmnXml)` 函数
   - 使用 bpmn-js 的 BpmnModdle 解析 XML
   - 从 `<bpmn:process name="...">` 提取名称
   - 提供默认名称 "Untitled Workflow"
   - 验证: 编写单元测试,测试各种 BPMN XML 格式
 
-- [ ] **T1.3** 创建工作流列表页面组件 (`client/src/pages/WorkflowListPage.vue`)
+- [x] **T1.3** 创建工作流列表页面组件 (`client/src/pages/WorkflowListPage.vue`)
   - 创建基础页面结构
   - 使用 `a-table` 或 `a-list` 展示工作流列表
   - 添加列: 名称、描述、创建时间、更新时间、状态、操作
@@ -26,7 +26,7 @@
   - 添加空状态 (`a-empty`)
   - 验证: 编写组件单元测试
 
-- [ ] **T1.4** 实现工作流列表页面逻辑
+- [x] **T1.4** 实现工作流列表页面逻辑
   - 页面加载时调用 `listWorkflows()` 获取数据
   - 实现分页功能(如果使用 `a-table`)
   - 实现"打开"按钮: 导航到 `/editor/:workflowId`
@@ -36,7 +36,7 @@
 
 ## Phase 2: 路由重构 (1-2 天)
 
-- [ ] **T2.1** 更新路由配置 (`client/src/router/index.ts`)
+- [x] **T2.1** 更新路由配置 (`client/src/router/index.ts`)
   - 添加 `/workflows` 路由 → `WorkflowListPage.vue`
   - 修改 `/` 路由: 重定向到 `/workflows`
   - 添加 `/editor` 路由 → `BpmnEditorPage.vue` (新建模式)
@@ -44,28 +44,29 @@
   - 保持 `/tool` 路由不变
   - 验证: 编写路由测试,确保所有路由正确映射
 
-- [ ] **T2.2** 测试路由重定向
+- [x] **T2.2** 测试路由重定向
   - 测试访问 `/` 是否重定向到 `/workflows`
   - 测试所有新路由是否正常工作
   - 验证: 手动测试所有路由路径
 
 ## Phase 3: 编辑器页面重构 (4-5 天)
 
-- [ ] **T3.1** 重构工具栏按钮布局
+- [x] **T3.1** 重构工具栏按钮布局
   - 修改 `BpmnEditorPage.vue` 工具栏部分
+  - 新增 "Back to List" 按钮(返回列表页)
   - 保留 "Open BPMN" 按钮(本地文件打开)
   - 重命名 "Save BPMN" → "Download" (下载到本地)
   - 新增 "Save" 按钮(保存到数据库)
-  - 调整按钮顺序: Open | Save | Download | New | ...
+  - 调整按钮顺序: Back to List | Open | Save | Download | New | ...
   - 验证: 视觉检查,确认按钮布局符合设计
 
-- [ ] **T3.2** 实现 Download 按钮功能
+- [x] **T3.2** 实现 Download 按钮功能
   - 将现有 `saveFile()` 方法重命名为 `downloadFile()`
   - 绑定到新的 Download 按钮
   - 保持原有下载功能不变
   - 验证: 测试下载功能是否正常
 
-- [ ] **T3.3** 实现 Save 按钮功能
+- [x] **T3.3** 实现 Save 按钮功能
   - 创建 `saveToDatabase()` 方法
   - 调用 `extractWorkflowName()` 从 BPMN XML 提取名称
   - 根据当前路由判断是创建还是更新:
@@ -76,7 +77,7 @@
   - 处理保存失败情况 (`message.error()`)
   - 验证: 编写单元测试和 E2E 测试
 
-- [ ] **T3.4** 实现从路由加载工作流
+- [x] **T3.4** 实现从路由加载工作流
   - 在 `onMounted()` 钩子中检查路由参数 `workflowId`
   - 如果存在 `workflowId`,调用 `getWorkflow(workflowId)`
   - 加载工作流的 BPMN XML 到编辑器
@@ -84,7 +85,7 @@
   - 处理加载失败情况(工作流不存在)
   - 验证: 编写 E2E 测试,测试从列表页打开工作流的完整流程
 
-- [ ] **T3.5** 更新编辑器状态管理
+- [x] **T3.5** 更新编辑器状态管理
   - 添加响应式状态: `currentWorkflowId`
   - 在保存成功后更新 `currentWorkflowId`
   - 在创建新工作流时清空 `currentWorkflowId`
@@ -109,12 +110,13 @@
   - 运行 `cd client && npm run test:e2e:headless`
   - 验证: 所有 E2E 测试通过
 
-- [ ] **T4.3** 类型检查和构建
+- [x] **T4.3** 类型检查和构建
   - 运行 `cd client && npm run type-check`
   - 修复所有类型错误
   - 运行 `cd client && npm run build`
   - 确保构建成功
   - 验证: 类型检查和构建无错误
+  - 注: 存在预先存在的类型错误(来自 claude/messageAdapter.ts, figmaService.ts, llmService.ts),本次变更未引入新错误
 
 - [ ] **T4.4** 手动集成测试
   - 测试完整用户流程:
@@ -128,7 +130,6 @@
     2. 网络错误时的处理
     3. 无效 BPMN XML 的处理
   - 验证: 所有场景正常工作
-
 ## Phase 5: 文档与清理 (1 天)
 
 - [ ] **T5.1** 更新用户文档

@@ -3,13 +3,21 @@
     <!-- 顶部工具栏 -->
     <div class="toolbar">
       <div class="toolbar-left">
+        <a-button @click="backToList">
+          <template #icon><UnorderedListOutlined /></template>
+          Workflows
+        </a-button>
         <a-button @click="openFile" type="primary">
           <template #icon><FolderOpenOutlined /></template>
           Open BPMN
         </a-button>
-        <a-button @click="saveFile" :disabled="!currentDiagram">
+        <a-button @click="saveToDatabase" :disabled="!currentDiagram" :loading="isSaving">
           <template #icon><SaveOutlined /></template>
-          Save BPMN
+          {{ isSaving ? '保存中...' : 'Save' }}
+        </a-button>
+        <a-button @click="downloadFile" :disabled="!currentDiagram">
+          <template #icon><DownloadOutlined /></template>
+          Download
         </a-button>
         <a-button @click="newDiagram">
           <template #icon><FileAddOutlined /></template>
@@ -110,11 +118,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { message } from 'ant-design-vue'
 import {
   FolderOpenOutlined,
   SaveOutlined,
   FileAddOutlined,
-  LineChartOutlined
+  LineChartOutlined,
+  DownloadOutlined,
+  UnorderedListOutlined
 } from '@ant-design/icons-vue'
 import BpmnEditor from '../components/BpmnEditor.vue'
 import RightPanelContainer from '../components/RightPanelContainer.vue'
@@ -136,6 +148,10 @@ import { editorOperationService } from '../services/editorOperationService'
 import { createBpmnClaudeLLMService } from '../services/claudeLlmService'
 import { createClaudeEditorBridge, waitForEditor } from '../services/claudeEditorBridge'
 import type { FileValidationResult } from '../types'
+import workflowService from '../services/workflowService'
+
+const router = useRouter()
+const route = useRoute()
 
 // 配置：使用 Claude 还是 Gemini
 // Claude: 使用 Claude Sonnet 4.5 + Tool Use (推荐)
@@ -149,6 +165,8 @@ const USE_FUNCTION_CALLING = false
 
 // 响应式数据
 const currentDiagram = ref<string>('')
+const currentWorkflowId = ref<string>('')
+const isSaving = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
 const isAIProcessing = ref<boolean>(false) // AI 处理中的状态
 const hasError = ref<boolean>(false)
@@ -162,7 +180,6 @@ const rightPanelRef = ref<any>() // RightPanelContainer 组件引用
 // Mock 和 Debug 相关状态
 const showVariablePanel = ref<boolean>(false)
 const showTimelinePanel = ref<boolean>(false)
-const currentWorkflowId = ref<string>('')
 const debugVariables = ref<Record<string, any>>({})
 const previousDebugVariables = ref<Record<string, any>>({})
 const executionHistories = ref<ExecutionHistory[]>([])
@@ -258,15 +275,20 @@ const validateUserTaskConstraints = (modeler: any): {
 }
 
 // 文件操作
+const backToList = (): void => {
+  router.push('/workflows')
+}
+
 const openFile = (): void => {
   fileInput.value?.click()
 }
 
-const saveFile = async (): Promise<void> => {
+// Download BPMN file to local
+const downloadFile = async (): Promise<void> => {
   if (!bpmnEditor.value) return
 
   try {
-    // 步骤 1: 保存前验证 UserTask 约束
+    // Validate UserTask constraints before downloading
     const modeler = bpmnEditor.value.getModeler()
     if (!modeler) {
       showStatus('编辑器未初始化', 'error')
@@ -276,7 +298,67 @@ const saveFile = async (): Promise<void> => {
     const validationResult = validateUserTaskConstraints(modeler)
 
     if (!validationResult.valid) {
-      // 验证失败，显示详细错误信息
+      // Validation failed
+      const errorMsg = validationResult.errors.join('\n\n' + '='.repeat(50) + '\n\n')
+      alert(
+        `❌ 无法下载：BPMN 结构不符合约束规则\n\n` +
+        `${errorMsg}\n\n` +
+        `📋 UserTask 约束规则：\n` +
+        `所有从 UserTask 出发的连线必须从 BoundaryEvent 出发，不能直接连接。\n\n` +
+        `这个约束确保流程图的语义清晰，明确定义每个任务的所有可能出口。`
+      )
+      hasError.value = true
+      errorMessage.value = validationResult.errors[0]?.split('\n')[0] || '验证错误'
+      return
+    }
+
+    // Get BPMN XML
+    const bpmnXml = await bpmnEditor.value.getXml()
+
+    // Determine filename
+    let filename = 'diagram'
+    if (currentWorkflowId.value) {
+      filename = `workflow-${currentWorkflowId.value}`
+    } else {
+      // Try to extract name from BPMN XML
+      const extractedName = await workflowService.extractWorkflowName(bpmnXml)
+      if (extractedName !== 'Untitled Workflow') {
+        filename = extractedName
+      }
+    }
+
+    // Download file
+    workflowService.downloadWorkflow(bpmnXml, filename)
+
+    // Trigger changed event to update currentDiagram
+    await bpmnEditor.value.triggerChanged()
+
+    lastSaved.value = new Date()
+    showStatus('File downloaded successfully', 'success')
+  } catch (error) {
+    console.error('Download error:', error)
+    showStatus('Failed to download file', 'error')
+  }
+}
+
+// Save workflow to database
+const saveToDatabase = async (): Promise<void> => {
+  if (!bpmnEditor.value || !currentDiagram.value) return
+
+  isSaving.value = true
+
+  try {
+    // Validate UserTask constraints before saving
+    const modeler = bpmnEditor.value.getModeler()
+    if (!modeler) {
+      message.error('编辑器未初始化')
+      return
+    }
+
+    const validationResult = validateUserTaskConstraints(modeler)
+
+    if (!validationResult.valid) {
+      // Validation failed
       const errorMsg = validationResult.errors.join('\n\n' + '='.repeat(50) + '\n\n')
       alert(
         `❌ 无法保存：BPMN 结构不符合约束规则\n\n` +
@@ -285,35 +367,44 @@ const saveFile = async (): Promise<void> => {
         `所有从 UserTask 出发的连线必须从 BoundaryEvent 出发，不能直接连接。\n\n` +
         `这个约束确保流程图的语义清晰，明确定义每个任务的所有可能出口。`
       )
-      hasError.value = true
-      errorMessage.value = validationResult.errors[0]?.split('\n')[0] || '验证错误' // 状态栏显示第一个错误的第一行
       return
     }
 
-    // 步骤 2: 验证通过，继续保存
-    // 从 BpmnEditor 获取最新的 XML 内容（BPMN 格式）
+    // Get BPMN XML
     const bpmnXml = await bpmnEditor.value.getXml()
 
-    const blob = new Blob([bpmnXml], { type: 'application/xml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'diagram.bpmn'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    // Extract workflow name from BPMN XML
+    const workflowName = await workflowService.extractWorkflowName(bpmnXml)
 
-    // 手动触发 changed 事件来更新 currentDiagram
-    await bpmnEditor.value.triggerChanged()
+    // Determine if creating or updating
+    const workflowId = route.params.workflowId as string | undefined
+
+    if (workflowId) {
+      // Update existing workflow
+      await workflowService.updateWorkflow(workflowId, workflowName, '', bpmnXml)
+      message.success('工作流已更新')
+      currentWorkflowId.value = workflowId
+    } else {
+      // Create new workflow
+      const workflow = await workflowService.createWorkflow(workflowName, '', bpmnXml)
+      message.success('工作流保存成功')
+      currentWorkflowId.value = workflow.id
+      // Navigate to editor with workflowId
+      router.push(`/editor/${workflow.id}`)
+    }
 
     lastSaved.value = new Date()
-    showStatus('File saved successfully', 'success')
+    showStatus('Workflow saved successfully', 'success')
   } catch (error) {
-    console.error('Save error:', error)
-    showStatus('Failed to save file', 'error')
+    const errorMsg = error instanceof Error ? error.message : '保存工作流失败'
+    message.error(errorMsg)
+    console.error('Save to database error:', error)
+  } finally {
+    isSaving.value = false
   }
 }
+
+const saveFile = downloadFile // Alias for backward compatibility
 
 const newDiagram = (): void => {
   const defaultXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1391,12 +1482,35 @@ const handleChatWithFunctionCalling = async (message: string): Promise<void> => 
 onMounted(async () => {
   console.log('BPMN Explorer initialized')
 
-  // 尝试从 localStorage 加载保存的图表
-  if (LocalStorageService.isAvailable() && LocalStorageService.hasSavedDiagram()) {
-    const savedDiagram = LocalStorageService.loadDiagram()
-    if (savedDiagram && !currentDiagram.value) {
-      console.log('Loading saved diagram from localStorage:', savedDiagram.name)
-      currentDiagram.value = savedDiagram.xml
+  // Check if loading workflow from database via route parameter
+  const workflowId = route.params.workflowId as string | undefined
+
+  if (workflowId) {
+    // Load workflow from database
+    try {
+      isLoading.value = true
+      const workflow = await workflowService.getWorkflow(workflowId)
+      currentDiagram.value = workflow.bpmnXml
+      currentWorkflowId.value = workflow.id
+      console.log('Loaded workflow from database:', workflow.name)
+      showStatus(`Loaded workflow: ${workflow.name}`, 'success')
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '加载工作流失败'
+      message.error(errorMsg)
+      console.error('Failed to load workflow:', error)
+      hasError.value = true
+      errorMessage.value = errorMsg
+    } finally {
+      isLoading.value = false
+    }
+  } else {
+    // Try loading from localStorage if no workflow ID
+    if (LocalStorageService.isAvailable() && LocalStorageService.hasSavedDiagram()) {
+      const savedDiagram = LocalStorageService.loadDiagram()
+      if (savedDiagram && !currentDiagram.value) {
+        console.log('Loading saved diagram from localStorage:', savedDiagram.name)
+        currentDiagram.value = savedDiagram.xml
+      }
     }
   }
 })

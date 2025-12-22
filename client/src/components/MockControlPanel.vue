@@ -63,7 +63,12 @@
           <a-tab-pane key="interceptors" tab="拦截器调用">
             <div class="split-panel">
               <div class="split-panel-top">
-                <div class="panel-title">拦截器列表</div>
+                <div class="panel-title">
+                  拦截器列表
+                  <span v-if="activeConfigCount > 0" class="config-badge">
+                    {{ activeConfigCount }} 个已启用 Mock
+                  </span>
+                </div>
                 <div v-if="lastResult && lastResult.interceptorCalls && lastResult.interceptorCalls.length > 0" class="interceptor-list">
                   <div
                     v-for="call in lastResult.interceptorCalls"
@@ -71,9 +76,23 @@
                     :class="['interceptor-item', { active: selectedInterceptor === call.order }]"
                     @click="selectedInterceptor = call.order"
                   >
-                    <span class="interceptor-order">{{ call.order }}</span>
-                    <span class="interceptor-name">{{ call.name }}</span>
-                    <span class="interceptor-time">{{ formatTime(call.timestamp) }}</span>
+                    <div class="interceptor-item-header">
+                      <span class="interceptor-order">{{ call.order }}</span>
+                      <span class="interceptor-name">{{ call.name }}</span>
+                      <span class="interceptor-time">{{ formatTime(call.timestamp) }}</span>
+                    </div>
+                    <div class="interceptor-item-controls" @click.stop>
+                      <a-radio-group
+                        :value="getInterceptorMode(call.name)"
+                        @change="(e: any) => handleModeChange(call.name, e.target.value)"
+                        size="small"
+                        button-style="solid"
+                      >
+                        <a-radio-button value="record">记录</a-radio-button>
+                        <a-radio-button value="enabled">Mock</a-radio-button>
+                        <a-radio-button value="disabled">禁用</a-radio-button>
+                      </a-radio-group>
+                    </div>
                   </div>
                 </div>
                 <div v-else class="empty-state-small">
@@ -130,7 +149,47 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { mockService, type ExecuteResult, type MockExecution, type InterceptorCall } from '../services/mockService'
+import { apiClient, type InterceptorMode, type InterceptorConfig } from '../services/api'
+
+// Interceptor call record structure
+interface InterceptorCall {
+  name: string
+  order: number
+  timestamp: string
+  input: Record<string, any>
+  output: Record<string, any>
+}
+
+// Execution result structure
+interface ExecuteResult {
+  businessResponse?: {
+    statusCode: number
+    body: any
+    headers?: Record<string, string>
+  }
+  engineResponse: {
+    instanceId: string
+    currentNodeIds: string[]
+    nextNodeIds?: string[]
+    status: string
+    executionId: string
+    variables: Record<string, any>
+  }
+  interceptorCalls?: InterceptorCall[]
+  requestParams?: Record<string, any>
+}
+
+// Legacy MockExecution for backwards compatibility
+interface MockExecution {
+  id: string
+  workflowId: string
+  status: 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'stopped'
+  currentNodeId: string
+  variables: Record<string, any>
+  executedNodes: string[]
+  createdAt: string
+  updatedAt: string
+}
 
 interface Props {
   workflowId: string
@@ -154,6 +213,12 @@ const selectedApi = ref('/api/execute/:workflowInstanceId')
 const activeTab = ref('request-response')
 const selectedInterceptor = ref<number | null>(null)
 const interceptorDetailTab = ref('input')
+
+// Interceptor configuration state
+const interceptorModes = ref<Record<string, InterceptorMode>>({})
+const showMockDataEditor = ref(false)
+const editingInterceptor = ref<InterceptorCall | null>(null)
+const mockDataJson = ref('')
 
 const selectedInterceptorDetails = computed(() => {
   if (!selectedInterceptor.value || !lastResult.value?.interceptorCalls) return null
@@ -199,14 +264,36 @@ const handleStart = async () => {
   errorMessage.value = ''
 
   try {
-    console.log('Starting mock execution for workflow:', props.workflowId)
-    const result = await mockService.executeWorkflow(props.workflowId, {
-      bpmnXml: props.bpmnXml, // Pass BPMN XML
+    console.log('Starting workflow execution with interceptor config:', interceptorModes.value)
+
+    // Apply interceptor configuration to apiClient before execution
+    if (Object.keys(interceptorModes.value).length > 0) {
+      apiClient.setInterceptorConfig(interceptorModes.value)
+      console.log('Applied interceptor config to apiClient')
+    } else {
+      apiClient.clearInterceptorConfig()
+    }
+
+    // Generate or use existing instance ID
+    let instanceId = currentInstanceId.value
+    if (!instanceId) {
+      // Generate a random instance ID
+      const randomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      instanceId = `${props.workflowId}_instance_${randomId}`
+      console.log('Generated new instance ID:', instanceId)
+    }
+
+    // Call real workflow execution API with instanceId in URL
+    // URL: http://api.workflow.com:3000/api/execute/:workflowInstanceId
+    // The interceptor configuration is automatically injected via HTTP headers
+    const result = await apiClient.post<ExecuteResult>(`/execute/${instanceId}`, {
+      workflowId: props.workflowId,
+      bpmnXml: props.bpmnXml,
       initialVariables: {},
-      nodeMockData: {}, // Can be enhanced to allow user input
+      startNodeId: undefined
     })
 
-    console.log('Mock execution result:', result)
+    console.log('Workflow execution result:', result)
 
     // Check if result has the expected structure
     if (!result || !result.engineResponse) {
@@ -221,6 +308,16 @@ const handleStart = async () => {
     // Reset interceptor selection
     selectedInterceptor.value = null
 
+    // Initialize interceptor modes from result if not set
+    if (result.interceptorCalls) {
+      result.interceptorCalls.forEach((call) => {
+        const interceptorId = call.name // Use name as interceptor ID for now
+        if (!interceptorModes.value[interceptorId]) {
+          interceptorModes.value[interceptorId] = 'record' // Default to record mode
+        }
+      })
+    }
+
     // Emit legacy format for backwards compatibility
     emit('executionUpdate', {
       id: result.engineResponse.instanceId,
@@ -233,7 +330,7 @@ const handleStart = async () => {
       updatedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Mock execution error:', error)
+    console.error('Workflow execution error:', error)
     errorMessage.value = error instanceof Error ? error.message : '执行失败'
   } finally {
     isLoading.value = false
@@ -274,6 +371,22 @@ const copyToClipboard = async (data: any) => {
     console.error('Failed to copy:', err)
   }
 }
+
+// Handle interceptor mode change
+const handleModeChange = (interceptorId: string, mode: InterceptorMode) => {
+  interceptorModes.value[interceptorId] = mode
+  console.log(`Interceptor ${interceptorId} mode changed to ${mode}`)
+}
+
+// Get mode for interceptor
+const getInterceptorMode = (interceptorName: string): InterceptorMode => {
+  return interceptorModes.value[interceptorName] || 'record'
+}
+
+// Get active config count
+const activeConfigCount = computed(() => {
+  return Object.values(interceptorModes.value).filter(mode => mode === 'enabled').length
+})
 </script>
 
 <style scoped>
@@ -366,6 +479,20 @@ const copyToClipboard = async (data: any) => {
   font-size: 13px;
   margin-bottom: 8px;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #52c41a;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 10px;
 }
 
 .detail-subtitle {
@@ -401,9 +528,9 @@ const copyToClipboard = async (data: any) => {
 
 .interceptor-item {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 8px;
+  padding: 12px;
   background: white;
   border: 1px solid #e8e8e8;
   border-radius: 4px;
@@ -419,6 +546,19 @@ const copyToClipboard = async (data: any) => {
 .interceptor-item.active {
   background: #e6f7ff;
   border-color: #1890ff;
+}
+
+.interceptor-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.interceptor-item-controls {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .interceptor-order {

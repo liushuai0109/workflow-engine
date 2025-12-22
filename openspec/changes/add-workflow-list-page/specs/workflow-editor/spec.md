@@ -161,18 +161,26 @@
 
 - **WHEN** 操作员查看工具栏
 - **THEN** 按钮顺序应为:
-  1. Open BPMN (打开本地文件)
-  2. Save (保存到数据库) - **新增**
-  3. Download (下载到本地) - **重命名自 Save BPMN**
-  4. New (创建新流程图)
-  5. 其他现有按钮(流量可视化等)
+  1. Back to List (返回列表页) - **新增**
+  2. Open BPMN (打开本地文件)
+  3. Save (保存到数据库) - **新增**
+  4. Download (下载到本地) - **重命名自 Save BPMN**
+  5. New (创建新流程图)
+  6. 其他现有按钮(流量可视化等)
 
 #### Scenario: 按钮图标和文字
 
 - **WHEN** 工具栏渲染
-- **THEN** "Save" 按钮使用 `SaveOutlined` 图标,文字为 "Save"
+- **THEN** "Back to List" 按钮使用 `UnorderedListOutlined` 图标,文字为 "Workflows"
+- **AND** "Save" 按钮使用 `SaveOutlined` 图标,文字为 "Save"
 - **AND** "Download" 按钮使用 `DownloadOutlined` 图标,文字为 "Download"
 - **AND** 其他按钮保持不变
+
+#### Scenario: 返回工作流列表
+
+- **WHEN** 操作员点击 "Back to List" 按钮
+- **THEN** 系统应导航到 `/workflows` 路由
+- **AND** 显示工作流列表页
 
 ### Requirement: 路由结构
 

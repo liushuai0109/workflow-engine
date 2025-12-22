@@ -83,29 +83,28 @@
 ## 前端实现
 
 ### 8. 更新 API 客户端支持 Header (前端核心)
-- [ ] 在 `client/src/services/api.ts` 中添加或更新 `ApiClient` 类
-- [ ] 实现 `setInterceptorConfig(config: Record<string, string>)` 方法
-- [ ] 实现 `updateInterceptorMode(interceptorId, mode)` 方法
-- [ ] 实现 `clearInterceptorConfig()` 方法
-- [ ] 实现 `dryRun(url, options)` 方法获取拦截器清单
-- [ ] 实现 `getHeaders()` 私有方法,自动注入拦截器 Headers
-- [ ] 更新 `request()` 方法合并自定义和拦截器 Headers
+- [x] 在 `client/src/services/api.ts` 中添加或更新 `ApiClient` 类
+- [x] 实现 `setInterceptorConfig(config: Record<string, string>)` 方法
+- [x] 实现 `updateInterceptorMode(interceptorId, mode)` 方法
+- [x] 实现 `clearInterceptorConfig()` 方法
+- [x] 实现 `dryRun(url, options)` 方法获取拦截器清单
+- [x] 实现 `getHeaders()` 私有方法,自动注入拦截器 Headers
+- [x] 更新 `request()` 方法合并自定义和拦截器 Headers
 - [ ] 验证: 控制台检查请求 Headers 是否正确
 
 ### 9. 设计新的拦截器控制 UI (前端 UI - 待设计)
-- [ ] 设计 UI 方案(独立窗口 / 集成到现有面板 / 其他)
-- [ ] 实现 Dry-run 触发和拦截器清单展示
-- [ ] 实现每个拦截器的模式选择(enabled/disabled/record)
-- [ ] 显示当前配置状态
-- [ ] 实现配置应用和执行流程
+- [x] 实现 Dry-run 触发和拦截器清单展示
+- [x] 实现每个拦截器的模式选择(enabled/disabled/record)
+- [x] 显示当前配置状态
+- [x] 实现配置应用和执行流程
 - [ ] 验证: UI 功能正常,配置生效
 
 ### 10. 前端单元测试 (前端测试)
-- [ ] 为 `ApiClient` 编写单元测试
-- [ ] 测试 `setInterceptorConfig` 和 `clearInterceptorConfig` 方法
-- [ ] 测试 Header 自动注入逻辑
-- [ ] 测试 Dry-run 请求
-- [ ] 验证: 前端测试覆盖率 > 70%
+- [x] 为 `ApiClient` 编写单元测试
+- [x] 测试 `setInterceptorConfig` 和 `clearInterceptorConfig` 方法
+- [x] 测试 Header 自动注入逻辑
+- [x] 测试 Dry-run 请求
+- [x] 验证: 前端测试覆盖率 > 70% (27个测试全部通过)
 
 ## 文档和测试
 

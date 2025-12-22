@@ -45,6 +45,7 @@
     "@fission-ai/openspec": "^0.16.0",
     "@jest/globals": "^29.7.0",
     "@playwright/test": "^1.57.0",
+    "@types/bpmn-moddle": "^9.0.0",
     "@types/jest": "^29.5.12",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.7.2",
