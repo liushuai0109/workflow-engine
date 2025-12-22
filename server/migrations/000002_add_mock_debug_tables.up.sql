@@ -1,21 +1,5 @@
 -- 添加 Mock 和 Debug 功能相关表
 
--- 表：mock_configs
-CREATE TABLE IF NOT EXISTS mock_configs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  workflow_id UUID NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  node_configs JSONB DEFAULT '{}',
-  gateway_configs JSONB DEFAULT '{}',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_mock_configs_workflow_id ON mock_configs(workflow_id);
-CREATE INDEX IF NOT EXISTS idx_mock_configs_node_configs ON mock_configs USING GIN (node_configs);
-CREATE INDEX IF NOT EXISTS idx_mock_configs_gateway_configs ON mock_configs USING GIN (gateway_configs);
-
 -- 表：debug_sessions
 CREATE TABLE IF NOT EXISTS debug_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

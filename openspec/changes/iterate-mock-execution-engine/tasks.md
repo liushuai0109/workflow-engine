@@ -4,13 +4,50 @@
 
 | Phase | 任务数 | 预计时间 | 实际时间 | 依赖 |
 |-------|-------|---------|---------|------|
-| Phase 1: Mock 实例管理 | 4 | 1-2 天 | | 无 |
+| Phase 0: 清理和删除 | 3 | 0.5 天 | | 无 |
+| Phase 1: Mock 实例管理 | 4 | 1-2 天 | | Phase 0 |
 | Phase 2: 执行引擎 Mock 模式支持 | 5 | 2-3 天 | | Phase 1 |
 | Phase 3: Mock 执行 API 重构 | 4 | 1-2 天 | | Phase 2 |
 | Phase 4: 前端 UI 更新 | 4 | 1-2 天 | | Phase 3 |
 | Phase 5: 拦截器调用跟踪功能 | 3 | 1-2 天 | | Phase 2, Phase 3 |
 | Phase 6: 前端执行结果展示面板 | 6 | 2-3 天 | | Phase 4, Phase 5 |
-| **总计** | **26** | **8-14 天** | | |
+| Phase 7: Mock 控制面板布局优化 | 4 | 0.5 天 | | Phase 6 |
+| **总计** | **33** | **9-15.5 天** | | |
+
+## Phase 0: 清理和删除
+
+- [x] 0.1 删除后端 Mock 配置管理代码
+  - [x] 删除 `server/internal/handlers/mock_config.go`
+  - [x] 删除 `server/internal/services/mock_config_service.go`
+  - [x] 删除 `server/internal/models/mock_config.go`
+  - [x] 从路由中移除 mock config 相关的路由注册
+  - [x] 删除 mock_configs 数据库表迁移文件（如果有）
+
+- [x] 0.2 删除后端所有 Mock API 接口
+  - [x] 删除整个 `server/internal/handlers/mock.go` 文件
+  - [x] 从路由中移除所有 Mock API 的路由注册：
+    - `POST /api/workflows/:workflowId/mock/execute`
+    - `POST /api/workflows/mock/instances/:instanceId/step`
+    - `GET /api/workflows/mock/instances/:instanceId`
+    - `POST /api/workflows/mock/instances` (如果存在)
+    - `PUT /api/workflows/mock/instances/:instanceId` (如果存在)
+    - `GET /api/workflows/mock/instances` (如果存在)
+    - `GET /api/workflows/mock/executions/:executionId` (如果存在)
+    - `POST /api/workflows/mock/executions/:executionId/continue` (如果存在)
+    - `POST /api/workflows/mock/executions/:executionId/stop` (如果存在)
+  - [x] 清理相关的测试文件
+  - [x] 删除 `server/internal/services/mock_executor.go`
+  - [x] 删除 `server/internal/services/mock_execution_store.go`
+
+- [x] 0.3 删除前端 Debug 面板和 Mock API 调用代码
+  - [x] 删除 `client/src/components/DebugPanel.vue`（如果存在）
+  - [x] 从 `mockService.ts` 中删除所有 Mock API 方法
+  - [x] 删除 `client/src/components/MockConfigPanel.vue` 组件
+  - [x] 从 `BpmnEditorPage.vue` 中移除 MockConfigPanel 相关引用
+  - [x] 从 MockControlPanel.vue、RightPanelContainer.vue、BpmnEditorPage.vue 中移除 configId prop
+  - [x] 清理相关的路由和状态管理代码
+  - [x] 删除相关的 TypeScript 类型定义（MockConfig, NodeConfig, GatewayConfig）
+
 
 ## Phase 1: Mock 实例管理
 
@@ -160,7 +197,45 @@
   - [x] 更新 `ExecuteResult` 类型，添加 `interceptorCalls` 和 `requestParams` 字段
   - [x] 更新 TypeScript 类型声明
 
+## Phase 7: Mock 控制面板布局优化
+
+- [x] 7.1 调整标题栏布局
+  - [x] 修改 panel-header 结构，添加按钮容器
+  - [x] 将"开始执行"按钮移至标题栏右侧
+  - [x] 调整标题栏 CSS 样式，使用 flexbox 布局
+  - [x] 移除原有的 control-buttons 区域
+
+- [x] 7.2 删除多余的UI元素
+  - [x] 移除"单步 (Step)"按钮及相关逻辑
+  - [x] 移除执行状态信息显示区域（执行状态、当前节点、实例ID）
+  - [x] 保留接口选择器组件（数据源为前端配置）
+
+- [x] 7.3 调整面板内容布局
+  - [x] 确保 Tabs 占据面板主要空间
+  - [x] 优化面板内容区域的 padding 和 margin
+
+- [x] 7.4 更新按钮样式
+  - [x] 调整"开始执行"按钮大小，适应标题栏高度
+  - [x] 确保按钮的悬停状态样式正确
+  - [x] 保持按钮的加载状态（loading spinner）显示
+
+- [x] 7.5 测试和验证
+  - [x] 测试"开始执行"按钮交互（点击、悬停）
+  - [x] 验证面板布局在不同屏幕尺寸下的表现
+  - [x] 验证 Tabs 内容区域的滚动和显示
+
 ## 验收标准
+
+### Phase 0：清理和删除
+- [x] 所有 Mock 配置管理相关代码已删除
+- [x] 整个 `server/internal/handlers/mock.go` 文件已删除
+- [x] 所有 Mock API 路由已从路由器中移除
+- [x] MockConfigPanel 组件已删除
+- [x] 前端 mockService 中的所有 Mock API 调用方法已删除
+- [x] 相关的 TypeScript 类型定义已清理（MockConfig, NodeConfig, GatewayConfig）
+- [x] configId prop 已从所有组件中移除
+- [x] 代码编译通过，无引用错误
+- [x] Mock 功能改为通过其他方式实现（不使用独立 API 端点）
 
 ### 基础功能（Phase 1-4，已完成）
 - [ ] Mock 执行可以模拟真实的执行引擎接口
@@ -173,21 +248,33 @@
 - [ ] 代码通过所有测试
 
 ### 新增功能（Phase 5-6）
-- [ ] 接口选择器正确显示在"开始执行"按钮上方
-- [ ] 接口选择器当前支持 `/api/execute/:workflowInstanceId`
-- [ ] 执行结果 Tabs 正确显示在"开始执行"按钮下方
-- [ ] Tabs 包含"请求/回包"、"拦截器调用"、"日志"三个标签
-- [ ] "请求/回包" Tab 正确显示请求入参和响应数据
-- [ ] "请求/回包" Tab 的上下区域支持拖拽调整高度
-- [ ] "拦截器调用" Tab 正确显示拦截器列表
-- [ ] 点击拦截器列表项可以查看该拦截器的入参和出参
-- [ ] "拦截器调用" Tab 的上下区域支持拖拽调整高度
-- [ ] "日志" Tab 显示占位提示信息
-- [ ] 拦截器调用信息按调用顺序正确展示
-- [ ] 后端 API 正确返回拦截器调用记录（`interceptorCalls`）
-- [ ] 后端 API 正确返回请求入参（`requestParams`）
-- [ ] JSON 数据支持代码高亮和格式化
-- [ ] 所有代码展示区域支持复制功能
-- [ ] 前端 TypeScript 类型定义完整且正确
-- [ ] 所有新功能的单元测试和集成测试通过
+- [x] 接口选择器正确显示在"开始执行"按钮上方
+- [x] 接口选择器当前支持 `/api/execute/:workflowInstanceId`
+- [x] 执行结果 Tabs 正确显示在"开始执行"按钮下方
+- [x] Tabs 包含"请求/回包"、"拦截器调用"、"日志"三个标签
+- [x] "请求/回包" Tab 正确显示请求入参和响应数据
+- [x] "请求/回包" Tab 的上下区域支持拖拽调整高度
+- [x] "拦截器调用" Tab 正确显示拦截器列表
+- [x] 点击拦截器列表项可以查看该拦截器的入参和出参
+- [x] "拦截器调用" Tab 的上下区域支持拖拽调整高度
+- [x] "日志" Tab 显示占位提示信息
+- [x] 拦截器调用信息按调用顺序正确展示
+- [x] 后端 API 正确返回拦截器调用记录（`interceptorCalls`）
+- [x] 后端 API 正确返回请求入参（`requestParams`）
+- [x] JSON 数据支持代码高亮和格式化
+- [x] 所有代码展示区域支持复制功能
+- [x] 前端 TypeScript 类型定义完整且正确
+- [ ] 所有新功能的单元测试和集成测试通过（测试待编写）
+
+### 新增功能（Phase 7 - Mock 控制面板布局优化）
+- [x] "开始执行"按钮移至标题栏右侧
+- [x] 标题栏使用 flexbox 布局（标题居左，按钮居右）
+- [x] 按钮大小和样式适应标题栏高度
+- [x] 原有独立控制按钮区域已移除
+- [x] "单步 (Step)"按钮已移除
+- [x] 执行状态信息显示区域已移除
+- [x] 接口选择器保留（数据源为前端配置）
+- [x] Tabs 占据面板主要空间
+- [x] 标题栏有明显的底部边框分隔线
+- [x] "开始执行"按钮交互状态正确（悬停、加载）
 

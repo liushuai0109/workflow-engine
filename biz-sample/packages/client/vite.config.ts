@@ -1,17 +1,19 @@
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import path from 'path'
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()],
-  server: {
-    host: '0.0.0.0', // 监听所有网络接口，通过 hosts 文件映射到 client.biz.com
-    port: 8080,
-    strictPort: true,
-    allowedHosts: [
-      'client.biz.com',
-      'localhost',
-      '.biz.com', // 允许所有 .biz.com 子域名
-    ],
+  plugins: [
+    // The React and Tailwind plugins are both required for Make, even if
+    // Tailwind is not being actively used – do not remove them
+    react(),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      // Alias @ to the src directory
+      '@': path.resolve(__dirname, './src'),
+    },
   },
 })

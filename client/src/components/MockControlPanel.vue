@@ -2,28 +2,19 @@
   <div class="mock-control-panel">
     <div class="panel-header">
       <h3>Mock 执行控制</h3>
+      <div class="header-buttons">
+        <a-button
+          type="primary"
+          @click="handleStart"
+          :loading="isLoading"
+          :disabled="!!(currentInstanceId && currentStatus !== 'completed' && currentStatus !== 'failed')"
+        >
+          开始执行
+        </a-button>
+      </div>
     </div>
 
     <div class="panel-content">
-      <!-- 执行状态 -->
-      <a-form :label-width="80">
-        <a-form-item label="执行状态">
-          <a-tag :theme="statusTagTheme" variant="light-outline">
-            {{ executionStatus || '未开始' }}
-          </a-tag>
-        </a-form-item>
-
-        <!-- 当前节点 -->
-        <a-form-item v-if="currentNodeIds.length > 0" label="当前节点">
-          <div class="value">{{ currentNodeIds.join(', ') }}</div>
-        </a-form-item>
-
-        <!-- 实例ID -->
-        <a-form-item v-if="currentInstanceId" label="实例ID">
-          <div class="value-small">{{ currentInstanceId }}</div>
-        </a-form-item>
-      </a-form>
-
       <!-- 接口选择器 -->
       <div class="interface-selector">
         <a-form-item label="执行接口">
@@ -31,28 +22,6 @@
             <a-option value="/api/execute/:workflowInstanceId">POST /api/execute/:workflowInstanceId</a-option>
           </a-select>
         </a-form-item>
-      </div>
-
-      <!-- 控制按钮 -->
-      <div class="control-buttons">
-        <a-button
-          type="primary"
-          block
-          @click="handleStart"
-          :loading="isLoading"
-          :disabled="!!(currentInstanceId && currentStatus !== 'completed' && currentStatus !== 'failed')"
-        >
-          开始执行
-        </a-button>
-        <a-button
-          type="success"
-          block
-          @click="handleStep"
-          :loading="isLoading"
-          :disabled="!currentInstanceId || currentStatus === 'completed' || currentStatus === 'failed'"
-        >
-          单步 (Step)
-        </a-button>
       </div>
 
       <!-- 错误信息 -->
@@ -165,7 +134,6 @@ import { mockService, type ExecuteResult, type MockExecution, type InterceptorCa
 
 interface Props {
   workflowId: string
-  configId?: string
   bpmnXml?: string // BPMN XML 内容，用于无数据库模式
 }
 
@@ -186,37 +154,6 @@ const selectedApi = ref('/api/execute/:workflowInstanceId')
 const activeTab = ref('request-response')
 const selectedInterceptor = ref<number | null>(null)
 const interceptorDetailTab = ref('input')
-
-const executionStatus = computed(() => {
-  if (!currentStatus.value) return null
-  const statusMap: Record<string, string> = {
-    pending: '等待中',
-    running: '运行中',
-    paused: '已暂停',
-    completed: '已完成',
-    failed: '执行失败',
-    stopped: '已停止',
-  }
-  return statusMap[currentStatus.value] || currentStatus.value
-})
-
-const statusClass = computed(() => {
-  if (!currentStatus.value) return ''
-  return `status-${currentStatus.value}`
-})
-
-const statusTagTheme = computed((): 'default' | 'primary' | 'success' | 'warning' | 'danger' => {
-  if (!currentStatus.value) return 'default'
-  const themeMap: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
-    pending: 'default',
-    running: 'primary',
-    paused: 'warning',
-    completed: 'success',
-    failed: 'danger',
-    stopped: 'default',
-  }
-  return themeMap[currentStatus.value] || 'default'
-})
 
 const selectedInterceptorDetails = computed(() => {
   if (!selectedInterceptor.value || !lastResult.value?.interceptorCalls) return null
@@ -303,46 +240,6 @@ const handleStart = async () => {
   }
 }
 
-const handleStep = async () => {
-  if (!currentInstanceId.value) {
-    await handleStart()
-    return
-  }
-
-  isLoading.value = true
-  errorMessage.value = ''
-
-  try {
-    const result = await mockService.stepExecution(currentInstanceId.value, {
-      businessParams: {},
-      nodeMockData: {}, // Can be enhanced to allow user input
-    })
-
-    lastResult.value = result
-    currentNodeIds.value = result.engineResponse.currentNodeIds
-    currentStatus.value = result.engineResponse.status
-
-    // Reset interceptor selection
-    selectedInterceptor.value = null
-
-    // Emit legacy format for backwards compatibility
-    emit('executionUpdate', {
-      id: result.engineResponse.instanceId,
-      workflowId: props.workflowId,
-      status: convertStatus(result.engineResponse.status),
-      currentNodeId: result.engineResponse.currentNodeIds[0] || '',
-      variables: result.engineResponse.variables,
-      executedNodes: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '单步执行失败'
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const convertStatus = (status: string): 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'stopped' => {
   const statusMap: Record<string, any> = {
     'pending': 'pending',
@@ -408,6 +305,13 @@ const copyToClipboard = async (data: any) => {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+  flex: 1;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .panel-content {
@@ -416,25 +320,7 @@ const copyToClipboard = async (data: any) => {
   flex: 1;
 }
 
-.value {
-  font-size: 14px;
-}
-
-.value-small {
-  font-size: 11px;
-  font-family: monospace;
-  color: #666;
-  word-break: break-all;
-}
-
 .interface-selector {
-  margin-bottom: 16px;
-}
-
-.control-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   margin-bottom: 16px;
 }
 
@@ -447,7 +333,6 @@ const copyToClipboard = async (data: any) => {
 .split-panel {
   display: flex;
   flex-direction: column;
-  height: 400px;
 }
 
 .split-panel-top {

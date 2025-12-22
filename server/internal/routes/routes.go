@@ -21,6 +21,7 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 	// Custom middlewares
 	router.Use(middleware.CORSMiddleware(cfg.CORSOrigin))
 	router.Use(middleware.LoggerMiddleware(logger))
+	router.Use(middleware.InterceptorMiddleware()) // Add interceptor middleware
 
 	// Initialize services
 	workflowSvc := services.NewWorkflowService(db, logger)
@@ -37,8 +38,6 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 	workflowHandler := handlers.NewWorkflowHandler(db, logger)
 	claudeHandler := handlers.NewClaudeHandler(cfg.Claude, logger)
 	executorHandler := handlers.NewWorkflowExecutorHandler(db, logger, workflowSvc, instanceSvc, executionSvc)
-	mockHandler := handlers.NewMockHandler(db, logger, workflowSvc, instanceSvc, executionSvc)
-	mockConfigHandler := handlers.NewMockConfigHandler(db, logger)
 	debugHandler := handlers.NewDebugHandler(db, logger)
 	executionHistoryHandler := handlers.NewExecutionHistoryHandler(db, logger)
 	chatHandler := handlers.NewChatConversationHandler(db, logger)
@@ -75,34 +74,6 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 
 		// Workflow execution
 		api.POST("/execute/:workflowInstanceId", executorHandler.ExecuteWorkflow)
-
-		// Mock execution
-		mock := api.Group("/workflows/:workflowId/mock")
-		{
-			mock.POST("/execute", mockHandler.ExecuteMock)
-		}
-
-		// Mock instance management (new instance-based API)
-		api.GET("/workflows/mock/instances/:instanceId", mockHandler.GetMockInstance)
-		api.POST("/workflows/mock/instances", mockHandler.CreateMockInstance)
-		api.PUT("/workflows/mock/instances/:instanceId", mockHandler.UpdateMockInstance)
-		api.GET("/workflows/mock/instances", mockHandler.ListMockInstances)
-		api.POST("/workflows/mock/instances/:instanceId/step", mockHandler.StepMockExecution)
-
-		// Legacy Mock execution operations (for backwards compatibility)
-		api.GET("/workflows/mock/executions/:executionId", mockHandler.GetMockExecution)
-		api.POST("/workflows/mock/executions/:executionId/continue", mockHandler.ContinueMockExecution)
-		api.POST("/workflows/mock/executions/:executionId/stop", mockHandler.StopMockExecution)
-
-		// Mock configuration
-		mockConfig := api.Group("/workflows/:workflowId/mock/configs")
-		{
-			mockConfig.POST("", mockConfigHandler.CreateMockConfig)
-			mockConfig.GET("", mockConfigHandler.GetMockConfigs)
-		}
-		api.GET("/workflows/mock/configs/:configId", mockConfigHandler.GetMockConfig)
-		api.PUT("/workflows/mock/configs/:configId", mockConfigHandler.UpdateMockConfig)
-		api.DELETE("/workflows/mock/configs/:configId", mockConfigHandler.DeleteMockConfig)
 
 		// Debug sessions
 		debug := api.Group("/workflows/:workflowId/debug")

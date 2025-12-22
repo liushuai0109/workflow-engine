@@ -65,11 +65,9 @@
         :active-tab="activeRightPanelTab"
         :workflow-id="getWorkflowId"
         :bpmn-xml="currentDiagram"
-        :config-id="selectedMockConfigId"
         @tab-change="handleRightPanelTabChange"
         @mock-execution-update="handleMockExecutionUpdate"
         @debug-session-update="handleDebugSessionUpdate"
-        @interceptor-session-update="handleInterceptorSessionUpdate"
         @chat-message="handleChatMessage"
       />
     </div>
@@ -91,14 +89,6 @@
 
     <!-- 隐藏的文件输入 -->
     <input ref="fileInput" type="file" accept=".bpmn,.xml" @change="handleFileSelect" style="display: none" />
-
-    <!-- Mock 配置面板 -->
-    <MockConfigPanel
-      v-if="showMockConfigPanel && currentDiagram"
-      :workflow-id="getWorkflowId || ''"
-      @close="showMockConfigPanel = false"
-      @config-selected="handleMockConfigSelected"
-    />
 
     <!-- 变量监视面板 -->
       <VariableWatchPanel
@@ -128,7 +118,6 @@ import {
 } from '@ant-design/icons-vue'
 import BpmnEditor from '../components/BpmnEditor.vue'
 import RightPanelContainer from '../components/RightPanelContainer.vue'
-import MockConfigPanel from '../components/MockConfigPanel.vue'
 import VariableWatchPanel from '../components/VariableWatchPanel.vue'
 import ExecutionTimeline from '../components/ExecutionTimeline.vue'
 import { LocalStorageService } from '../services/localStorageService'
@@ -136,7 +125,6 @@ import { visualizationService } from '../services/visualizationService'
 import { contextMenuService } from '../services/contextMenuService'
 import type { MockExecution } from '../services/mockService'
 import { debugService, type DebugSession } from '../services/debugService'
-import type { InterceptSession } from '../services/interceptorService'
 import type { ExecutionHistory } from '../components/ExecutionTimeline.vue'
 import { llmService } from '../services/llmService'
 import type { Message, FunctionCall } from '../services/llmService'
@@ -172,17 +160,15 @@ const isFlowVisualizationEnabled = ref<boolean>(false)
 const rightPanelRef = ref<any>() // RightPanelContainer 组件引用
 
 // Mock 和 Debug 相关状态
-const showMockConfigPanel = ref<boolean>(false)
 const showVariablePanel = ref<boolean>(false)
 const showTimelinePanel = ref<boolean>(false)
-const selectedMockConfigId = ref<string | undefined>()
 const currentWorkflowId = ref<string>('')
 const debugVariables = ref<Record<string, any>>({})
 const previousDebugVariables = ref<Record<string, any>>({})
 const executionHistories = ref<ExecutionHistory[]>([])
 
 // 右侧面板 Tab 状态
-const activeRightPanelTab = ref<'properties' | 'chat' | 'mock' | 'debug' | 'interceptor'>('properties')
+const activeRightPanelTab = ref<'properties' | 'chat' | 'mock' | 'debug'>('properties')
 
 // 当图表改变时，更新工作流 ID
 watch(() => currentDiagram.value, () => {
@@ -300,7 +286,7 @@ const saveFile = async (): Promise<void> => {
         `这个约束确保流程图的语义清晰，明确定义每个任务的所有可能出口。`
       )
       hasError.value = true
-      errorMessage.value = validationResult.errors[0].split('\n')[0] // 状态栏显示第一个错误的第一行
+      errorMessage.value = validationResult.errors[0]?.split('\n')[0] || '验证错误' // 状态栏显示第一个错误的第一行
       return
     }
 
@@ -506,15 +492,10 @@ const toggleDebugPanel = () => {
   console.log('Debug Panel tab after toggle:', activeRightPanelTab.value)
 }
 
-const toggleInterceptorPanel = () => {
-  console.log('Toggle Interceptor Panel, current tab:', activeRightPanelTab.value)
-  activeRightPanelTab.value = activeRightPanelTab.value === 'interceptor' ? 'properties' : 'interceptor'
-  console.log('Interceptor Panel tab after toggle:', activeRightPanelTab.value)
-}
 
 // 处理右侧面板 Tab 切换
 const handleRightPanelTabChange = async (tab: string) => {
-  activeRightPanelTab.value = tab as 'properties' | 'chat' | 'mock' | 'debug' | 'interceptor'
+  activeRightPanelTab.value = tab as 'properties' | 'chat' | 'mock' | 'debug'
 
   // 如果切换到聊天 Tab，滚动到底部并加载历史
   if (tab === 'chat') {
@@ -579,11 +560,6 @@ const handleMockExecutionUpdate = (execution: MockExecution) => {
   }
 }
 
-const handleMockConfigSelected = (config: any) => {
-  selectedMockConfigId.value = config.id
-  showMockConfigPanel.value = false
-}
-
 const handleDebugSessionUpdate = async (session: DebugSession) => {
   // 保存之前的变量值用于变化检测
   previousDebugVariables.value = { ...debugVariables.value }
@@ -620,21 +596,6 @@ const handleDebugSessionUpdate = async (session: DebugSession) => {
   }
 }
 
-const handleInterceptorSessionUpdate = (session: InterceptSession) => {
-  // 更新可视化
-  if (bpmnEditor.value) {
-    const modeler = bpmnEditor.value.getModeler()
-    if (modeler) {
-      visualizationService.init(modeler)
-      // 高亮当前节点
-      if (session.currentNodeIds && session.currentNodeIds.length > 0) {
-        session.currentNodeIds.forEach(nodeId => {
-          visualizationService.highlightNode(nodeId, 'running')
-        })
-      }
-    }
-  }
-}
 
 const handleHistorySelected = (history: ExecutionHistory) => {
   // 高亮选中的历史节点

@@ -2,33 +2,72 @@
 
 ## MODIFIED Requirements
 
+### Requirement: 业务方法签名规范化
+
+系统 SHALL 将所有业务方法改造为接受结构体参数。
+
+#### Scenario: 定义参数结构体
+
+- **当** 业务方法需要多个参数时
+- **则** 应定义对应的参数结构体
+- **并且** 结构体命名规范为 `{MethodName}Params`
+- **并且** 字段使用 `json` tag 定义序列化名称
+- **并且** 关键字段使用 `intercept:"id"` tag 标记用于生成拦截器标识
+- **并且** 示例:
+  ```go
+  type GetWorkflowParams struct {
+      WorkflowID string `json:"workflowId" intercept:"id"`
+      IncludeDeleted bool `json:"includeDeleted"`
+  }
+  ```
+
+#### Scenario: 改造方法签名
+
+- **当** 方法需要接受多个参数时
+- **则** 应改为接受单一结构体参数
+- **并且** 第一个参数保持为 `context.Context`
+- **并且** 第二个参数为参数结构体
+- **并且** 示例:
+  ```go
+  // 原签名
+  func (s *Service) GetWorkflow(ctx context.Context, workflowID string, includeDeleted bool) (*Workflow, error)
+
+  // 改造后
+  func (s *Service) GetWorkflow(ctx context.Context, params GetWorkflowParams) (*Workflow, error)
+  ```
+
 ### Requirement: 拦截器核心功能
 
-系统 SHALL 提供拦截器机制以支持方法调用的拦截、mock 数据返回和执行记录。
+系统 SHALL 提供单一泛型拦截器函数以支持所有业务方法的拦截。
 
-#### Scenario: 使用泛型重载函数拦截方法调用
+#### Scenario: 使用泛型函数拦截方法调用
 
 - **当** 服务层需要拦截一个方法调用时
-- **则** 应使用对应参数数量的 Intercept 函数:
-  - `Intercept0[T any](ctx, operation, fn func(context.Context) (T, error)) (T, error)` - 无额外参数
-  - `Intercept1[T, P1 any](ctx, operation, fn func(context.Context, P1) (T, error), p1 P1) (T, error)` - 1 个参数
-  - `Intercept2[T, P1, P2 any](ctx, operation, fn func(context.Context, P1, P2) (T, error), p1 P1, p2 P2) (T, error)` - 2 个参数
-  - `Intercept3[T, P1, P2, P3 any](...)` - 3 个参数
-  - `Intercept4[T, P1, P2, P3, P4 any](...)` - 4 个参数
-  - `Intercept5[T, P1, P2, P3, P4, P5 any](...)` - 5 个参数
-- **并且** 第一个参数必须是 `context.Context`
-- **并且** 返回值必须是 `(T, error)` 格式
-- **并且** 拦截器应直接调用传入的方法引用,而非闭包
+- **则** 应使用泛型 Intercept 函数:
+  ```go
+  func Intercept[T any, P any](
+      ctx context.Context,
+      operation string,
+      fn func(context.Context, P) (T, error),
+      params P,
+  ) (T, error)
+  ```
+- **并且** T 为方法返回值类型
+- **并且** P 为参数结构体类型
+- **并且** 支持任意结构体类型,无需多个重载函数
 
 #### Scenario: 自动生成拦截器唯一标识
 
 - **当** 拦截器执行时
-- **则** 应自动生成唯一标识,格式为 `{operation}:{param1}:{param2}:...`
-- **并且** 参数序列化规则:
+- **则** 应从参数结构体自动生成唯一标识
+- **并且** 使用反射遍历结构体字段
+- **并且** 只提取带 `intercept:"id"` tag 的字段值
+- **并且** 标识格式为 `{operation}:{idField1}:{idField2}:...`
+- **并且** 字段序列化规则:
   - 字符串类型直接使用
   - 数字类型转换为字符串
   - 布尔值转换为 "true" 或 "false"
-  - 复杂类型 JSON 序列化后截断(最多 50 字符)
+  - 复杂类型 JSON 序列化后哈希(避免过长)
 - **并且** 同一操作和参数组合应生成相同的标识
 - **并且** 标识用于配置查找和日志记录
 
@@ -42,13 +81,6 @@
   - `record` - 执行真实方法并记录入参和输出(默认)
 - **并且** 未配置的拦截器默认使用 record 模式
 - **并且** 记录的数据应存储在配置的 mock 数据存储中
-
-#### Scenario: 兼容旧的闭包调用方式
-
-- **当** 现有代码使用旧的 `Intercept(ctx, operation, func(ctx) (T, error))` 方式时
-- **则** 系统应继续支持该调用方式
-- **并且** 内部应将其映射到 `Intercept0` 函数
-- **并且** 应在日志中标记使用了废弃的 API(可选)
 
 ## ADDED Requirements
 

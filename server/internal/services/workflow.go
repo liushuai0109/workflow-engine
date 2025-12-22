@@ -32,6 +32,13 @@ func NewWorkflowService(db *database.Database, logger *zerolog.Logger) *Workflow
 	}
 }
 
+// --- Parameter Structs for Interceptor (New Architecture) ---
+
+// GetWorkflowByIDParams holds parameters for GetWorkflowByID method
+type GetWorkflowByIDParams struct {
+	WorkflowID string `json:"workflowId" intercept:"id"`
+}
+
 // CreateWorkflow creates a new workflow
 func (s *WorkflowService) CreateWorkflow(ctx context.Context, name, description, xml string) (*models.Workflow, error) {
 	if !s.db.IsAvailable() {
@@ -130,6 +137,58 @@ func (s *WorkflowService) GetWorkflowByID(ctx context.Context, workflowID string
 			return nil, fmt.Errorf("%s: %s", models.ErrWorkflowNotFound, "workflow not found")
 		}
 		s.logger.Error().Err(err).Str("workflowId", workflowID).Msg("Failed to get workflow")
+		return nil, fmt.Errorf("failed to get workflow: %w", err)
+	}
+
+	return &workflowDB, nil
+}
+
+// GetWorkflowByIDWithParams retrieves a workflow by ID using struct parameters (New Architecture)
+// This is an example of the refactored method for the new interceptor architecture
+func (s *WorkflowService) GetWorkflowByIDWithParams(ctx context.Context, params GetWorkflowByIDParams) (*models.Workflow, error) {
+	// Check in-memory store first (for database-free Mock mode)
+	workflow, err := s.store.GetWorkflow(params.WorkflowID)
+	if err == nil {
+		s.logger.Debug().Str("workflowId", params.WorkflowID).Msg("Workflow found in memory")
+		return workflow, nil
+	}
+
+	// Use in-memory store if database is not available
+	if s.useStore || s.db == nil || s.db.DB == nil {
+		return nil, fmt.Errorf("%s: %s", models.ErrWorkflowNotFound, "workflow not found")
+	}
+
+	query := `
+		SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at
+		FROM workflows
+		WHERE id = $1
+	`
+
+	var workflowDB models.Workflow
+	var createdBy sql.NullString
+
+	err = s.db.QueryRowContext(ctx, query, params.WorkflowID).Scan(
+		&workflowDB.Id,
+		&workflowDB.Name,
+		&workflowDB.Description,
+		&workflowDB.BpmnXml,
+		&workflowDB.Version,
+		&workflowDB.Status,
+		&createdBy,
+		&workflowDB.CreatedAt,
+		&workflowDB.UpdatedAt,
+	)
+
+	if createdBy.Valid {
+		workflowDB.CreatedBy = createdBy.String
+	}
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			s.logger.Warn().Str("workflowId", params.WorkflowID).Msg("Workflow not found")
+			return nil, fmt.Errorf("%s: %s", models.ErrWorkflowNotFound, "workflow not found")
+		}
+		s.logger.Error().Err(err).Str("workflowId", params.WorkflowID).Msg("Failed to get workflow")
 		return nil, fmt.Errorf("failed to get workflow: %w", err)
 	}
 

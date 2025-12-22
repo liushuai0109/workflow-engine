@@ -2,5 +2,4 @@
 
 DROP TABLE IF EXISTS execution_histories;
 DROP TABLE IF EXISTS debug_sessions;
-DROP TABLE IF EXISTS mock_configs;
 

@@ -29,6 +29,33 @@ type WorkflowEngineService struct {
 	mockInstanceSvc *MockInstanceService
 }
 
+// --- Parameter Structs for Interceptor (New Architecture) ---
+
+// GetInstanceParams holds parameters for GetInstance interceptor calls
+type GetInstanceParams struct {
+	InstanceID string `json:"instanceId" intercept:"id"`
+}
+
+// GetWorkflowParams holds parameters for GetWorkflow interceptor calls
+type GetWorkflowParams struct {
+	WorkflowID string `json:"workflowId" intercept:"id"`
+}
+
+// UpdateInstanceParams holds parameters for UpdateInstance interceptor calls
+type UpdateInstanceParams struct {
+	InstanceID string   `json:"instanceId" intercept:"id"`
+	Status     string   `json:"status"`
+	NextNodes  []string `json:"nextNodes"` // Updated from Variables
+}
+
+// ExecuteServiceTaskParams holds parameters for ServiceTask execution
+type ExecuteServiceTaskParams struct {
+	NodeID         string                 `json:"nodeId" intercept:"id"`
+	BusinessApiUrl string                 `json:"businessApiUrl"`
+	BusinessParams map[string]interface{} `json:"businessParams"`
+	Variables      map[string]interface{} `json:"variables"`
+}
+
 // NewWorkflowEngineService creates a new WorkflowEngineService
 func NewWorkflowEngineService(
 	db *database.Database,
@@ -38,11 +65,11 @@ func NewWorkflowEngineService(
 	executionSvc *WorkflowExecutionService,
 ) *WorkflowEngineService {
 	return &WorkflowEngineService{
-		db:              db,
-		logger:          logger,
-		workflowSvc:     workflowSvc,
-		instanceSvc:     instanceSvc,
-		executionSvc:    executionSvc,
+		db:           db,
+		logger:       logger,
+		workflowSvc:  workflowSvc,
+		instanceSvc:  instanceSvc,
+		executionSvc: executionSvc,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -61,11 +88,11 @@ func NewWorkflowEngineServiceWithMockInstance(
 	mockInstanceSvc *MockInstanceService,
 ) *WorkflowEngineService {
 	return &WorkflowEngineService{
-		db:              db,
-		logger:          logger,
-		workflowSvc:     workflowSvc,
-		instanceSvc:     instanceSvc,
-		executionSvc:    executionSvc,
+		db:           db,
+		logger:       logger,
+		workflowSvc:  workflowSvc,
+		instanceSvc:  instanceSvc,
+		executionSvc: executionSvc,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -76,9 +103,9 @@ func NewWorkflowEngineServiceWithMockInstance(
 
 // ExecuteResult represents the result of workflow execution
 type ExecuteResult struct {
-	BusinessResponse *BusinessResponse `json:"businessResponse,omitempty"`
-	EngineResponse   *EngineResponse   `json:"engineResponse"`
-	InterceptorCalls []InterceptorCall `json:"interceptorCalls,omitempty"`
+	BusinessResponse *BusinessResponse      `json:"businessResponse,omitempty"`
+	EngineResponse   *EngineResponse        `json:"engineResponse"`
+	InterceptorCalls []InterceptorCall      `json:"interceptorCalls,omitempty"`
 	RequestParams    map[string]interface{} `json:"requestParams,omitempty"`
 }
 
@@ -100,12 +127,12 @@ type BusinessResponse struct {
 
 // EngineResponse represents the response from workflow engine
 type EngineResponse struct {
-	InstanceId    string                 `json:"instanceId"`
-	CurrentNodeIds []string              `json:"currentNodeIds"`
-	NextNodeIds   []string               `json:"nextNodeIds,omitempty"`
-	Status        string                 `json:"status"`
-	ExecutionId   string                 `json:"executionId"`
-	Variables     map[string]interface{} `json:"variables"`
+	InstanceId     string                 `json:"instanceId"`
+	CurrentNodeIds []string               `json:"currentNodeIds"`
+	NextNodeIds    []string               `json:"nextNodeIds,omitempty"`
+	Status         string                 `json:"status"`
+	ExecutionId    string                 `json:"executionId"`
+	Variables      map[string]interface{} `json:"variables"`
 }
 
 // ExecuteFromNode executes workflow from a specific node
@@ -134,25 +161,9 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 
 	// 1. 获取工作流实例 (使用拦截器支持 Mock 实例和真实实例)
 	instance, err := interceptor.Intercept(ctx,
-		fmt.Sprintf("GetInstance:%s", instanceId),
-		func(ctx context.Context) (*models.WorkflowInstance, error) {
-			// 检查是否为 Mock 实例
-			session := interceptor.GetInterceptSession(ctx)
-			if session != nil && session.InstanceID == instanceId {
-				// Mock 实例：从 Mock 数据获取
-				if s.mockInstanceSvc.MockInstanceExists(instanceId) {
-					mockInstance, err := s.mockInstanceSvc.GetMockInstance(ctx, instanceId)
-					if err != nil {
-						return nil, err
-					}
-					// 转换为标准实例格式
-					return convertMockInstanceToWorkflowInstance(mockInstance), nil
-				}
-			}
-
-			// 真实实例：从数据库获取
-			return s.instanceSvc.GetWorkflowInstanceByID(ctx, instanceId)
-		},
+		"GetInstance",
+		s.getInstance,
+		GetInstanceParams{InstanceID: instanceId},
 	)
 
 	if err != nil {
@@ -171,10 +182,9 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 
 	// 2. 获取工作流定义 (使用拦截器)
 	workflow, err := interceptor.Intercept(ctx,
-		fmt.Sprintf("GetWorkflow:%s", instance.WorkflowId),
-		func(ctx context.Context) (*models.Workflow, error) {
-			return s.workflowSvc.GetWorkflowByID(ctx, instance.WorkflowId)
-		},
+		"GetWorkflow",
+		s.getWorkflow,
+		GetWorkflowParams{WorkflowID: instance.WorkflowId},
 	)
 
 	if err != nil {
@@ -451,34 +461,12 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 
 	// 9. 更新实例状态 (使用拦截器)
 	updatedInstance, err := interceptor.Intercept(ctx,
-		fmt.Sprintf("UpdateInstance:%s", instanceId),
-		func(ctx context.Context) (*models.WorkflowInstance, error) {
-			// 检查是否为 Mock 实例
-			session := interceptor.GetInterceptSession(ctx)
-			if session != nil && session.InstanceID == instanceId {
-				// Mock 实例：更新内存数据
-				if s.mockInstanceSvc.MockInstanceExists(instanceId) {
-					mockInstance, err := s.mockInstanceSvc.UpdateMockInstance(
-						ctx,
-						instanceId,
-						instanceStatus,
-						nextNodeIds,
-						nil, // Don't update variables here
-					)
-					if err != nil {
-						return nil, err
-					}
-					return convertMockInstanceToWorkflowInstance(mockInstance), nil
-				}
-			}
-
-			// 真实实例：更新数据库
-			return s.instanceSvc.UpdateWorkflowInstance(
-				ctx,
-				instanceId,
-				instanceStatus,
-				nextNodeIds,
-			)
+		"UpdateInstance",
+		s.updateInstance,
+		UpdateInstanceParams{
+			InstanceID: instanceId,
+			Status:     instanceStatus,
+			NextNodes:  nextNodeIds,
 		},
 	)
 
@@ -512,92 +500,17 @@ func (s *WorkflowEngineService) executeServiceTask(
 	businessParams map[string]interface{},
 	variables map[string]interface{},
 ) (*BusinessResponse, error) {
-	// Use interceptor to wrap service call
+	// Use new interceptor architecture with struct parameters
 	return interceptor.Intercept(ctx,
-		fmt.Sprintf("ServiceTask:%s", node.Id),
-		func(ctx context.Context) (*BusinessResponse, error) {
-			// Check if in old Mock mode for backward compatibility
-			if IsMockMode(ctx) {
-				s.logger.Info().
-					Str("nodeId", node.Id).
-					Msg("Executing ServiceTask in legacy Mock mode")
-
-				mockData, err := s.mockCaller.Call(ctx, node.Id)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get mock data for node %s: %w", node.Id, err)
-				}
-
-				return &BusinessResponse{
-					StatusCode: mockData.StatusCode,
-					Body:       mockData.Body,
-					Headers:    mockData.Headers,
-				}, nil
-			}
-
-			// Real service call
-			return s.callRealService(ctx, node, businessParams, variables)
+		"ServiceTask",
+		s.executeServiceTaskWithParams,
+		ExecuteServiceTaskParams{
+			NodeID:         node.Id,
+			BusinessApiUrl: node.BusinessApiUrl,
+			BusinessParams: businessParams,
+			Variables:      variables,
 		},
 	)
-}
-
-// callRealService performs the actual HTTP call to external service
-func (s *WorkflowEngineService) callRealService(
-	ctx context.Context,
-	node *models.Node,
-	businessParams map[string]interface{},
-	variables map[string]interface{},
-) (*BusinessResponse, error) {
-	if node.BusinessApiUrl == "" {
-		return nil, fmt.Errorf("business API URL not configured for ServiceTask %s", node.Id)
-	}
-
-	// 准备请求体
-	var requestBody []byte
-	var err error
-	if businessParams != nil {
-		requestBody, err = json.Marshal(businessParams)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal business params: %w", err)
-		}
-	} else {
-		requestBody = []byte("{}")
-	}
-
-	// 创建 HTTP 请求
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, node.BusinessApiUrl, bytes.NewReader(requestBody))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// 发送请求
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call business API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// 读取响应体
-	var responseBody interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		// 如果无法解析为 JSON，读取为字符串
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		responseBody = string(bodyBytes)
-	}
-
-	// 提取响应头
-	headers := make(map[string]string)
-	for k, v := range resp.Header {
-		if len(v) > 0 {
-			headers[k] = v[0]
-		}
-	}
-
-	return &BusinessResponse{
-		StatusCode: resp.StatusCode,
-		Body:       responseBody,
-		Headers:    headers,
-	}, nil
 }
 
 // advanceToNextNode advances workflow to the next node based on sequence flows and conditions
@@ -942,3 +855,137 @@ func (s *WorkflowEngineService) isNodeAfterCurrentNodes(
 	return false
 }
 
+// --- Helper Methods for New Interceptor Architecture ---
+
+// getInstance gets a workflow instance (supports both Mock and real instances)
+// This method uses struct parameters for the new interceptor architecture
+func (s *WorkflowEngineService) getInstance(ctx context.Context, params GetInstanceParams) (*models.WorkflowInstance, error) {
+	// Check if Mock instance
+	session := interceptor.GetInterceptSession(ctx)
+	if session != nil && session.InstanceID == params.InstanceID {
+		// Mock instance: get from Mock data
+		if s.mockInstanceSvc.MockInstanceExists(params.InstanceID) {
+			mockInstance, err := s.mockInstanceSvc.GetMockInstance(ctx, params.InstanceID)
+			if err != nil {
+				return nil, err
+			}
+			// Convert to standard instance format
+			return convertMockInstanceToWorkflowInstance(mockInstance), nil
+		}
+	}
+
+	// Real instance: get from database
+	return s.instanceSvc.GetWorkflowInstanceByID(ctx, params.InstanceID)
+}
+
+// getWorkflow gets a workflow by ID
+// This method uses struct parameters for the new interceptor architecture
+func (s *WorkflowEngineService) getWorkflow(ctx context.Context, params GetWorkflowParams) (*models.Workflow, error) {
+	return s.workflowSvc.GetWorkflowByID(ctx, params.WorkflowID)
+}
+
+// updateInstance updates a workflow instance
+// This method uses struct parameters for the new interceptor architecture
+func (s *WorkflowEngineService) updateInstance(ctx context.Context, params UpdateInstanceParams) (*models.WorkflowInstance, error) {
+	// Check if Mock instance
+	session := interceptor.GetInterceptSession(ctx)
+	if session != nil && session.InstanceID == params.InstanceID {
+		// Mock instance: update memory data
+		if s.mockInstanceSvc.MockInstanceExists(params.InstanceID) {
+			mockInstance, err := s.mockInstanceSvc.UpdateMockInstance(
+				ctx,
+				params.InstanceID,
+				params.Status,
+				params.NextNodes,
+				nil, // Don't update variables here
+			)
+			if err != nil {
+				return nil, err
+			}
+			return convertMockInstanceToWorkflowInstance(mockInstance), nil
+		}
+	}
+
+	// Real instance: update database
+	return s.instanceSvc.UpdateWorkflowInstance(
+		ctx,
+		params.InstanceID,
+		params.Status,
+		params.NextNodes,
+	)
+}
+
+// executeServiceTaskWithParams executes a ServiceTask with struct parameters
+// This method uses struct parameters for the new interceptor architecture
+func (s *WorkflowEngineService) executeServiceTaskWithParams(ctx context.Context, params ExecuteServiceTaskParams) (*BusinessResponse, error) {
+	// Check if in old Mock mode for backward compatibility
+	if IsMockMode(ctx) {
+		s.logger.Info().
+			Str("nodeId", params.NodeID).
+			Msg("Executing ServiceTask in legacy Mock mode")
+
+		mockData, err := s.mockCaller.Call(ctx, params.NodeID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get mock data for node %s: %w", params.NodeID, err)
+		}
+
+		return &BusinessResponse{
+			StatusCode: mockData.StatusCode,
+			Body:       mockData.Body,
+			Headers:    mockData.Headers,
+		}, nil
+	}
+
+	// Real service call
+	if params.BusinessApiUrl == "" {
+		return nil, fmt.Errorf("business API URL not configured for ServiceTask %s", params.NodeID)
+	}
+
+	// Prepare request body
+	var requestBody []byte
+	var err error
+	if params.BusinessParams != nil {
+		requestBody, err = json.Marshal(params.BusinessParams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal business params: %w", err)
+		}
+	} else {
+		requestBody = []byte("{}")
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, params.BusinessApiUrl, bytes.NewReader(requestBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call business API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	var responseBody interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		// If not valid JSON, read as string
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		responseBody = string(bodyBytes)
+	}
+
+	// Extract headers
+	headers := make(map[string]string)
+	for k, v := range resp.Header {
+		if len(v) > 0 {
+			headers[k] = v[0]
+		}
+	}
+
+	return &BusinessResponse{
+		StatusCode: resp.StatusCode,
+		Body:       responseBody,
+		Headers:    headers,
+	}, nil
+}

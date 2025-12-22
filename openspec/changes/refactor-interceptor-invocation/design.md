@@ -6,19 +6,29 @@
 
 ## 架构决策
 
-### 1. 泛型 vs 反射 vs 可变参数
+### 1. 参数传递方式:结构体 vs 离散参数 vs 可变参数
 
-**决策**: 使用 Go 泛型创建多个重载版本的 Intercept 函数。
+**决策**: 使用结构体参数 + 单一泛型函数。
 
 **理由**:
 - **类型安全**: 泛型在编译时检查类型,避免运行时错误
-- **性能**: 无反射开销,性能接近直接调用
-- **可读性**: 函数签名清晰,IDE 支持良好
-- **实施成本**: 适中,需要定义有限数量的重载函数(0-5 个参数基本覆盖所有场景)
+- **代码简洁**: 只需一个 Intercept 函数,无需多个重载版本
+- **参数语义化**: 结构体字段有明确名称,可读性强
+- **扩展性好**: 添加新参数只需修改结构体,不影响函数签名
+- **序列化友好**: 结构体天然支持 JSON 序列化,便于日志和标识生成
+- **IDE 支持**: 结构体字面量有自动补全和类型检查
 
 **权衡**:
-- 需要为不同参数数量定义多个函数
-- Go 泛型目前不支持可变参数泛型,需要手动定义重载
+- 需要为每个业务方法定义参数结构体
+- 单参数方法显得略微繁琐(但换来统一性)
+
+**对比其他方案**:
+| 方案 | 优点 | 缺点 |
+|------|------|------|
+| **结构体(采用)** | 代码量少,扩展性好,语义清晰 | 需要定义结构体 |
+| 泛型穷举 | 类型安全,性能好 | 需要 Intercept0-5,代码重复 |
+| 反射 | 最灵活 | 性能差,失去类型检查 |
+| 可变参数 | Go 不支持泛型可变参数 | 技术上不可行 |
 
 ### 2. 上下文传递机制
 
@@ -58,61 +68,139 @@
 
 ### 4. 拦截器唯一标识生成规则
 
-**标识格式**: `{operation}:{param1}:{param2}:...`
+**标识格式**: `{operation}:{idField1}:{idField2}:...`
 
 **生成规则**:
-1. 从函数名或 operation 字符串中提取操作名
-2. 序列化关键参数(通常是 ID、名称等字符串类型)
-3. 用冒号 `:` 连接
+1. 从 operation 字符串提取操作名
+2. 使用反射遍历参数结构体字段
+3. 提取带 `intercept:"id"` tag 的字段值
+4. 序列化这些字段值(使用 JSON)
+5. 用冒号 `:` 连接
 
 **示例**:
 ```go
-// Intercept1 调用
-workflow, err := interceptor.Intercept1(ctx,
+// 参数结构体定义
+type GetWorkflowParams struct {
+    WorkflowID string `json:"workflowId" intercept:"id"`
+    IncludeDeleted bool `json:"includeDeleted"`
+    Cache bool `json:"-"`
+}
+
+// 调用
+workflow, err := interceptor.Intercept(ctx,
     "GetWorkflow",
     s.workflowSvc.GetWorkflowByID,
-    "workflow-123",
+    GetWorkflowParams{
+        WorkflowID: "workflow-123",
+        IncludeDeleted: true,
+        Cache: false,
+    },
 )
 // 生成标识: "GetWorkflow:workflow-123"
+// 注意: IncludeDeleted 和 Cache 不参与 ID 生成
 
-// Intercept2 调用
-instance, err := interceptor.Intercept2(ctx,
+type UpdateInstanceParams struct {
+    InstanceID string `json:"instanceId" intercept:"id"`
+    Status string `json:"status" intercept:"id"`
+    Variables map[string]interface{} `json:"variables"`
+}
+
+instance, err := interceptor.Intercept(ctx,
     "UpdateInstance",
     s.instanceSvc.UpdateWorkflowInstance,
-    "instance-456",
-    "running",
+    UpdateInstanceParams{
+        InstanceID: "instance-456",
+        Status: "running",
+        Variables: vars,
+    },
 )
 // 生成标识: "UpdateInstance:instance-456:running"
 ```
 
-**可序列化参数类型**:
+**字段序列化规则**:
 - 字符串: 直接使用
-- 整数/数字: 转换为字符串
+- 数字: 转换为字符串
 - 布尔值: "true" 或 "false"
-- 其他类型: JSON 序列化后截断(最多 50 字符)
+- 复杂类型: JSON 序列化后哈希(避免过长)
+- nil/空值: 使用 "null"
+
+**Tag 规范**:
+- `intercept:"id"` - 字段参与唯一标识生成
+- `intercept:"-"` - 字段不参与任何拦截器逻辑
+- 无 tag - 字段不参与 ID 生成,但会被完整记录
 
 **唯一性保证**:
-- 对于同一个操作和同一组参数,始终生成相同的标识
-- 不同参数值生成不同标识
+- 对于同一操作和同一组 ID 字段值,始终生成相同标识
+- 不同 ID 字段值生成不同标识
 - 标识包含足够信息用于调试和日志追踪
 
 ## 详细设计
 
 ### 1. 拦截器核心函数签名
 
-#### Intercept1 - 单参数方法
+#### 单一泛型函数
+
 ```go
-func Intercept1[T any, P1 any](
+// 唯一的拦截器函数,处理所有场景
+func Intercept[T any, P any](
     ctx context.Context,
     operation string,
-    fn func(context.Context, P1) (T, error),
-    p1 P1,
+    fn func(context.Context, P) (T, error),
+    params P,
 ) (T, error)
 ```
 
+**类型参数**:
+- `T`: 方法返回值类型
+- `P`: 参数结构体类型
+
 **调用示例**:
+
 ```go
-// 旧方式
+// 示例 1: 单参数方法
+type GetWorkflowParams struct {
+    WorkflowID string `json:"workflowId" intercept:"id"`
+}
+
+workflow, err := interceptor.Intercept(ctx,
+    "GetWorkflow",
+    s.workflowSvc.GetWorkflowByID,
+    GetWorkflowParams{WorkflowID: "workflow-123"},
+)
+
+// 示例 2: 多参数方法
+type UpdateInstanceParams struct {
+    InstanceID string `json:"instanceId" intercept:"id"`
+    Status string `json:"status" intercept:"id"`
+    Variables map[string]interface{} `json:"variables"`
+    Force bool `json:"force"`
+}
+
+instance, err := interceptor.Intercept(ctx,
+    "UpdateInstance",
+    s.instanceSvc.UpdateInstance,
+    UpdateInstanceParams{
+        InstanceID: "instance-456",
+        Status: "running",
+        Variables: vars,
+        Force: false,
+    },
+)
+
+// 示例 3: 无额外参数的方法(使用空结构体)
+type ListWorkflowsParams struct{}
+
+workflows, err := interceptor.Intercept(ctx,
+    "ListWorkflows",
+    s.workflowSvc.ListWorkflows,
+    ListWorkflowsParams{},
+)
+```
+
+**旧方式对比**:
+
+```go
+// 旧方式 - 闭包
 workflow, err := interceptor.Intercept(ctx,
     "GetWorkflow",
     func(ctx context.Context) (*models.Workflow, error) {
@@ -120,57 +208,66 @@ workflow, err := interceptor.Intercept(ctx,
     },
 )
 
-// 新方式
-workflow, err := interceptor.Intercept1(ctx,
+// 新方式 - 结构体参数
+workflow, err := interceptor.Intercept(ctx,
     "GetWorkflow",
     s.workflowSvc.GetWorkflowByID,
-    workflowId,
+    GetWorkflowParams{WorkflowID: workflowId},
 )
 ```
 
-#### Intercept2 - 双参数方法
+### 2. 业务方法改造规范
+
+#### 原方法签名
 ```go
-func Intercept2[T any, P1 any, P2 any](
+func (s *WorkflowService) GetWorkflowByID(
     ctx context.Context,
-    operation string,
-    fn func(context.Context, P1, P2) (T, error),
-    p1 P1,
-    p2 P2,
-) (T, error)
-```
+    workflowID string,
+) (*Workflow, error)
 
-**调用示例**:
-```go
-// 调用双参数方法
-result, err := interceptor.Intercept2(ctx,
-    "UpdateInstance",
-    s.instanceSvc.UpdateWorkflowInstance,
-    instanceId,
-    status,
-)
-```
-
-#### Intercept0 - 无额外参数方法
-```go
-func Intercept0[T any](
+func (s *WorkflowService) UpdateInstance(
     ctx context.Context,
-    operation string,
-    fn func(context.Context) (T, error),
-) (T, error)
+    instanceID string,
+    status string,
+    variables map[string]interface{},
+    force bool,
+) (*Instance, error)
 ```
 
-**说明**: 保留当前方式以支持无参数方法,提供兼容性。
+#### 改造后签名
+```go
+// 1. 定义参数结构体
+type GetWorkflowParams struct {
+    WorkflowID string `json:"workflowId" intercept:"id"`
+}
 
-#### 完整重载列表
-- `Intercept0`: context 参数,无额外参数
-- `Intercept1`: context + 1 个参数
-- `Intercept2`: context + 2 个参数
-- `Intercept3`: context + 3 个参数
-- `Intercept4`: context + 4 个参数
-- `Intercept5`: context + 5 个参数
+type UpdateInstanceParams struct {
+    InstanceID string `json:"instanceId" intercept:"id"`
+    Status string `json:"status" intercept:"id"`
+    Variables map[string]interface{} `json:"variables"`
+    Force bool `json:"force"`
+}
 
-**覆盖率分析**:
-根据代码分析,当前项目中 90% 以上的调用只需要 0-2 个参数,5 个参数足以覆盖所有场景。
+// 2. 方法改为接受结构体参数
+func (s *WorkflowService) GetWorkflowByID(
+    ctx context.Context,
+    params GetWorkflowParams,
+) (*Workflow, error) {
+    // 使用 params.WorkflowID
+}
+
+func (s *WorkflowService) UpdateInstance(
+    ctx context.Context,
+    params UpdateInstanceParams,
+) (*Instance, error) {
+    // 使用 params.InstanceID, params.Status 等
+}
+```
+
+#### 参数结构体命名规范
+- 格式: `{MethodName}Params`
+- 示例: `GetWorkflowParams`, `UpdateInstanceParams`, `ListWorkflowsParams`
+- 放置位置: 紧邻方法定义,或集中在 `types.go` 文件
 
 ### 2. 中间件实现
 
@@ -285,23 +382,23 @@ func (c *InterceptConfig) SetMockData(interceptorId string, data interface{}) {
 
 ### 3. 拦截器内部实现
 
-#### 核心逻辑(带细粒度配置)
+#### 核心逻辑
 ```go
-func Intercept1[T any, P1 any](
+func Intercept[T any, P any](
     ctx context.Context,
     operation string,
-    fn func(context.Context, P1) (T, error),
-    p1 P1,
+    fn func(context.Context, P) (T, error),
+    params P,
 ) (T, error) {
     var zero T
 
-    // 1. 生成拦截器唯一标识
-    interceptorId := generateInterceptorId(operation, p1)
+    // 1. 生成拦截器唯一标识(从结构体参数中提取)
+    interceptorId := generateInterceptorId(operation, params)
 
     // 2. 检查是否为 Dry-run 模式
     if IsDryRunMode(ctx) {
         // Dry-run: 记录拦截器信息但不执行
-        RecordInterceptorCall(ctx, interceptorId, operation, p1)
+        RecordInterceptorCall(ctx, interceptorId, operation, params)
         return zero, ErrDryRunMode // 特殊错误,表示 dry-run
     }
 
@@ -313,7 +410,7 @@ func Intercept1[T any, P1 any](
     switch mode {
     case InterceptModeDisabled:
         // 禁用模式:直接执行,不记录
-        return fn(ctx, p1)
+        return fn(ctx, params)
 
     case InterceptModeEnabled:
         // 启用模式:优先使用 mock 数据
@@ -321,76 +418,104 @@ func Intercept1[T any, P1 any](
         if exists {
             result, ok := mockData.(T)
             if ok {
-                LogExecution(ctx, interceptorId, p1, result, true, "")
-                RecordCall(ctx, interceptorId, p1, result)
+                LogExecution(ctx, interceptorId, params, result, true, "")
+                RecordCall(ctx, interceptorId, params, result)
                 return result, nil
             }
         }
         // 未找到 mock 数据,回退到真实调用
-        result, err := fn(ctx, p1)
-        LogExecution(ctx, interceptorId, p1, result, false, errString(err))
-        RecordCall(ctx, interceptorId, p1, result)
+        result, err := fn(ctx, params)
+        LogExecution(ctx, interceptorId, params, result, false, errString(err))
+        RecordCall(ctx, interceptorId, params, result)
         return result, err
 
     case InterceptModeRecord:
         // 记录模式:执行真实方法并记录
-        result, err := fn(ctx, p1)
+        result, err := fn(ctx, params)
         if err == nil {
             config.SetMockData(interceptorId, result)
         }
-        LogExecution(ctx, interceptorId, p1, result, false, errString(err))
-        RecordCall(ctx, interceptorId, p1, result)
+        LogExecution(ctx, interceptorId, params, result, false, errString(err))
+        RecordCall(ctx, interceptorId, params, result)
         return result, err
 
     default:
         // 默认:记录模式
-        result, err := fn(ctx, p1)
-        LogExecution(ctx, interceptorId, p1, result, false, errString(err))
-        RecordCall(ctx, interceptorId, p1, result)
+        result, err := fn(ctx, params)
+        LogExecution(ctx, interceptorId, params, result, false, errString(err))
+        RecordCall(ctx, interceptorId, params, result)
         return result, err
     }
 }
+```
 
-// generateInterceptorId 生成拦截器唯一标识
-func generateInterceptorId(operation string, params ...interface{}) string {
-    parts := []string{operation}
-    for _, param := range params {
-        parts = append(parts, serializeParam(param))
+#### generateInterceptorId - 从结构体生成 ID
+```go
+func generateInterceptorId(operation string, params interface{}) string {
+    // 1. 获取参数结构体的反射值
+    val := reflect.ValueOf(params)
+    if val.Kind() == reflect.Ptr {
+        val = val.Elem()
     }
-    return strings.Join(parts, ":")
+
+    // 2. 确保是结构体
+    if val.Kind() != reflect.Struct {
+        // 非结构体(如基本类型),直接序列化
+        return fmt.Sprintf("%s:%v", operation, params)
+    }
+
+    // 3. 遍历字段,提取带 intercept:"id" tag 的字段
+    typ := val.Type()
+    idParts := []string{operation}
+
+    for i := 0; i < val.NumField(); i++ {
+        field := typ.Field(i)
+        tagValue := field.Tag.Get("intercept")
+
+        // 只处理带 intercept:"id" tag 的字段
+        if tagValue == "id" {
+            fieldVal := val.Field(i)
+            serialized := serializeField(fieldVal)
+            idParts = append(idParts, serialized)
+        }
+    }
+
+    return strings.Join(idParts, ":")
 }
 
-// serializeParam 序列化参数为字符串
-func serializeParam(param interface{}) string {
-    switch v := param.(type) {
-    case string:
-        return v
-    case int, int8, int16, int32, int64:
-        return fmt.Sprintf("%d", v)
-    case uint, uint8, uint16, uint32, uint64:
-        return fmt.Sprintf("%d", v)
-    case bool:
-        return fmt.Sprintf("%t", v)
-    case float32, float64:
-        return fmt.Sprintf("%f", v)
+func serializeField(val reflect.Value) string {
+    switch val.Kind() {
+    case reflect.String:
+        return val.String()
+    case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+        return fmt.Sprintf("%d", val.Int())
+    case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+        return fmt.Sprintf("%d", val.Uint())
+    case reflect.Bool:
+        return fmt.Sprintf("%t", val.Bool())
+    case reflect.Float32, reflect.Float64:
+        return fmt.Sprintf("%f", val.Float())
     default:
-        // 复杂类型:JSON 序列化并截断
-        data, _ := json.Marshal(v)
-        str := string(data)
-        if len(str) > 50 {
-            str = str[:50] + "..."
+        // 复杂类型:JSON 序列化并哈希(避免过长)
+        data, err := json.Marshal(val.Interface())
+        if err != nil {
+            return "error"
         }
-        return str
+        if len(data) > 50 {
+            // 过长则哈希
+            hash := sha256.Sum256(data)
+            return hex.EncodeToString(hash[:8]) // 使用前 8 字节
+        }
+        return string(data)
     }
 }
 ```
 
 **关键改进**:
-- 自动生成拦截器唯一标识
-- 支持 Dry-run 模式记录拦截器清单
-- 根据配置查找每个拦截器的模式
-- 未配置的拦截器默认使用 record 模式
-- 完整记录参数和输出
+- 自动从结构体提取 ID 字段(通过反射和 tag)
+- 支持任意结构体类型,无需手动穷举
+- 参数完整记录(整个结构体),ID 只用关键字段
+- 代码更简洁,扩展性更好
 
 ### 4. 前端集成
 

@@ -19,11 +19,6 @@ jest.mock('../DebugControlPanel.vue', () => ({
   template: '<div class="debug-control-panel"></div>'
 }))
 
-jest.mock('../InterceptorControlPanel.vue', () => ({
-  name: 'InterceptorControlPanel',
-  template: '<div class="interceptor-control-panel"></div>'
-}))
-
 describe('RightPanelContainer', () => {
   let wrapper: VueWrapper
 
@@ -51,8 +46,7 @@ describe('RightPanelContainer', () => {
           'SettingOutlined': { template: '<span class="anticon">⚙</span>' },
           'RobotOutlined': { template: '<span class="anticon">🤖</span>' },
           'ThunderboltOutlined': { template: '<span class="anticon">⚡</span>' },
-          'BugOutlined': { template: '<span class="anticon">🐛</span>' },
-          'FilterOutlined': { template: '<span class="anticon">🔍</span>' }
+          'BugOutlined': { template: '<span class="anticon">🐛</span>' }
         }
       }
     })
@@ -67,9 +61,9 @@ describe('RightPanelContainer', () => {
       expect(wrapper.find('.ant-tabs').exists()).toBe(true)
     })
 
-    it('应该包含所有 5 个 Tab 面板', () => {
+    it('应该包含所有 4 个 Tab 面板', () => {
       const tabPanes = wrapper.findAll('.ant-tabs-tabpane')
-      expect(tabPanes.length).toBeGreaterThanOrEqual(5)
+      expect(tabPanes.length).toBeGreaterThanOrEqual(4)
     })
   })
 
@@ -111,10 +105,10 @@ describe('RightPanelContainer', () => {
     })
 
     it('应该在 Tab 切换时更新本地状态', async () => {
-      wrapper.vm.handleTabChange('interceptor')
+      wrapper.vm.handleTabChange('debug')
       await nextTick()
 
-      expect(wrapper.vm.localActiveTab).toBe('interceptor')
+      expect(wrapper.vm.localActiveTab).toBe('debug')
     })
   })
 
@@ -146,8 +140,8 @@ describe('RightPanelContainer', () => {
     })
 
     it('应该在最后一个 Tab 按右方向键时循环到第一个', async () => {
-      // 当前在 interceptor（最后一个）
-      wrapper.vm.localActiveTab = 'interceptor'
+      // 当前在 debug（最后一个）
+      wrapper.vm.localActiveTab = 'debug'
 
       // 模拟按下右方向键
       const event = new KeyboardEvent('keydown', { key: 'ArrowRight' })
@@ -168,7 +162,7 @@ describe('RightPanelContainer', () => {
       wrapper.vm.handleKeyDown(event)
       await nextTick()
 
-      expect(wrapper.vm.localActiveTab).toBe('interceptor')
+      expect(wrapper.vm.localActiveTab).toBe('debug')
     })
 
     it('应该在键盘导航时阻止默认行为', () => {
@@ -209,16 +203,6 @@ describe('RightPanelContainer', () => {
 
       expect(wrapper.emitted('debug-session-update')).toBeTruthy()
       expect(wrapper.emitted('debug-session-update')?.[0]).toEqual([debugSession])
-    })
-
-    it('应该转发 interceptor-session-update 事件', async () => {
-      wrapper.vm.localActiveTab = 'interceptor'
-      const interceptSession = { id: 'intercept-1', status: 'active' }
-      wrapper.vm.handleSessionUpdate(interceptSession)
-      await nextTick()
-
-      expect(wrapper.emitted('interceptor-session-update')).toBeTruthy()
-      expect(wrapper.emitted('interceptor-session-update')?.[0]).toEqual([interceptSession])
     })
 
     it('应该转发 chat-message 事件', async () => {
@@ -273,15 +257,6 @@ describe('RightPanelContainer', () => {
       expect(props.configId).toBeUndefined()
     })
 
-    it('应该为 Interceptor Panel 提供正确的 props', async () => {
-      wrapper.vm.localActiveTab = 'interceptor'
-      await nextTick()
-
-      const props = wrapper.vm.currentPanelProps
-      expect(props.workflowId).toBe('test-workflow-123')
-      expect(props.bpmnXml).toBe('<definitions></definitions>')
-      expect(props.configId).toBeUndefined()
-    })
   })
 
   describe('Properties Panel 挂载点', () => {

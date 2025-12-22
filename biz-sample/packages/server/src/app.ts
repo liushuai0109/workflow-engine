@@ -20,21 +20,9 @@ app.on('error', (err, ctx) => {
   };
 });
 
-// CORS 配置 - 允许 client.biz.com 域名（包括带端口的开发环境）
+// CORS 配置 - 允许所有来源
 app.use(cors({
-  origin: (ctx: any): string => {
-    const origin = ctx.request.header.origin || '';
-    if (origin.includes('client.biz.com')) {
-      return origin;
-    }
-    // 开发环境允许所有源
-    if (process.env.NODE_ENV === 'development') {
-      return origin || '*';
-    }
-    // 生产环境拒绝其他源
-    return '';
-  },
-  credentials: true,
+  origin: '*',
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }));

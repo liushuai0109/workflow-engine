@@ -58,20 +58,6 @@
           @session-update="handleSessionUpdate"
         />
       </a-tab-pane>
-
-      <a-tab-pane key="interceptor" :forceRender="true">
-        <template #tab>
-          <span class="tab-label">
-            <FilterOutlined />
-            <span>拦截器</span>
-          </span>
-        </template>
-        <InterceptorControlPanel
-          v-bind="currentPanelProps"
-          @close="handlePanelClose"
-          @session-update="handleSessionUpdate"
-        />
-      </a-tab-pane>
     </a-tabs>
   </div>
 </template>
@@ -82,22 +68,18 @@ import {
   SettingOutlined,
   RobotOutlined,
   ThunderboltOutlined,
-  BugOutlined,
-  FilterOutlined
+  BugOutlined
 } from '@ant-design/icons-vue'
 import ChatBox from './ChatBox.vue'
 import MockControlPanel from './MockControlPanel.vue'
 import DebugControlPanel from './DebugControlPanel.vue'
-import InterceptorControlPanel from './InterceptorControlPanel.vue'
 import type { MockExecution } from '../services/mockService'
 import type { DebugSession } from '../services/debugService'
-import type { InterceptSession } from '../services/interceptorService'
 
 interface Props {
-  activeTab?: 'properties' | 'chat' | 'mock' | 'debug' | 'interceptor' | null
+  activeTab?: 'properties' | 'chat' | 'mock' | 'debug' | null
   workflowId?: string
   bpmnXml?: string
-  configId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -108,7 +90,6 @@ const emit = defineEmits<{
   'tab-change': [tab: string]
   'mock-execution-update': [execution: MockExecution]
   'debug-session-update': [session: DebugSession]
-  'interceptor-session-update': [session: InterceptSession]
   'chat-message': [message: string]
 }>()
 
@@ -132,7 +113,7 @@ const handleTabChange = (value: string | number) => {
 }
 
 // 支持键盘导航
-const tabKeys = ['properties', 'chat', 'mock', 'debug', 'interceptor']
+const tabKeys = ['properties', 'chat', 'mock', 'debug']
 
 const handleKeyDown = (event: KeyboardEvent) => {
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -146,8 +127,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
       newIndex = currentIndex < tabKeys.length - 1 ? currentIndex + 1 : 0
     }
 
-    localActiveTab.value = tabKeys[newIndex]
-    emit('tab-change', tabKeys[newIndex])
+    const newTab = tabKeys[newIndex]
+    if (newTab) {
+      localActiveTab.value = newTab
+      emit('tab-change', newTab)
+    }
     event.preventDefault()
   }
 }
@@ -162,16 +146,10 @@ const currentPanelProps = computed(() => {
     case 'mock':
       return {
         ...baseProps,
-        bpmnXml: props.bpmnXml,
-        configId: props.configId
+        bpmnXml: props.bpmnXml
       }
     case 'debug':
       return baseProps
-    case 'interceptor':
-      return {
-        ...baseProps,
-        bpmnXml: props.bpmnXml
-      }
     default:
       return baseProps
   }
@@ -189,12 +167,8 @@ const handleMockExecutionUpdate = (execution: MockExecution) => {
   emit('mock-execution-update', execution)
 }
 
-const handleSessionUpdate = (session: DebugSession | InterceptSession) => {
-  if (localActiveTab.value === 'debug') {
-    emit('debug-session-update', session as DebugSession)
-  } else if (localActiveTab.value === 'interceptor') {
-    emit('interceptor-session-update', session as InterceptSession)
-  }
+const handleSessionUpdate = (session: DebugSession) => {
+  emit('debug-session-update', session)
 }
 
 // 处理聊天消息
@@ -323,7 +297,6 @@ defineExpose({
 /* 调整面板样式以适应 Tab 容器 */
 :deep(.mock-control-panel),
 :deep(.debug-control-panel),
-:deep(.interceptor-control-panel),
 :deep(.chat-box-container) {
   position: static;
   width: 100%;
