@@ -14,6 +14,8 @@ import (
 // WorkflowExecutorHandler handles workflow execution requests
 type WorkflowExecutorHandler struct {
 	engineService *services.WorkflowEngineService
+	workflowSvc   *services.WorkflowService
+	instanceSvc   *services.WorkflowInstanceService
 	logger        *zerolog.Logger
 }
 
@@ -33,7 +35,9 @@ func NewWorkflowExecutorHandler(
 			instanceSvc,
 			executionSvc,
 		),
-		logger: logger,
+		workflowSvc: workflowSvc,
+		instanceSvc: instanceSvc,
+		logger:      logger,
 	}
 }
 
@@ -65,31 +69,60 @@ func (h *WorkflowExecutorHandler) ExecuteWorkflow(c *gin.Context) {
 		return
 	}
 
-	// 调用执行引擎 (如果提供了 workflow/instance 则使用，否则从数据库获取)
+	// 调用执行引擎
 	var result *services.ExecuteResult
 	var err error
 
-	if req.Workflow != nil || req.WorkflowInstance != nil {
-		// Mock mode: use provided data
+	if req.Workflow != nil && req.WorkflowInstance != nil {
+		// Mock mode: use provided data directly
 		h.logger.Info().
 			Str("workflowInstanceId", workflowInstanceId).
-			Bool("hasWorkflow", req.Workflow != nil).
-			Bool("hasInstance", req.WorkflowInstance != nil).
 			Msg("Executing with provided data (mock mode)")
 
-		result, err = h.engineService.ExecuteFromNodeWithOptionalData(
+		result, err = h.engineService.ExecuteFromNode(
 			c.Request.Context(),
-			workflowInstanceId,
-			req.FromNodeId,
-			req.BusinessParams,
 			req.Workflow,
 			req.WorkflowInstance,
+			req.FromNodeId,
+			req.BusinessParams,
 		)
 	} else {
 		// Normal mode: fetch from database
+		h.logger.Info().
+			Str("workflowInstanceId", workflowInstanceId).
+			Msg("Fetching workflow and instance from database")
+
+		// 1. Get workflow instance from database
+		instance, err := h.instanceSvc.GetWorkflowInstanceByID(c.Request.Context(), workflowInstanceId)
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("workflowInstanceId", workflowInstanceId).
+				Msg("Failed to get workflow instance")
+			c.JSON(http.StatusNotFound, models.NewErrorResponse(
+				models.ErrWorkflowInstanceNotFound,
+				"Workflow instance not found",
+			))
+			return
+		}
+
+		// 2. Get workflow from database
+		workflow, err := h.workflowSvc.GetWorkflowByID(c.Request.Context(), instance.WorkflowId)
+		if err != nil {
+			h.logger.Error().Err(err).
+				Str("workflowId", instance.WorkflowId).
+				Msg("Failed to get workflow")
+			c.JSON(http.StatusNotFound, models.NewErrorResponse(
+				models.ErrWorkflowNotFound,
+				"Workflow not found",
+			))
+			return
+		}
+
+		// 3. Call execution engine with prepared data
 		result, err = h.engineService.ExecuteFromNode(
 			c.Request.Context(),
-			workflowInstanceId,
+			workflow,
+			instance,
 			req.FromNodeId,
 			req.BusinessParams,
 		)
@@ -166,13 +199,12 @@ func (h *WorkflowExecutorHandler) ExecuteWorkflowMock(c *gin.Context) {
 		Msg("Executing workflow in mock mode (full data from request body)")
 
 	// 调用执行引擎 (传递完整的 workflow 和 instance 数据)
-	result, err := h.engineService.ExecuteFromNodeWithOptionalData(
+	result, err := h.engineService.ExecuteFromNode(
 		c.Request.Context(),
-		workflowInstanceId,
-		req.FromNodeId,
-		req.BusinessParams,
 		req.Workflow,
 		req.WorkflowInstance,
+		req.FromNodeId,
+		req.BusinessParams,
 	)
 
 	if err != nil {

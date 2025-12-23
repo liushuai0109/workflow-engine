@@ -30,16 +30,6 @@ type WorkflowEngineService struct {
 
 // --- Parameter Structs for Interceptor (New Architecture) ---
 
-// GetInstanceParams holds parameters for GetInstance interceptor calls
-type GetInstanceParams struct {
-	InstanceID string `json:"instanceId" intercept:"id"`
-}
-
-// GetWorkflowParams holds parameters for GetWorkflow interceptor calls
-type GetWorkflowParams struct {
-	WorkflowID string `json:"workflowId" intercept:"id"`
-}
-
 // UpdateInstanceParams holds parameters for UpdateInstance interceptor calls
 type UpdateInstanceParams struct {
 	InstanceID string   `json:"instanceId" intercept:"id"`
@@ -133,24 +123,14 @@ type EngineResponse struct {
 }
 
 // ExecuteFromNode executes workflow from a specific node
+// workflow and instance data must be provided by the caller (from request body or database)
+// This method focuses solely on execution logic without data fetching
 func (s *WorkflowEngineService) ExecuteFromNode(
 	ctx context.Context,
-	instanceId string,
+	workflow *models.Workflow,
+	instance *models.WorkflowInstance,
 	fromNodeId string,
 	businessParams map[string]interface{},
-) (*ExecuteResult, error) {
-	return s.ExecuteFromNodeWithOptionalData(ctx, instanceId, fromNodeId, businessParams, nil, nil)
-}
-
-// ExecuteFromNodeWithOptionalData executes workflow with optional workflow and instance data
-// If workflow or instance is provided, it will be used directly instead of fetching from database
-func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
-	ctx context.Context,
-	instanceId string,
-	fromNodeId string,
-	businessParams map[string]interface{},
-	optionalWorkflow *models.Workflow,
-	optionalInstance *models.WorkflowInstance,
 ) (*ExecuteResult, error) {
 	// Create interceptor call recorder and add to context
 	recorder := NewInterceptorCallRecorder()
@@ -164,50 +144,10 @@ func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
 
 	// Store request params for later inclusion in response
 	requestParams := map[string]interface{}{
-		"instanceId":     instanceId,
+		"workflowId":     workflow.Id,
+		"instanceId":     instance.Id,
 		"fromNodeId":     fromNodeId,
 		"businessParams": businessParams,
-	}
-
-	// 1. 获取工作流实例 (如果提供了 optionalInstance 则直接使用，否则从数据库获取)
-	var instance *models.WorkflowInstance
-	var err error
-
-	if optionalInstance != nil {
-		// Use provided instance directly (mock mode)
-		instance = optionalInstance
-		s.logger.Info().Str("instanceId", instanceId).Msg("Using provided workflow instance (mock mode)")
-	} else {
-		// Fetch from database (使用拦截器支持 Mock 实例和真实实例)
-		instance, err = interceptor.Intercept(ctx,
-			"GetInstance",
-			s.getInstance,
-			GetInstanceParams{InstanceID: instanceId},
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", models.ErrWorkflowInstanceNotFound, err)
-		}
-	}
-
-	// 2. 获取工作流定义 (如果提供了 optionalWorkflow 则直接使用，否则从数据库获取)
-	var workflow *models.Workflow
-
-	if optionalWorkflow != nil {
-		// Use provided workflow directly (mock mode)
-		workflow = optionalWorkflow
-		s.logger.Info().Str("workflowId", workflow.Id).Msg("Using provided workflow (mock mode)")
-	} else {
-		// Fetch from database (使用拦截器)
-		workflow, err = interceptor.Intercept(ctx,
-			"GetWorkflow",
-			s.getWorkflow,
-			GetWorkflowParams{WorkflowID: instance.WorkflowId},
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", models.ErrWorkflowNotFound, err)
-		}
 	}
 
 	// 3. 解析 BPMN XML
@@ -225,7 +165,7 @@ func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
 		// 使用第一个当前节点作为起始节点
 		fromNodeId = instance.CurrentNodeIds[0]
 		s.logger.Info().
-			Str("instanceId", instanceId).
+			Str("instanceId", instance.Id).
 			Str("fromNodeId", fromNodeId).
 			Msg("Empty fromNodeId provided, using first current node")
 	}
@@ -237,7 +177,7 @@ func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
 		}
 
 		s.logger.Info().
-			Str("instanceId", instanceId).
+			Str("instanceId", instance.Id).
 			Strs("startEvents", wd.StartEvents).
 			Msg("Initializing current_node_ids with start events")
 
@@ -246,7 +186,7 @@ func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
 			"UpdateInstance",
 			s.updateInstance,
 			UpdateInstanceParams{
-				InstanceID: instanceId,
+				InstanceID: instance.Id,
 				Status:     instance.Status,
 				NextNodes:  wd.StartEvents,
 			},
@@ -290,7 +230,7 @@ func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
 		"CreateExecution",
 		s.createExecution,
 		CreateExecutionParams{
-			InstanceID: instanceId,
+			InstanceID: instance.Id,
 			WorkflowID: workflow.Id,
 			Variables:  variables,
 		},
@@ -449,14 +389,14 @@ func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
 		"UpdateInstance",
 		s.updateInstance,
 		UpdateInstanceParams{
-			InstanceID: instanceId,
+			InstanceID: instance.Id,
 			Status:     instanceStatus,
 			NextNodes:  nextNodeIds,
 		},
 	)
 
 	if err != nil {
-		s.logger.Error().Err(err).Str("instanceId", instanceId).Msg("Failed to update instance")
+		s.logger.Error().Err(err).Str("instanceId", instance.Id).Msg("Failed to update instance")
 		return nil, fmt.Errorf("failed to update instance: %w", err)
 	}
 
@@ -867,18 +807,6 @@ func (s *WorkflowEngineService) isNodeAfterCurrentNodes(
 }
 
 // --- Helper Methods for New Interceptor Architecture ---
-
-// getInstance gets a workflow instance from database
-// This method uses struct parameters for the new interceptor architecture
-func (s *WorkflowEngineService) getInstance(ctx context.Context, params GetInstanceParams) (*models.WorkflowInstance, error) {
-	return s.instanceSvc.GetWorkflowInstanceByID(ctx, params.InstanceID)
-}
-
-// getWorkflow gets a workflow by ID
-// This method uses struct parameters for the new interceptor architecture
-func (s *WorkflowEngineService) getWorkflow(ctx context.Context, params GetWorkflowParams) (*models.Workflow, error) {
-	return s.workflowSvc.GetWorkflowByID(ctx, params.WorkflowID)
-}
 
 // updateInstance updates a workflow instance in database
 // This method uses struct parameters for the new interceptor architecture
