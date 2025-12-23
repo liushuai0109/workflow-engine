@@ -655,12 +655,22 @@ ExecuteFromNode(ctx, workflow, workflowInstance, fromNodeId, businessParams)
   - ✅ 后端编译通过
 
 #### 待实施（下一步）
-- ⏳ **更新单元测试**（7个测试需要更新为新签名）
-  - 测试需要创建 workflow 和 instance 对象
-  - 测试需要调用新的 ExecuteFromNode 签名
-- ⏳ 前端起始节点选择器 UI（当前仍为"执行接口"选择器）
-- ⏳ 从 BPMN XML 提取可用起始节点（StartEvent, BoundaryEvent, IntermediateCatchEvent）
-- ⏳ 更新 UI 显示格式为"节点类型:节点名称:节点ID"
+- ✅ **更新单元测试** (2025-12-23)
+  - ✅ 已更新 7 个测试用例使用新的 ExecuteFromNode 签名
+  - ✅ 测试在每个测试中创建 workflow 和 instance 对象
+  - ✅ 所有 ExecuteFromNode 相关测试通过
+- ✅ **前端起始节点选择器 UI** (2025-12-23)
+  - ✅ 将"执行接口"选择器改为"起始节点"选择器
+  - ✅ 从 BPMN XML 提取可用起始节点（StartEvent, BoundaryEvent, IntermediateCatchEvent）
+  - ✅ 显示格式：`节点类型:节点名称:节点ID`（如：`开始节点:开始:StartEvent_1`）
+  - ✅ 自动选择第一个 StartEvent
+  - ✅ 当 BPMN 无起始节点时显示警告信息
+  - ✅ 创建 BPMN 工具函数库 (`client/src/utils/bpmn.ts`)
+
+#### 后续优化建议
+- ⏳ 集成测试（验证 HTTP → Context 完整流程）
+- ⏳ API 文档和迁移指南
+- ⏳ 性能测试和回归测试
 
 ### 2025-01-15: UUID 生成和完整数据传递
 

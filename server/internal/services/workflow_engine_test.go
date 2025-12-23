@@ -107,17 +107,25 @@ func TestWorkflowEngineService_ExecuteFromNode_ServiceTask_Success(t *testing.T)
 	fromNodeId := "ServiceTask_1"
 	now := time.Now()
 
-	// Mock: Get workflow instance (with ServiceTask_1 in current_node_ids)
-	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
-		WithArgs(instanceId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
-			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{"ServiceTask_1"}), 1, now, now))
+	// Create workflow and instance objects for the new signature
+	workflow := &models.Workflow{
+		Id:      workflowId,
+		Name:    "Test Workflow",
+		BpmnXml: bpmnXML,
+		Version: "1.0.0",
+		Status:  models.StatusDraft,
+	}
 
-	// Mock: Get workflow definition
-	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
-		WithArgs(workflowId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
-			AddRow(workflowId, "Test Workflow", "", bpmnXML, "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+	instance := &models.WorkflowInstance{
+		Id:             instanceId,
+		WorkflowId:     workflowId,
+		Name:           "Test Instance",
+		Status:         models.InstanceStatusRunning,
+		CurrentNodeIds: []string{"ServiceTask_1"},
+		InstanceVersion: 1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
 	// Mock: Get instance version (for CreateWorkflowExecution)
 	mock.ExpectQuery(`SELECT instance_version FROM workflow_instances WHERE id`).
@@ -150,7 +158,7 @@ func TestWorkflowEngineService_ExecuteFromNode_ServiceTask_Success(t *testing.T)
 			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusCompleted, pq.Array([]string{}), 2, now, now))
 
 	// Execute
-	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, map[string]interface{}{"param": "value"})
+	result, err := engineSvc.ExecuteFromNode(ctx, workflow, instance, fromNodeId, map[string]interface{}{"param": "value"})
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)
@@ -175,17 +183,25 @@ func TestWorkflowEngineService_ExecuteFromNode_InvalidNodeId(t *testing.T) {
 	fromNodeId := "InvalidNode"
 	now := time.Now()
 
-	// Mock: Get workflow instance
-	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
-		WithArgs(instanceId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
-			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{}), 1, now, now))
+	// Create workflow and instance objects for the new signature
+	workflow := &models.Workflow{
+		Id:      workflowId,
+		Name:    "Test Workflow",
+		BpmnXml: createTestBPMN(),
+		Version: "1.0.0",
+		Status:  models.StatusDraft,
+	}
 
-	// Mock: Get workflow definition
-	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
-		WithArgs(workflowId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
-			AddRow(workflowId, "Test Workflow", "", createTestBPMN(), "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+	instance := &models.WorkflowInstance{
+		Id:             instanceId,
+		WorkflowId:     workflowId,
+		Name:           "Test Instance",
+		Status:         models.InstanceStatusRunning,
+		CurrentNodeIds: []string{},
+		InstanceVersion: 1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
 	// Mock: Update instance to initialize current_node_ids (auto-initialization will happen before node validation)
 	// Args: updated_at, status, current_node_ids, instance_id
@@ -195,7 +211,7 @@ func TestWorkflowEngineService_ExecuteFromNode_InvalidNodeId(t *testing.T) {
 			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{"StartEvent_1"}), 2, now, now))
 
 	// Execute
-	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, nil)
+	result, err := engineSvc.ExecuteFromNode(ctx, workflow, instance, fromNodeId, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -228,17 +244,25 @@ func TestWorkflowEngineService_ExecuteFromNode_EndEvent(t *testing.T) {
 	fromNodeId := "EndEvent_1"
 	now := time.Now()
 
-	// Mock: Get workflow instance
-	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
-		WithArgs(instanceId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
-			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{"EndEvent_1"}), 1, now, now))
+	// Create workflow and instance objects for the new signature
+	workflow := &models.Workflow{
+		Id:      workflowId,
+		Name:    "Test Workflow",
+		BpmnXml: bpmnXML,
+		Version: "1.0.0",
+		Status:  models.StatusDraft,
+	}
 
-	// Mock: Get workflow definition
-	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
-		WithArgs(workflowId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
-			AddRow(workflowId, "Test Workflow", "", bpmnXML, "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+	instance := &models.WorkflowInstance{
+		Id:             instanceId,
+		WorkflowId:     workflowId,
+		Name:           "Test Instance",
+		Status:         models.InstanceStatusRunning,
+		CurrentNodeIds: []string{"EndEvent_1"},
+		InstanceVersion: 1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
 	// Mock: Get instance version (for CreateWorkflowExecution)
 	mock.ExpectQuery(`SELECT instance_version FROM workflow_instances WHERE id`).
@@ -270,7 +294,7 @@ func TestWorkflowEngineService_ExecuteFromNode_EndEvent(t *testing.T) {
 			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusCompleted, pq.Array([]string{}), 2, now, now))
 
 	// Execute
-	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, nil)
+	result, err := engineSvc.ExecuteFromNode(ctx, workflow, instance, fromNodeId, nil)
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)
@@ -789,17 +813,26 @@ func TestExecuteFromNode_AutoInitializeCurrentNodeIds(t *testing.T) {
   </bpmn:process>
 </bpmn:definitions>`
 
-	// Mock: Get workflow instance with EMPTY current_node_ids
-	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
-		WithArgs(instanceId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
-			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{}), 1, now, now))
+	// Create workflow and instance objects for the new signature
+	workflow := &models.Workflow{
+		Id:      workflowId,
+		Name:    "Test Workflow",
+		BpmnXml: bpmnXML,
+		Version: "1.0.0",
+		Status:  models.StatusDraft,
+	}
 
-	// Mock: Get workflow definition
-	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
-		WithArgs(workflowId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
-			AddRow(workflowId, "Test Workflow", "", bpmnXML, "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+	// Instance with EMPTY current_node_ids - will be auto-initialized
+	instance := &models.WorkflowInstance{
+		Id:             instanceId,
+		WorkflowId:     workflowId,
+		Name:           "Test Instance",
+		Status:         models.InstanceStatusRunning,
+		CurrentNodeIds: []string{}, // Empty - will be auto-initialized
+		InstanceVersion: 1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
 	// Mock: Update instance to initialize current_node_ids
 	// Args: updated_at, status, current_node_ids, instance_id
@@ -841,7 +874,7 @@ func TestExecuteFromNode_AutoInitializeCurrentNodeIds(t *testing.T) {
 			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusCompleted, pq.Array([]string{}), 3, now, now))
 
 	// Execute
-	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, nil)
+	result, err := engineSvc.ExecuteFromNode(ctx, workflow, instance, fromNodeId, nil)
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)
@@ -886,20 +919,29 @@ func TestExecuteFromNode_NoStartEvents_ReturnsError(t *testing.T) {
   </bpmn:process>
 </bpmn:definitions>`
 
-	// Mock: Get workflow instance with EMPTY current_node_ids
-	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
-		WithArgs(instanceId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
-			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{}), 1, now, now))
+	// Create workflow and instance objects for the new signature
+	workflow := &models.Workflow{
+		Id:      workflowId,
+		Name:    "Test Workflow",
+		BpmnXml: bpmnXML,
+		Version: "1.0.0",
+		Status:  models.StatusDraft,
+	}
 
-	// Mock: Get workflow definition
-	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
-		WithArgs(workflowId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
-			AddRow(workflowId, "Test Workflow", "", bpmnXML, "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+	// Instance with EMPTY current_node_ids
+	instance := &models.WorkflowInstance{
+		Id:             instanceId,
+		WorkflowId:     workflowId,
+		Name:           "Test Instance",
+		Status:         models.InstanceStatusRunning,
+		CurrentNodeIds: []string{}, // Empty
+		InstanceVersion: 1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
 	// Execute
-	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, nil)
+	result, err := engineSvc.ExecuteFromNode(ctx, workflow, instance, fromNodeId, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -952,17 +994,26 @@ func TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_UsesCurrentNodeId
 	fromNodeId := "" // Empty fromNodeId - should use current_node_ids
 	now := time.Now()
 
-	// Mock: Get workflow instance (with ServiceTask_1 in current_node_ids)
-	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
-		WithArgs(instanceId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
-			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{"ServiceTask_1"}), 1, now, now))
+	// Create workflow and instance objects for the new signature
+	workflow := &models.Workflow{
+		Id:      workflowId,
+		Name:    "Test Workflow",
+		BpmnXml: bpmnXML,
+		Version: "1.0.0",
+		Status:  models.StatusDraft,
+	}
 
-	// Mock: Get workflow definition
-	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
-		WithArgs(workflowId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
-			AddRow(workflowId, "Test Workflow", "", bpmnXML, "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+	// Instance with ServiceTask_1 in current_node_ids
+	instance := &models.WorkflowInstance{
+		Id:             instanceId,
+		WorkflowId:     workflowId,
+		Name:           "Test Instance",
+		Status:         models.InstanceStatusRunning,
+		CurrentNodeIds: []string{"ServiceTask_1"}, // Will be used when fromNodeId is empty
+		InstanceVersion: 1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
 	// Mock: Get instance version (for CreateWorkflowExecution)
 	mock.ExpectQuery(`SELECT instance_version FROM workflow_instances WHERE id`).
@@ -994,7 +1045,7 @@ func TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_UsesCurrentNodeId
 			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusCompleted, pq.Array([]string{}), 2, now, now))
 
 	// Execute with empty fromNodeId - should use ServiceTask_1 from current_node_ids
-	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, map[string]interface{}{"param": "value"})
+	result, err := engineSvc.ExecuteFromNode(ctx, workflow, instance, fromNodeId, map[string]interface{}{"param": "value"})
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)
@@ -1019,20 +1070,29 @@ func TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_EmptyCurrentNodeI
 	fromNodeId := "" // Empty fromNodeId
 	now := time.Now()
 
-	// Mock: Get workflow instance (with EMPTY current_node_ids)
-	mock.ExpectQuery(`SELECT id, workflow_id, name, status, current_node_ids, instance_version, created_at, updated_at`).
-		WithArgs(instanceId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "workflow_id", "name", "status", "current_node_ids", "instance_version", "created_at", "updated_at"}).
-			AddRow(instanceId, workflowId, "Test Instance", models.InstanceStatusRunning, pq.Array([]string{}), 1, now, now))
+	// Create workflow and instance objects for the new signature
+	workflow := &models.Workflow{
+		Id:      workflowId,
+		Name:    "Test Workflow",
+		BpmnXml: createTestBPMN(),
+		Version: "1.0.0",
+		Status:  models.StatusDraft,
+	}
 
-	// Mock: Get workflow definition
-	mock.ExpectQuery(`SELECT id, name, description, bpmn_xml, version, status, created_by, created_at, updated_at`).
-		WithArgs(workflowId).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "bpmn_xml", "version", "status", "created_by", "created_at", "updated_at"}).
-			AddRow(workflowId, "Test Workflow", "", createTestBPMN(), "1.0.0", models.StatusDraft, sql.NullString{}, now, now))
+	// Instance with EMPTY current_node_ids
+	instance := &models.WorkflowInstance{
+		Id:             instanceId,
+		WorkflowId:     workflowId,
+		Name:           "Test Instance",
+		Status:         models.InstanceStatusRunning,
+		CurrentNodeIds: []string{}, // Empty
+		InstanceVersion: 1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
 
 	// Execute with empty fromNodeId and empty current_node_ids - should return error
-	result, err := engineSvc.ExecuteFromNode(ctx, instanceId, fromNodeId, nil)
+	result, err := engineSvc.ExecuteFromNode(ctx, workflow, instance, fromNodeId, nil)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)

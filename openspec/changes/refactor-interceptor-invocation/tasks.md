@@ -5,16 +5,22 @@
 **Phase 1 完成 - 后端核心架构 + 完整迁移 + 单元测试**:
 - ✅ 新的泛型 `Intercept[T, P any]` 函数已实现,支持结构体参数和反射ID生成
 - ✅ HTTP中间件已实现并注册,支持 `X-Intercept-Dry-Run` 和 `X-Intercept-Config` headers
-- ✅ 添加了 `InterceptLegacy` 兼容层,使现有代码可以继续运行
-- ✅ **Task 2 完成**: 已将 WorkflowEngineService 中的所有 4 个拦截器迁移到新架构
-  - GetInstance (支持 Mock 和真实实例)
-  - GetWorkflow (通过 WorkflowID 获取工作流)
+- ✅ 添加了通配符支持 (`"*"`),实现全程 Mock 模式
+- ✅ **Task 2 完成**: 已将 WorkflowEngineService 中的拦截器迁移到新架构
+  - ~~GetInstance~~ (已移除 - 通过 ExecuteFromNode 参数直接传递)
+  - ~~GetWorkflow~~ (已移除 - 通过 ExecuteFromNode 参数直接传递)
   - UpdateInstance (更新实例状态和节点)
   - ServiceTask (执行业务 API 调用,支持 Mock 模式)
-- ✅ WorkflowEngineService 不再使用 InterceptLegacy,完全切换到新架构
+- ✅ **ExecuteFromNode 架构重构完成** (2025-01-16)
+  - 重构方法签名：接收 workflow 和 instance 对象
+  - Handler 层负责数据准备（从 request body 或数据库获取）
+  - Service 层专注业务逻辑，移除内部数据查询
+  - 新增 `POST /api/execute` 路由（Mock 模式）
+  - 保留 `POST /api/execute/:workflowInstanceId` 路由（正常模式）
 - ✅ **Task 6 完成**: 后端单元测试已全部完成
-  - 添加了 13+ 个新测试用例,覆盖结构体参数、ID生成、三种模式、错误处理
-  - 所有测试通过 (28 passed)
+  - 添加了 13+ 个拦截器测试用例,覆盖结构体参数、ID生成、三种模式、错误处理
+  - **2025-12-23**: 更新了 7 个 ExecuteFromNode 测试用例使用新签名
+  - 所有测试通过 (35+ passed)
   - 核心功能测试覆盖率 >85% (interceptWithSession: 92%, generateInterceptorID: 86.7%)
   - 总体覆盖率 62.1% (HTTP中间件函数将在集成测试中验证)
 
@@ -94,12 +100,40 @@
 - [x] 测试错误处理和降级逻辑
 - [x] 验证: 测试覆盖率 62.1% (核心功能 >85%, HTTP middleware 函数将在集成测试中覆盖)
 
+### 6.5. ExecuteFromNode 架构重构 (后端架构优化)
+- [x] 分析现有 ExecuteFromNode 方法的职责（2025-01-16）
+- [x] 设计新的方法签名（接收 workflow 和 instance 对象）
+- [x] 修改 ExecuteFromNode 方法实现
+  - [x] 移除内部的 getInstance 和 getWorkflow 调用
+  - [x] 移除对 workflowSvc 和 instanceSvc 的依赖
+  - [x] 接收 workflow 和 instance 作为参数
+- [x] 更新 Handler 层数据准备逻辑
+  - [x] ExecuteWorkflow：从数据库查询数据
+  - [x] ExecuteWorkflowMock：从 request body 获取数据
+- [x] 添加通配符拦截器支持
+  - [x] 更新 InterceptConfig.GetMode() 支持 "*" 配置
+  - [x] 实现优先级：具体配置 > 通配符 > 默认
+- [x] 添加新路由 `POST /api/execute`（Mock 模式）
+- [x] 保留旧路由 `POST /api/execute/:workflowInstanceId`（正常模式）
+- [x] 更新单元测试使用新签名（7个测试用例）- 2025-12-23
+  - [x] TestWorkflowEngineService_ExecuteFromNode_ServiceTask_Success
+  - [x] TestWorkflowEngineService_ExecuteFromNode_InvalidNodeId
+  - [x] TestWorkflowEngineService_ExecuteFromNode_EndEvent
+  - [x] TestExecuteFromNode_AutoInitializeCurrentNodeIds
+  - [x] TestExecuteFromNode_NoStartEvents_ReturnsError
+  - [x] TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_UsesCurrentNodeIds
+  - [x] TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_EmptyCurrentNodeIds
+- [x] 删除废弃的 GetInstanceParams 和 GetWorkflowParams
+- [x] 验证：所有测试通过，编译无错误
+
 ### 7. 集成测试 - 端到端拦截器流程 (后端集成测试)
 - [ ] 在 `server/internal/services/integration_test.go` 中添加测试
 - [ ] 测试 HTTP Header 传递到 ctx 的完整流程
 - [ ] 测试 Dry-run 模式返回拦截器清单
 - [ ] 测试拦截器日志记录功能
 - [ ] 测试 mock 数据的设置和使用
+- [ ] 测试通配符配置 ("*") 的行为
+- [ ] 测试全程 Mock 模式的端到端流程
 - [ ] 验证: 集成测试通过,覆盖主要场景
 
 ## 前端实现
@@ -119,7 +153,12 @@
 - [x] 实现每个拦截器的模式选择(enabled/disabled/record)
 - [x] 显示当前配置状态
 - [x] 实现配置应用和执行流程
-- [ ] 验证: UI 功能正常,配置生效
+- [x] 将"执行接口"选择器改为"起始节点"选择器（2025-12-23）
+- [x] 从 BPMN XML 提取可用起始节点（StartEvent, BoundaryEvent, IntermediateCatchEvent）
+- [x] 显示格式：`节点类型:节点名称:节点ID`
+- [x] 自动选择第一个 StartEvent
+- [x] 创建 BPMN 工具函数库 (`client/src/utils/bpmn.ts`)
+- [x] 验证: UI 功能正常,配置生效
 
 ### 10. 前端单元测试 (前端测试)
 - [x] 为 `ApiClient` 编写单元测试
@@ -198,11 +237,16 @@
 
 ## 验收标准
 
-- [x] 所有业务方法改造为结构体参数 (4个拦截器已完成)
+- [x] 所有业务方法改造为结构体参数 (2个拦截器仍在使用: UpdateInstance, ServiceTask)
 - [x] 单一泛型 `Intercept` 函数正常工作
 - [x] Dry-run 模式正确返回拦截器清单 (前端已实现)
 - [x] 细粒度配置功能正常工作 (前端 UI 已实现)
+- [x] 通配符配置 ("*") 功能正常工作 (支持全程 Mock 模式)
+- [x] ExecuteFromNode 架构重构完成 (职责分离，Handler 负责数据准备)
+- [x] 新增 `POST /api/execute` 路由支持全程 Mock 模式
 - [x] 单元测试覆盖率达到 80% 以上 (后端62.1%, 前端27个测试通过)
+- [x] ExecuteFromNode 相关测试全部更新并通过 (7个测试)
+- [x] 前端起始节点选择器 UI 实现完成
 - [ ] 集成测试覆盖主要使用场景 (Task 7 待完成)
 - [ ] 性能测试表明额外开销 < 5% (Task 13 待完成)
 - [ ] 回归测试全部通过 (Task 14 待完成)

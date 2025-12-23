@@ -49,6 +49,7 @@
     "@types/jest": "^29.5.12",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.7.2",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/tsconfig": "^0.8.1",
     "@xmldom/xmldom": "^0.8.11",

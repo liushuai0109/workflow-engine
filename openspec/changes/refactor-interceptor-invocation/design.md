@@ -849,6 +849,180 @@ func Intercept[T any](
 - 提供降级机制(Header 缺失时仍可工作)
 - 在开发环境提供调试工具
 
+### 6. ExecuteFromNode 方法签名重构
+
+#### 设计原则：职责分离
+
+**核心理念**: Handler 层负责数据准备，Service 层负责业务逻辑
+
+#### 方法签名变更
+
+**旧签名**（已废弃）:
+```go
+// 通过 ID 查询数据（内部使用拦截器）
+func (s *WorkflowEngineService) ExecuteFromNode(
+    ctx context.Context,
+    instanceId string,
+    fromNodeId string,
+    businessParams map[string]interface{},
+) (*ExecuteResult, error)
+
+// 带可选数据的版本（临时方案）
+func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
+    ctx context.Context,
+    instanceId string,
+    fromNodeId string,
+    businessParams map[string]interface{},
+    optionalWorkflow *models.Workflow,
+    optionalInstance *models.WorkflowInstance,
+) (*ExecuteResult, error)
+```
+
+**新签名**（当前实现）:
+```go
+// 接收数据对象（数据准备在 Handler 层完成）
+func (s *WorkflowEngineService) ExecuteFromNode(
+    ctx context.Context,
+    workflow *models.Workflow,
+    instance *models.WorkflowInstance,
+    fromNodeId string,
+    businessParams map[string]interface{},
+) (*ExecuteResult, error)
+```
+
+#### 架构优势
+
+1. **职责清晰**
+   - Handler 层：数据准备（从 request body 或数据库获取）
+   - Service 层：业务逻辑（专注工作流执行）
+
+2. **简化依赖**
+   - ExecuteFromNode 不再依赖 workflowSvc 和 instanceSvc
+   - 移除内部的 GetInstance 和 GetWorkflow 拦截器调用
+   - 减少服务间的循环依赖
+
+3. **易于测试**
+   - 可以直接传入 mock 对象，无需数据库
+   - 测试更加独立和可控
+   - 便于单元测试覆盖各种场景
+
+4. **代码简洁**
+   - 减少不必要的拦截器调用
+   - 数据获取逻辑统一在 Handler 层
+   - Service 方法更加纯粹
+
+#### Handler 层实现
+
+**两种路由对应两种数据准备方式**:
+
+```go
+// 路由 1: POST /api/execute/:workflowInstanceId
+// 正常模式 - 从数据库查询数据
+func (h *WorkflowExecutorHandler) ExecuteWorkflow(c *gin.Context) {
+    instanceId := c.Param("workflowInstanceId")
+
+    // 1. 从数据库获取 workflow 和 instance
+    instance, err := h.instanceSvc.GetWorkflowInstanceByID(ctx, instanceId)
+    workflow, err := h.workflowSvc.GetWorkflowByID(ctx, instance.WorkflowId)
+
+    // 2. 调用执行引擎
+    result, err := h.engineService.ExecuteFromNode(ctx, workflow, instance, fromNodeId, businessParams)
+
+    c.JSON(http.StatusOK, result)
+}
+
+// 路由 2: POST /api/execute
+// Mock 模式 - 从请求体获取数据
+func (h *WorkflowExecutorHandler) ExecuteWorkflowMock(c *gin.Context) {
+    var req struct {
+        Workflow         *models.Workflow         `json:"workflow" binding:"required"`
+        WorkflowInstance *models.WorkflowInstance `json:"workflowInstance" binding:"required"`
+        FromNodeId       string                    `json:"fromNodeId"`
+        BusinessParams   map[string]interface{}   `json:"businessParams"`
+    }
+
+    // 1. 从 request body 获取 workflow 和 instance
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 2. 调用执行引擎
+    result, err := h.engineService.ExecuteFromNode(ctx, req.Workflow, req.WorkflowInstance, req.FromNodeId, req.BusinessParams)
+
+    c.JSON(http.StatusOK, result)
+}
+```
+
+#### 前端调用方式
+
+**正常模式**（需要数据库中的数据）:
+```typescript
+// URL 包含 instanceId
+const result = await apiClient.post(`/execute/${instanceId}`, {
+    fromNodeId: 'StartEvent_1',
+    businessParams: {}
+})
+```
+
+**全程 Mock 模式**（无需数据库）:
+```typescript
+// 生成新的 UUID v4
+const workflowInstanceId = uuidv4()
+
+// 应用通配符拦截器配置
+apiClient.setInterceptorConfig({ '*': 'enabled' })
+
+// URL 不包含参数，所有数据在请求体中
+const result = await apiClient.post(`/execute`, {
+    fromNodeId: 'StartEvent_1',
+    businessParams: {},
+    workflow: {
+        id: 'Process_1',
+        name: 'Mock Workflow Process_1',
+        bpmnXml: '<bpmn:definitions>...</bpmn:definitions>',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    },
+    workflowInstance: {
+        id: workflowInstanceId,
+        workflowId: 'Process_1',
+        name: `Mock Instance ${workflowInstanceId}`,
+        status: 'running',
+        currentNodeIds: [],
+        instanceVersion: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    }
+})
+```
+
+#### 通配符拦截器支持
+
+**拦截器配置增强**:
+```go
+func (c *InterceptConfig) GetMode(interceptorID string) InterceptMode {
+    // 1. 检查具体拦截器配置
+    if mode, exists := c.configMap[interceptorID]; exists {
+        return InterceptMode(mode)
+    }
+    // 2. 检查通配符 "*" 配置
+    if mode, exists := c.configMap["*"]; exists {
+        return InterceptMode(mode)
+    }
+    // 3. 返回系统默认
+    return InterceptModeRecord
+}
+```
+
+**使用场景**:
+- `{"*": "enabled"}` - 全程 Mock 模式（所有拦截器启用 mock）
+- `{"*": "record"}` - 默认模式（所有拦截器启用记录）
+- `{"*": "disabled"}` - 所有拦截器禁用
+- `{"*": "enabled", "GetInstance:123": "record"}` - 全程 mock，但特定拦截器真实执行
+
+**优先级**: 具体拦截器配置 > 通配符配置 > 系统默认（record）
+
 ## 总结
 
 本设计方案通过以下方式优化了拦截器的实现:
@@ -857,5 +1031,7 @@ func Intercept[T any](
 3. **更好的可观测性**: 完整记录方法调用信息
 4. **灵活的控制**: 支持前端动态控制拦截行为
 5. **平滑的迁移**: 提供兼容层和分阶段迁移策略
+6. **职责分离**: Handler 负责数据准备，Service 专注业务逻辑
+7. **通配符支持**: 支持全局拦截器配置，实现全程 Mock 模式
 
 这些改进将显著提升代码的可读性、可维护性和可调试性,同时保持良好的性能和类型安全。

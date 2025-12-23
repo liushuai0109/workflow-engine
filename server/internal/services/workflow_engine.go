@@ -181,18 +181,31 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 			Strs("startEvents", wd.StartEvents).
 			Msg("Initializing current_node_ids with start events")
 
-		// 更新实例的 current_node_ids (使用拦截器)
-		instance, err = interceptor.Intercept(ctx,
-			"UpdateInstance",
-			s.updateInstance,
-			UpdateInstanceParams{
-				InstanceID: instance.Id,
-				Status:     instance.Status,
-				NextNodes:  wd.StartEvents,
-			},
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize current_node_ids: %w", err)
+		// 在全程 Mock 模式下（通配符拦截器启用），直接修改内存对象，避免数据库操作
+		// 检查是否启用了通配符拦截器配置
+		config := interceptor.GetInterceptConfig(ctx)
+		wildcardMode := config.GetMode("*")
+
+		if wildcardMode == interceptor.InterceptModeEnabled {
+			// 全程 Mock 模式：直接更新内存中的 instance 对象
+			s.logger.Info().
+				Str("instanceId", instance.Id).
+				Msg("Full mock mode detected, updating instance in memory only")
+			instance.CurrentNodeIds = wd.StartEvents
+		} else {
+			// 正常模式：通过拦截器更新数据库
+			instance, err = interceptor.Intercept(ctx,
+				"UpdateInstance",
+				s.updateInstance,
+				UpdateInstanceParams{
+					InstanceID: instance.Id,
+					Status:     instance.Status,
+					NextNodes:  wd.StartEvents,
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to initialize current_node_ids: %w", err)
+			}
 		}
 	}
 
@@ -226,32 +239,57 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 	if businessParams != nil {
 		variables = businessParams
 	}
-	execution, err := interceptor.Intercept(ctx,
-		"CreateExecution",
-		s.createExecution,
-		CreateExecutionParams{
-			InstanceID: instance.Id,
-			WorkflowID: workflow.Id,
+
+	// 检查是否为全程 Mock 模式
+	config := interceptor.GetInterceptConfig(ctx)
+	isFullMockMode := config.GetMode("*") == interceptor.InterceptModeEnabled
+
+	var execution *models.WorkflowExecution
+
+	if isFullMockMode {
+		// 全程 Mock 模式：创建假的 execution 对象，不访问数据库
+		s.logger.Info().
+			Str("instanceId", instance.Id).
+			Msg("Full mock mode: creating fake execution object")
+
+		execution = &models.WorkflowExecution{
+			Id:         "mock-execution-" + instance.Id,
+			InstanceId: instance.Id,
+			WorkflowId: workflow.Id,
+			Status:     models.ExecutionStatusRunning,
 			Variables:  variables,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create execution: %w", err)
+		}
+	} else {
+		// 正常模式：通过拦截器创建并更新 execution
+		execution, err = interceptor.Intercept(ctx,
+			"CreateExecution",
+			s.createExecution,
+			CreateExecutionParams{
+				InstanceID: instance.Id,
+				WorkflowID: workflow.Id,
+				Variables:  variables,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create execution: %w", err)
+		}
+
+		// Immediately update to Running status (使用拦截器)
+		execution, err = interceptor.Intercept(ctx,
+			"UpdateExecution",
+			s.updateExecution,
+			UpdateExecutionParams{
+				ExecutionID:  execution.Id,
+				Status:       models.ExecutionStatusRunning,
+				Variables:    nil, // Don't override variables yet
+				ErrorMessage: "",
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update execution to running status: %w", err)
+		}
 	}
-	// Immediately update to Running status (使用拦截器)
-	execution, err = interceptor.Intercept(ctx,
-		"UpdateExecution",
-		s.updateExecution,
-		UpdateExecutionParams{
-			ExecutionID:  execution.Id,
-			Status:       models.ExecutionStatusRunning,
-			Variables:    nil, // Don't override variables yet
-			ErrorMessage: "",
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update execution to running status: %w", err)
-	}
+
 	s.logger.Info().Str("executionId", execution.Id).Msg("Created execution record with Running status")
 
 	// 6. 执行节点并持续推进，直到遇到需要等待的节点
@@ -360,44 +398,70 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		}
 	}
 
-	// 8. 更新执行状态为 Completed/Failed (使用拦截器)
-	_, err = interceptor.Intercept(ctx,
-		"UpdateExecution",
-		s.updateExecution,
-		UpdateExecutionParams{
-			ExecutionID:  execution.Id,
-			Status:       executionStatus,
-			Variables:    execution.Variables,
-			ErrorMessage: "",
-		},
-	)
-	if err != nil {
-		s.logger.Error().Err(err).
-			Str("executionId", execution.Id).
-			Str("status", executionStatus).
-			Msg("Failed to update execution status")
-		// Don't return error, continue to update instance
-	} else {
+	// 8. 更新执行状态为 Completed/Failed
+	if isFullMockMode {
+		// 全程 Mock 模式：直接更新内存中的 execution 对象
 		s.logger.Info().
 			Str("executionId", execution.Id).
 			Str("status", executionStatus).
-			Msg("Updated execution status")
+			Msg("Full mock mode: updating execution in memory")
+		execution.Status = executionStatus
+	} else {
+		// 正常模式：通过拦截器更新数据库
+		_, err = interceptor.Intercept(ctx,
+			"UpdateExecution",
+			s.updateExecution,
+			UpdateExecutionParams{
+				ExecutionID:  execution.Id,
+				Status:       executionStatus,
+				Variables:    execution.Variables,
+				ErrorMessage: "",
+			},
+		)
+		if err != nil {
+			s.logger.Error().Err(err).
+				Str("executionId", execution.Id).
+				Str("status", executionStatus).
+				Msg("Failed to update execution status")
+			// Don't return error, continue to update instance
+		} else {
+			s.logger.Info().
+				Str("executionId", execution.Id).
+				Str("status", executionStatus).
+				Msg("Updated execution status")
+		}
 	}
 
-	// 9. 更新实例状态 (使用拦截器)
-	updatedInstance, err := interceptor.Intercept(ctx,
-		"UpdateInstance",
-		s.updateInstance,
-		UpdateInstanceParams{
-			InstanceID: instance.Id,
-			Status:     instanceStatus,
-			NextNodes:  nextNodeIds,
-		},
-	)
+	// 9. 更新实例状态
+	var updatedInstance *models.WorkflowInstance
 
-	if err != nil {
-		s.logger.Error().Err(err).Str("instanceId", instance.Id).Msg("Failed to update instance")
-		return nil, fmt.Errorf("failed to update instance: %w", err)
+	if isFullMockMode {
+		// 全程 Mock 模式：直接更新内存中的 instance 对象
+		s.logger.Info().
+			Str("instanceId", instance.Id).
+			Str("status", instanceStatus).
+			Msg("Full mock mode: updating instance in memory")
+
+		instance.Status = instanceStatus
+		instance.CurrentNodeIds = nextNodeIds
+		updatedInstance = instance
+	} else {
+		// 正常模式：通过拦截器更新数据库
+		var err error
+		updatedInstance, err = interceptor.Intercept(ctx,
+			"UpdateInstance",
+			s.updateInstance,
+			UpdateInstanceParams{
+				InstanceID: instance.Id,
+				Status:     instanceStatus,
+				NextNodes:  nextNodeIds,
+			},
+		)
+
+		if err != nil {
+			s.logger.Error().Err(err).Str("instanceId", instance.Id).Msg("Failed to update instance")
+			return nil, fmt.Errorf("failed to update instance: %w", err)
+		}
 	}
 
 	// 10. 构建响应

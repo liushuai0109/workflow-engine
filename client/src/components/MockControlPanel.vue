@@ -7,7 +7,7 @@
           type="primary"
           @click="handleStart"
           :loading="isLoading"
-          :disabled="!!(currentInstanceId && currentStatus !== 'completed' && currentStatus !== 'failed')"
+          :disabled="isLoading"
         >
           开始执行
         </a-button>
@@ -15,13 +15,29 @@
     </div>
 
     <div class="panel-content">
-      <!-- 接口选择器 -->
-      <div class="interface-selector">
-        <a-form-item label="执行接口">
-          <a-select v-model="selectedApi" style="width: 100%">
-            <a-option value="/api/execute/:workflowInstanceId">POST /api/execute/:workflowInstanceId</a-option>
+      <!-- 起始节点选择器 -->
+      <div class="start-node-selector">
+        <a-form-item label="起始节点">
+          <a-select
+            v-model:value="selectedStartNodeId"
+            style="width: 100%"
+            placeholder="请选择起始节点"
+            :disabled="startNodes.length === 0"
+            show-search
+            :filter-option="false"
+          >
+            <a-option
+              v-for="node in startNodes"
+              :key="node.id"
+              :value="node.id"
+            >
+              {{ formatStartNodeLabel(node) }}
+            </a-option>
           </a-select>
         </a-form-item>
+        <div v-if="startNodes.length === 0" class="warning-text">
+          未在 BPMN 中找到起始节点（StartEvent、BoundaryEvent 或 IntermediateCatchEvent）
+        </div>
       </div>
 
       <!-- 错误信息 -->
@@ -148,9 +164,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { apiClient, type InterceptorMode, type InterceptorConfig } from '../services/api'
 import { v4 as uuidv4 } from 'uuid'
+import { extractStartNodes, formatStartNodeLabel, type StartNode } from '../utils/bpmn'
 
 // Interceptor call record structure
 interface InterceptorCall {
@@ -161,7 +178,7 @@ interface InterceptorCall {
   output: Record<string, any>
 }
 
-// Execution result structure
+// Execution result structure (actual data from API)
 interface ExecuteResult {
   businessResponse?: {
     statusCode: number
@@ -178,6 +195,12 @@ interface ExecuteResult {
   }
   interceptorCalls?: InterceptorCall[]
   requestParams?: Record<string, any>
+}
+
+// API response wrapper
+interface ApiResponse {
+  success: boolean
+  data: ExecuteResult
 }
 
 // Legacy MockExecution for backwards compatibility
@@ -210,10 +233,13 @@ const currentStatus = ref<string>('')
 const isLoading = ref(false)
 const errorMessage = ref('')
 const lastResult = ref<ExecuteResult | null>(null)
-const selectedApi = ref('/api/execute/:workflowInstanceId')
 const activeTab = ref('request-response')
 const selectedInterceptor = ref<number | null>(null)
 const interceptorDetailTab = ref('input')
+
+// Start node selection
+const startNodes = ref<StartNode[]>([])
+const selectedStartNodeId = ref<string | undefined>(undefined)
 
 // Interceptor configuration state
 const interceptorModes = ref<Record<string, InterceptorMode>>({})
@@ -221,13 +247,31 @@ const showMockDataEditor = ref(false)
 const editingInterceptor = ref<InterceptorCall | null>(null)
 const mockDataJson = ref('')
 
+// JSON formatting cache to avoid re-formatting the same data
+const jsonCache = new Map<string, string>()
+
+const formatJSONCached = (obj: any, cacheKey: string): string => {
+  if (!obj) return ''
+
+  if (jsonCache.has(cacheKey)) {
+    return jsonCache.get(cacheKey)!
+  }
+
+  const formatted = JSON.stringify(obj, null, 2)
+  jsonCache.set(cacheKey, formatted)
+  return formatted
+}
+
 const selectedInterceptorDetails = computed(() => {
   if (!selectedInterceptor.value || !lastResult.value?.interceptorCalls) return null
   return lastResult.value.interceptorCalls.find(call => call.order === selectedInterceptor.value)
 })
 
 const requestParamsJson = computed({
-  get: () => lastResult.value?.requestParams ? formatJSON(lastResult.value.requestParams) : '',
+  get: () => {
+    if (!lastResult.value?.requestParams) return ''
+    return formatJSONCached(lastResult.value.requestParams, 'requestParams')
+  },
   set: () => {
     // Read-only for now, could add edit support later
   }
@@ -236,10 +280,11 @@ const requestParamsJson = computed({
 const responseDataJson = computed({
   get: () => {
     if (!lastResult.value) return ''
-    return formatJSON({
+    const responseObj = {
       businessResponse: lastResult.value.businessResponse,
       engineResponse: lastResult.value.engineResponse
-    })
+    }
+    return formatJSONCached(responseObj, 'responseData')
   },
   set: () => {
     // Read-only for now, could add edit support later
@@ -247,14 +292,22 @@ const responseDataJson = computed({
 })
 
 const interceptorInputJson = computed({
-  get: () => selectedInterceptorDetails.value?.input ? formatJSON(selectedInterceptorDetails.value.input) : '',
+  get: () => {
+    if (!selectedInterceptorDetails.value?.input) return ''
+    const cacheKey = `input-${selectedInterceptor.value}`
+    return formatJSONCached(selectedInterceptorDetails.value.input, cacheKey)
+  },
   set: () => {
     // Read-only for now, could add edit support later
   }
 })
 
 const interceptorOutputJson = computed({
-  get: () => selectedInterceptorDetails.value?.output ? formatJSON(selectedInterceptorDetails.value.output) : '',
+  get: () => {
+    if (!selectedInterceptorDetails.value?.output) return ''
+    const cacheKey = `output-${selectedInterceptor.value}`
+    return formatJSONCached(selectedInterceptorDetails.value.output, cacheKey)
+  },
   set: () => {
     // Read-only for now, could add edit support later
   }
@@ -265,19 +318,15 @@ const handleStart = async () => {
   errorMessage.value = ''
 
   try {
-    // Generate or use existing instance ID
-    let instanceId = currentInstanceId.value
-    if (!instanceId) {
-      // Generate a valid UUID v4 using uuid library
-      instanceId = uuidv4()
-      console.log('Generated new instance ID:', instanceId)
-    }
+    // Always generate a new instance ID for each execution
+    const instanceId = uuidv4()
+    console.log('Generated new instance ID:', instanceId)
 
     console.log('Starting workflow execution with interceptor config:', interceptorModes.value)
 
     // Apply wildcard interceptor configuration for full mock mode
     // Set all interceptors to 'enabled' mode by default when workflow and instance data is provided
-    const fullMockConfig = { '*': 'enabled' }
+    const fullMockConfig: InterceptorConfig = { '*': 'enabled' as InterceptorMode }
     apiClient.setInterceptorConfig(fullMockConfig)
     console.log('Applied full mock mode config:', fullMockConfig)
 
@@ -301,11 +350,14 @@ const handleStart = async () => {
       updatedAt: new Date().toISOString()
     }
 
+    // Use selected start node or undefined
+    const fromNodeId = selectedStartNodeId.value || undefined
+
     // Call real workflow execution API WITHOUT instanceId in URL
     // URL: http://api.workflow.com:3000/api/execute
     // For mock mode, provide workflow and workflowInstance in request body
-    const result = await apiClient.post<ExecuteResult>(`/execute`, {
-      fromNodeId: undefined,
+    const result = await apiClient.post<ApiResponse>(`/execute`, {
+      fromNodeId: fromNodeId,
       businessParams: {},
       workflow: workflow,
       workflowInstance: workflowInstance
@@ -314,21 +366,31 @@ const handleStart = async () => {
     console.log('Workflow execution result:', result)
 
     // Check if result has the expected structure
-    if (!result || !result.engineResponse) {
-      throw new Error('Invalid response structure: engineResponse is missing')
+    // API response format: { success: true, data: { engineResponse: {...}, interceptorCalls: [...] } }
+    if (!result || !result.data || !result.data.engineResponse) {
+      throw new Error('Invalid response structure: data.engineResponse is missing')
     }
 
-    lastResult.value = result
-    currentInstanceId.value = result.engineResponse.instanceId
-    currentNodeIds.value = result.engineResponse.currentNodeIds
-    currentStatus.value = result.engineResponse.status
+    // Extract data from the API response wrapper
+    const responseData = result.data
+
+    // Clear JSON formatting cache for new execution data
+    jsonCache.clear()
+
+    lastResult.value = responseData
+    currentInstanceId.value = responseData.engineResponse.instanceId
+    currentNodeIds.value = responseData.engineResponse.currentNodeIds
+    currentStatus.value = responseData.engineResponse.status
+
+    console.log('Execution completed with status:', currentStatus.value)
+    console.log('isLoading before finally:', isLoading.value)
 
     // Reset interceptor selection
     selectedInterceptor.value = null
 
     // Initialize interceptor modes from result if not set
-    if (result.interceptorCalls) {
-      result.interceptorCalls.forEach((call) => {
+    if (responseData.interceptorCalls) {
+      responseData.interceptorCalls.forEach((call: InterceptorCall) => {
         const interceptorId = call.name // Use name as interceptor ID for now
         if (!interceptorModes.value[interceptorId]) {
           interceptorModes.value[interceptorId] = 'record' // Default to record mode
@@ -338,11 +400,11 @@ const handleStart = async () => {
 
     // Emit legacy format for backwards compatibility
     emit('executionUpdate', {
-      id: result.engineResponse.instanceId,
+      id: responseData.engineResponse.instanceId,
       workflowId: props.workflowId,
-      status: convertStatus(result.engineResponse.status),
-      currentNodeId: result.engineResponse.currentNodeIds[0] || '',
-      variables: result.engineResponse.variables,
+      status: convertStatus(responseData.engineResponse.status),
+      currentNodeId: responseData.engineResponse.currentNodeIds[0] || '',
+      variables: responseData.engineResponse.variables,
       executedNodes: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -352,6 +414,7 @@ const handleStart = async () => {
     errorMessage.value = error instanceof Error ? error.message : '执行失败'
   } finally {
     isLoading.value = false
+    console.log('isLoading set to false in finally block')
   }
 }
 
@@ -365,10 +428,6 @@ const convertStatus = (status: string): 'pending' | 'running' | 'paused' | 'comp
     'cancelled': 'stopped',
   }
   return statusMap[status] || 'running'
-}
-
-const formatJSON = (obj: any): string => {
-  return JSON.stringify(obj, null, 2)
 }
 
 const formatTime = (timestamp: string): string => {
@@ -404,6 +463,59 @@ const getInterceptorMode = (interceptorName: string): InterceptorMode => {
 // Get active config count
 const activeConfigCount = computed(() => {
   return Object.values(interceptorModes.value).filter(mode => mode === 'enabled').length
+})
+
+// Debug: watch selectedStartNodeId changes
+watch(selectedStartNodeId, (newValue) => {
+  console.log('selectedStartNodeId changed to:', newValue)
+})
+
+// Debug: watch isLoading changes
+watch(isLoading, (newValue) => {
+  console.log('isLoading changed to:', newValue)
+})
+
+// Extract start nodes when BPMN XML changes
+watch(
+  () => props.bpmnXml,
+  async (newBpmnXml) => {
+    if (newBpmnXml) {
+      startNodes.value = extractStartNodes(newBpmnXml)
+      console.log('startNodes.value', startNodes.value)
+
+      // Wait for DOM update before setting default selection
+      await nextTick()
+
+      // Always auto-select the first node (default to first StartEvent)
+      if (startNodes.value.length > 0 && startNodes.value[0]) {
+        const defaultNodeId = startNodes.value[0].id
+        selectedStartNodeId.value = defaultNodeId
+        console.log('Selected default node:', defaultNodeId, 'from', startNodes.value[0])
+      } else {
+        selectedStartNodeId.value = undefined
+      }
+    } else {
+      startNodes.value = []
+      selectedStartNodeId.value = undefined
+    }
+  },
+  { immediate: true }
+)
+
+// Initialize on mount
+onMounted(async () => {
+  if (props.bpmnXml) {
+    startNodes.value = extractStartNodes(props.bpmnXml)
+
+    // Wait for DOM update before setting default selection
+    await nextTick()
+
+    if (startNodes.value.length > 0 && startNodes.value[0]) {
+      const defaultNodeId = startNodes.value[0].id
+      selectedStartNodeId.value = defaultNodeId
+      console.log('onMounted: Selected default node:', defaultNodeId)
+    }
+  }
 })
 </script>
 
@@ -451,8 +563,19 @@ const activeConfigCount = computed(() => {
   flex: 1;
 }
 
-.interface-selector {
+.start-node-selector {
   margin-bottom: 16px;
+}
+
+.warning-text {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fff7e6;
+  border: 1px solid #ffd666;
+  border-radius: 4px;
+  color: #ad6800;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .result-tabs-section {
