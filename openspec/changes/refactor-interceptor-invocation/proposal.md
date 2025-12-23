@@ -645,12 +645,19 @@ ExecuteFromNode(ctx, workflow, workflowInstance, fromNodeId, businessParams)
 - ✅ 拦截器通配符支持已实现
 - ✅ Proposal 文档已更新，说明新的架构设计
 
+#### 实施完成
+- ✅ **重构 ExecuteFromNode 方法签名** (2025-01-16)
+  - ✅ 修改方法签名接收 workflow 和 workflowInstance 对象
+  - ✅ Handler 层实现数据准备逻辑（从 request body 或数据库获取）
+  - ✅ 移除 Service 层的 getInstance 和 getWorkflow 方法
+  - ✅ 移除 GetInstanceParams 和 GetWorkflowParams 结构体
+  - ✅ 删除废弃的 interceptor_handler.go 文件
+  - ✅ 后端编译通过
+
 #### 待实施（下一步）
-- ⏳ **重构 ExecuteFromNode 方法签名**（设计已完成，代码待实施）
-  - 修改方法签名接收 workflow 和 workflowInstance 对象
-  - Handler 层实现数据准备逻辑（从 request body 或数据库获取）
-  - 移除 Service 层的 GetInstance 和 GetWorkflow 拦截器调用
-  - 删除 ExecuteFromNodeWithOptionalData 冗余方法
+- ⏳ **更新单元测试**（7个测试需要更新为新签名）
+  - 测试需要创建 workflow 和 instance 对象
+  - 测试需要调用新的 ExecuteFromNode 签名
 - ⏳ 前端起始节点选择器 UI（当前仍为"执行接口"选择器）
 - ⏳ 从 BPMN XML 提取可用起始节点（StartEvent, BoundaryEvent, IntermediateCatchEvent）
 - ⏳ 更新 UI 显示格式为"节点类型:节点名称:节点ID"
