@@ -77,6 +77,7 @@
         @mock-execution-update="handleMockExecutionUpdate"
         @debug-session-update="handleDebugSessionUpdate"
         @chat-message="handleChatMessage"
+        @highlight-nodes="handleHighlightNodes"
       />
     </div>
 
@@ -133,7 +134,7 @@ import RightPanelContainer from '../components/RightPanelContainer.vue'
 import VariableWatchPanel from '../components/VariableWatchPanel.vue'
 import ExecutionTimeline from '../components/ExecutionTimeline.vue'
 import { LocalStorageService } from '../services/localStorageService'
-import { visualizationService } from '../services/visualizationService'
+import { visualizationService, type NodeStatus } from '../services/visualizationService'
 import { contextMenuService } from '../services/contextMenuService'
 import type { MockExecution } from '../services/mockService'
 import { debugService, type DebugSession } from '../services/debugService'
@@ -646,6 +647,38 @@ const handleMockExecutionUpdate = (execution: MockExecution) => {
         execution.status === 'failed' ? [execution.currentNodeId] : []
       )
     }
+  }
+}
+
+// 处理节点高亮
+const handleHighlightNodes = (nodeIds: string[]) => {
+  console.log('=== handleHighlightNodes called ===')
+  console.log('Node IDs to highlight:', nodeIds)
+  console.log('bpmnEditor.value exists:', !!bpmnEditor.value)
+
+  if (bpmnEditor.value) {
+    const modeler = bpmnEditor.value.getModeler()
+    console.log('Modeler exists:', !!modeler)
+
+    if (modeler) {
+      // 先获取所有元素看看 registry 里有什么
+      const elementRegistry = modeler.get('elementRegistry')
+      const allElements = elementRegistry.getAll()
+      console.log('Total elements in registry:', allElements.length)
+      console.log('All element IDs:', allElements.map((el: any) => el.id))
+
+      visualizationService.init(modeler)
+      // 清除之前的高亮
+      visualizationService.clearNodeHighlights()
+      // 高亮当前节点（绿色边框 - 使用 completed 状态）
+      visualizationService.highlightNodes(
+        nodeIds.map(nodeId => ({ nodeId, status: 'completed' as NodeStatus }))
+      )
+    } else {
+      console.warn('Modeler not available in handleHighlightNodes')
+    }
+  } else {
+    console.warn('bpmnEditor.value not available in handleHighlightNodes')
   }
 }
 

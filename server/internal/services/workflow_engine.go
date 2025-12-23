@@ -184,7 +184,10 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		// 在全程 Mock 模式下（通配符拦截器启用），直接修改内存对象，避免数据库操作
 		// 检查是否启用了通配符拦截器配置
 		config := interceptor.GetInterceptConfig(ctx)
-		wildcardMode := config.GetMode("*")
+		var wildcardMode interceptor.InterceptMode
+		if config != nil {
+			wildcardMode = config.GetMode("*")
+		}
 
 		if wildcardMode == interceptor.InterceptModeEnabled {
 			// 全程 Mock 模式：直接更新内存中的 instance 对象
@@ -242,7 +245,10 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 
 	// 检查是否为全程 Mock 模式
 	config := interceptor.GetInterceptConfig(ctx)
-	isFullMockMode := config.GetMode("*") == interceptor.InterceptModeEnabled
+	isFullMockMode := false
+	if config != nil {
+		isFullMockMode = config.GetMode("*") == interceptor.InterceptModeEnabled
+	}
 
 	var execution *models.WorkflowExecution
 

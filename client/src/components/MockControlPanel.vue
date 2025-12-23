@@ -90,7 +90,7 @@
                     v-for="call in lastResult.interceptorCalls"
                     :key="call.order"
                     :class="['interceptor-item', { active: selectedInterceptor === call.order }]"
-                    @click="selectedInterceptor = call.order"
+                    @click="handleInterceptorClick(call.order)"
                   >
                     <div class="interceptor-item-header">
                       <span class="interceptor-order">{{ call.order }}</span>
@@ -225,6 +225,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
   executionUpdate: [execution: MockExecution]
+  highlightNodes: [nodeIds: string[]]
 }>()
 
 const currentInstanceId = ref<string | null>(null)
@@ -262,9 +263,19 @@ const formatJSONCached = (obj: any, cacheKey: string): string => {
   return formatted
 }
 
+// Cache interceptor details by order for O(1) lookup
+const interceptorDetailsMap = computed(() => {
+  if (!lastResult.value?.interceptorCalls) return new Map()
+  const map = new Map<number, InterceptorCall>()
+  lastResult.value.interceptorCalls.forEach(call => {
+    map.set(call.order, call)
+  })
+  return map
+})
+
 const selectedInterceptorDetails = computed(() => {
-  if (!selectedInterceptor.value || !lastResult.value?.interceptorCalls) return null
-  return lastResult.value.interceptorCalls.find(call => call.order === selectedInterceptor.value)
+  if (!selectedInterceptor.value) return null
+  return interceptorDetailsMap.value.get(selectedInterceptor.value) || null
 })
 
 const requestParamsJson = computed({
@@ -409,6 +420,14 @@ const handleStart = async () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
+
+    // Emit highlight event for current nodes
+    if (responseData.engineResponse.currentNodeIds && responseData.engineResponse.currentNodeIds.length > 0) {
+      console.log('MockControlPanel: About to emit highlightNodes event with:', responseData.engineResponse.currentNodeIds)
+      emit('highlightNodes', responseData.engineResponse.currentNodeIds)
+    } else {
+      console.warn('MockControlPanel: No currentNodeIds to highlight:', responseData.engineResponse.currentNodeIds)
+    }
   } catch (error) {
     console.error('Workflow execution error:', error)
     errorMessage.value = error instanceof Error ? error.message : '执行失败'
@@ -437,6 +456,13 @@ const formatTime = (timestamp: string): string => {
   } catch (e) {
     return timestamp
   }
+}
+
+// Handle interceptor click with immediate feedback
+const handleInterceptorClick = (order: number) => {
+  console.log('Interceptor clicked:', order)
+  selectedInterceptor.value = order
+  interceptorDetailTab.value = 'input' // Reset to input tab
 }
 
 const copyToClipboard = async (data: any) => {

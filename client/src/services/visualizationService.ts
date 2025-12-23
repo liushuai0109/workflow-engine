@@ -30,16 +30,39 @@ class VisualizationService {
    * 高亮节点
    */
   highlightNode(nodeId: string, status: NodeStatus) {
-    if (!this.modeler) return
+    if (!this.modeler) {
+      console.warn('Modeler not initialized')
+      return
+    }
 
     const elementRegistry = this.modeler.get('elementRegistry')
     const canvas = this.modeler.get('canvas')
+
+    console.log(`Attempting to highlight node: ${nodeId}`)
+    console.log('All elements in registry:', elementRegistry.getAll().map((el: any) => el.id))
+
     const element = elementRegistry.get(nodeId)
 
     if (!element) {
-      console.warn(`Node ${nodeId} not found`)
+      console.warn(`Node ${nodeId} not found in element registry`)
+      // Try to find element with different methods
+      const allElements = elementRegistry.getAll()
+      const foundElement = allElements.find((el: any) =>
+        el.id === nodeId ||
+        el.businessObject?.id === nodeId ||
+        el.businessObject?.$attrs?.id === nodeId
+      )
+
+      if (foundElement) {
+        console.log('Found element by searching:', foundElement)
+        const actualId = foundElement.id
+        // 递归调用使用正确的 ID
+        this.highlightNode(actualId, status)
+      }
       return
     }
+
+    console.log('Found element:', element)
 
     // 移除旧的样式类
     this.removeNodeHighlight(nodeId)
@@ -48,6 +71,8 @@ class VisualizationService {
     const statusClass = `node-status-${status}`
     canvas.addMarker(nodeId, statusClass)
     this.highlightedNodes.set(nodeId, status)
+
+    console.log(`Successfully added marker ${statusClass} to node ${nodeId}`)
   }
 
   /**

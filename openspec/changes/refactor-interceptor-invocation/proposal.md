@@ -672,6 +672,46 @@ ExecuteFromNode(ctx, workflow, workflowInstance, fromNodeId, businessParams)
 - ⏳ API 文档和迁移指南
 - ⏳ 性能测试和回归测试
 
+### 2025-12-23: Bug 修复和 UI 优化
+
+#### 修复内容
+1. **后端 nil 指针修复** (`server/internal/services/workflow_engine.go`)
+   - 问题：`GetInterceptConfig(ctx)` 可能返回 nil，导致测试 panic
+   - 解决：在两处调用 `config.GetMode()` 前添加 nil 检查
+   ```go
+   config := interceptor.GetInterceptConfig(ctx)
+   var wildcardMode interceptor.InterceptMode
+   if config != nil {
+       wildcardMode = config.GetMode("*")
+   }
+   ```
+   - 影响：所有 WorkflowEngineService 测试现在稳定通过
+
+2. **前端按钮禁用逻辑修复** (`client/src/components/MockControlPanel.vue`)
+   - 问题：执行完成后按钮仍然禁用，无法再次点击
+   - 解决：简化禁用逻辑，只依赖 `isLoading` 状态
+   ```typescript
+   // 修改前
+   :disabled="isLoading || currentStatus === 'running'"
+   // 修改后
+   :disabled="isLoading"
+   ```
+   - 效果：执行完成后（isLoading = false）按钮立即可用
+
+3. **每次执行生成新 instanceId** (`client/src/components/MockControlPanel.vue`)
+   - 修改前：复用已有 instanceId
+   - 修改后：每次点击"开始执行"都生成新的 UUID v4
+   - 好处：避免状态冲突，每次都是全新执行
+
+4. **起始节点默认选择优化** (`client/src/components/MockControlPanel.vue`)
+   - 问题：默认选项可能因 DOM 更新时序问题未被选中
+   - 解决：使用 `nextTick()` 等待 DOM 更新完成
+   ```typescript
+   await nextTick()  // 等待选项列表渲染完成
+   selectedStartNodeId.value = startNodes.value[0].id
+   ```
+   - 添加调试日志追踪选择状态
+
 ### 2025-01-15: UUID 生成和完整数据传递
 
 #### 问题和修复
@@ -706,5 +746,122 @@ ExecuteFromNode(ctx, workflow, workflowInstance, fromNodeId, businessParams)
    - 删除 `/api/interceptor/*` 相关路由
    - 删除 mockInstanceService 依赖
    - 简化服务初始化
+
+---
+
+## 2025-12-23: 节点高亮功能调试
+
+### 功能需求
+点击"开始执行"按钮后，返回的 `current_node_ids` 对应的节点应该边框加粗变绿。
+
+### 问题
+实现了完整的事件链路，但节点没有高亮显示。
+
+### 实现
+
+#### 1. 事件链路实现
+```
+MockControlPanel (emit 'highlightNodes')
+  ↓
+RightPanelContainer (forward 'highlight-nodes')
+  ↓
+BpmnEditorPage (handle 'highlight-nodes')
+  ↓
+visualizationService.highlightNodes()
+```
+
+**MockControlPanel.vue** (Line 424-430):
+```typescript
+// Emit highlight event for current nodes
+if (responseData.engineResponse.currentNodeIds && responseData.engineResponse.currentNodeIds.length > 0) {
+  console.log('MockControlPanel: About to emit highlightNodes event with:', responseData.engineResponse.currentNodeIds)
+  emit('highlightNodes', responseData.engineResponse.currentNodeIds)
+} else {
+  console.warn('MockControlPanel: No currentNodeIds to highlight:', responseData.engineResponse.currentNodeIds)
+}
+```
+
+**RightPanelContainer.vue** (Line 158-161):
+```typescript
+const handleHighlightNodes = (nodeIds: string[]) => {
+  console.log('RightPanelContainer: Forwarding highlightNodes event with:', nodeIds)
+  emit('highlight-nodes', nodeIds)
+}
+```
+
+**BpmnEditorPage.vue** (Line 654-683):
+```typescript
+const handleHighlightNodes = (nodeIds: string[]) => {
+  console.log('=== handleHighlightNodes called ===')
+  console.log('Node IDs to highlight:', nodeIds)
+  console.log('bpmnEditor.value exists:', !!bpmnEditor.value)
+
+  if (bpmnEditor.value) {
+    const modeler = bpmnEditor.value.getModeler()
+    console.log('Modeler exists:', !!modeler)
+
+    if (modeler) {
+      // 先获取所有元素看看 registry 里有什么
+      const elementRegistry = modeler.get('elementRegistry')
+      const allElements = elementRegistry.getAll()
+      console.log('Total elements in registry:', allElements.length)
+      console.log('All element IDs:', allElements.map((el: any) => el.id))
+
+      visualizationService.init(modeler)
+      visualizationService.clearNodeHighlights()
+      visualizationService.highlightNodes(
+        nodeIds.map(nodeId => ({ nodeId, status: 'completed' as NodeStatus }))
+      )
+    }
+  }
+}
+```
+
+#### 2. 样式定义
+**style.css** (Line 18-28):
+```css
+:deep(.node-status-running) {
+  stroke: #52c41a !important;        /* 绿色 */
+  stroke-width: 3px !important;      /* 加粗 3px */
+  filter: drop-shadow(0 0 4px rgba(82, 196, 26, 0.6));
+}
+
+:deep(.node-status-completed) {
+  stroke: #52c41a !important;        /* 绿色 */
+  stroke-width: 3px !important;      /* 加粗 3px */
+  filter: drop-shadow(0 0 4px rgba(82, 196, 26, 0.6));
+}
+```
+
+#### 3. 增强调试
+**visualizationService.ts** - 已有详细日志输出和 fallback 查找逻辑（Line 32-76）
+
+#### 4. 节点 ID 格式分析
+根据 sample-servicetask.bpmn 分析：
+```xml
+<bpmn:startEvent id="StartEvent_1">
+<bpmn:serviceTask id="ServiceTask_1" name="XFlow Service Task">
+<bpmn:endEvent id="EndEvent_1">
+<bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="ServiceTask_1" />
+```
+
+- 节点 ID: `StartEvent_1`, `ServiceTask_1`, `EndEvent_1`
+- 后端返回的 `currentNodeIds` 应使用这些 ID
+- bpmn-js 的 elementRegistry 使用相同的 ID
+
+### 调试清单
+创建了 `/DEBUGGING_NODE_HIGHLIGHT.md` 文档，包含：
+- 完整的测试步骤
+- 预期的控制台日志输出
+- 可能的问题场景和解决方案
+- 文件修改清单
+- 验证清单
+
+### 下一步
+运行前端应用，执行测试，根据控制台日志输出定位问题：
+1. 事件是否正确传递？
+2. modeler 是否已初始化？
+3. 节点 ID 是否匹配？
+4. CSS 样式是否生效？
 
 ---

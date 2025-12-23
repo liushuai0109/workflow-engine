@@ -42,6 +42,7 @@
           v-bind="currentPanelProps"
           @close="handlePanelClose"
           @execution-update="handleMockExecutionUpdate"
+          @highlight-nodes="handleHighlightNodes"
         />
       </a-tab-pane>
 
@@ -91,6 +92,7 @@ const emit = defineEmits<{
   'mock-execution-update': [execution: MockExecution]
   'debug-session-update': [session: DebugSession]
   'chat-message': [message: string]
+  'highlight-nodes': [nodeIds: string[]]
 }>()
 
 // 本地 Tab 状态
@@ -150,6 +152,12 @@ const handleSessionUpdate = (session: DebugSession) => {
 // 处理聊天消息
 const handleChatMessage = (message: string) => {
   emit('chat-message', message)
+}
+
+// 处理节点高亮
+const handleHighlightNodes = (nodeIds: string[]) => {
+  console.log('RightPanelContainer: Forwarding highlightNodes event with:', nodeIds)
+  emit('highlight-nodes', nodeIds)
 }
 
 // 暴露方法给父组件

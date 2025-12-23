@@ -15,31 +15,31 @@ html, body {
 }
 
 /* 节点状态高亮样式 */
-:deep(.node-status-running) {
-  stroke: #1890ff !important;
-  stroke-width: 3px !important;
-  filter: drop-shadow(0 0 4px rgba(24, 144, 255, 0.6));
-}
-
-:deep(.node-status-completed) {
+.node-status-running .djs-visual > :nth-child(1) {
   stroke: #52c41a !important;
-  stroke-width: 2px !important;
-  opacity: 0.8;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(82, 196, 26, 0.6));
 }
 
-:deep(.node-status-failed) {
+.node-status-completed .djs-visual > :nth-child(1) {
+  stroke: #52c41a !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(82, 196, 26, 0.6));
+}
+
+.node-status-failed .djs-visual > :nth-child(1) {
   stroke: #ff4d4f !important;
   stroke-width: 3px !important;
   filter: drop-shadow(0 0 4px rgba(255, 77, 79, 0.6));
 }
 
-:deep(.node-status-pending) {
+.node-status-pending .djs-visual > :nth-child(1) {
   stroke: #999 !important;
   stroke-width: 1px !important;
   opacity: 0.6;
 }
 
-:deep(.node-status-breakpoint) {
+.node-status-breakpoint .djs-visual > :nth-child(1) {
   stroke: #faad14 !important;
   stroke-width: 3px !important;
   stroke-dasharray: 5, 5;
@@ -47,14 +47,14 @@ html, body {
 }
 
 /* 断点标记 */
-:deep(.node-breakpoint) {
+.node-breakpoint .djs-visual > :nth-child(1) {
   stroke: #faad14 !important;
   stroke-width: 3px !important;
   stroke-dasharray: 5, 5;
 }
 
 /* 路径高亮样式 */
-:deep(.path-active) {
+.path-active .djs-visual > :nth-child(1) {
   stroke: #1890ff !important;
   stroke-width: 3px !important;
   filter: drop-shadow(0 0 4px rgba(24, 144, 255, 0.6));
@@ -71,9 +71,9 @@ html, body {
 }
 
 /* Context Pad 自定义按钮样式 */
-:deep(.custom-set-breakpoint),
-:deep(.custom-remove-breakpoint),
-:deep(.custom-view-details) {
+.custom-set-breakpoint,
+.custom-remove-breakpoint,
+.custom-view-details {
   background: white !important;
   border: 1px solid #ddd !important;
   border-radius: 4px !important;
@@ -82,14 +82,14 @@ html, body {
   transition: all 0.2s !important;
 }
 
-:deep(.custom-set-breakpoint:hover),
-:deep(.custom-remove-breakpoint:hover),
-:deep(.custom-view-details:hover) {
+.custom-set-breakpoint:hover,
+.custom-remove-breakpoint:hover,
+.custom-view-details:hover {
   background: #f5f5f5 !important;
   border-color: #1890ff !important;
 }
 
-:deep(.custom-remove-breakpoint) {
+.custom-remove-breakpoint {
   background: #fff2f0 !important;
   border-color: #ff4d4f !important;
 }
