@@ -269,6 +269,21 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
   - 签名: `func Intercept[T any, P any](ctx context.Context, operation string, fn func(context.Context, P) (T, error), params P) (T, error)`
   - 只需一个函数即可处理所有场景
 
+- **MODIFIED**: ExecuteFromNode 方法签名调整
+  - 原签名：`ExecuteFromNode(ctx, instanceId, fromNodeId, businessParams)` - 通过 ID 查询数据
+  - 新签名：`ExecuteFromNode(ctx, workflow, workflowInstance, fromNodeId, businessParams)` - 接收数据对象
+  - **职责分离**：
+    - Handler 层负责数据准备（从 request body 获取或通过 ID 从数据库查询）
+    - Service 层只负责执行逻辑，不关心数据来源
+  - **移除内部拦截器调用**：
+    - 删除 `interceptor.Intercept(ctx, "GetInstance", ...)` 调用
+    - 删除 `interceptor.Intercept(ctx, "GetWorkflow", ...)` 调用
+  - **简化依赖**：ExecuteFromNode 不再依赖 workflowSvc 和 instanceSvc
+  - **好处**：
+    - 测试更容易：可以直接传入 mock 对象而不需要数据库
+    - 职责更清晰：数据获取和业务逻辑完全分离
+    - 代码更简洁：减少不必要的拦截器调用
+
 - **ADDED**: 拦截器唯一标识机制
   - 拦截器标识从参数结构体自动生成
   - 格式: `{operation}:{json字段1}:{json字段2}:...`
@@ -354,8 +369,14 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
       - 支持从 StartEvent、BoundaryEvent、IntermediateCatchEvent 开始执行
       - 如果为空，默认使用第一个 StartEvent
     - `businessParams` (可选) - 业务参数
-  - **后端实现**：新增 handler 方法，检测到 workflow 和 workflowInstance 参数时调用 `ExecuteFromNodeWithOptionalData`
-  - **跳过数据库查询**，直接使用请求体中的 workflow 和 instance 数据
+  - **后端实现**：
+    - Handler 层负责数据准备：从 request body 获取或通过 ID 从数据库查询
+    - `ExecuteFromNode` 方法接收已准备好的 `workflow` 和 `workflowInstance` 参数
+    - 数据获取逻辑在 Handler 层完成，执行逻辑在 Service 层保持纯粹
+  - **架构优势**：
+    - 职责分离：Handler 负责数据获取，Service 负责业务逻辑
+    - 不需要在 Service 内部使用拦截器获取 workflow/instance
+    - 简化依赖：ExecuteFromNode 不依赖 workflowSvc 和 instanceSvc
   - **适用场景**：编辑器中即时测试尚未保存到数据库的流程定义
   - **与拦截器机制互补**：
     - 传递完整数据解决了 GetInstance 和 GetWorkflow 的数据来源问题
@@ -428,8 +449,8 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
   - `server/internal/middleware/interceptor.go` - 新增 HTTP 中间件
   - `server/internal/services/` - 所有业务方法改造为结构体参数
   - `server/internal/services/` - 新增参数结构体定义(如 GetWorkflowParams)
-  - `server/internal/services/workflow_engine.go` - 更新所有拦截器调用点，新增 ExecuteFromNodeWithOptionalData 方法
-  - `server/internal/handlers/workflow_executor.go` - 新增 ExecuteWorkflowMock 方法，支持全程 Mock 模式
+  - `server/internal/services/workflow_engine.go` - 修改 ExecuteFromNode 方法签名，接收 workflow 和 workflowInstance 参数，移除内部数据获取逻辑
+  - `server/internal/handlers/workflow_executor.go` - Handler 层负责数据准备（从 request body 或数据库获取），然后调用 ExecuteFromNode
   - `server/internal/routes/routes.go` - 新增 `POST /api/execute` 路由，简化服务初始化，移除 interceptor routes
   - `server/internal/models/interceptor_record.go` - 新增拦截器记录数据模型
   - `server/internal/repository/interceptor_repository.go` - 新增拦截器记录存储层
@@ -508,6 +529,29 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
 
 ### 2025-01-16: 完成全程 Mock 模式实现
 
+#### 架构调整：ExecuteFromNode 方法签名重构
+**设计原则**：职责分离 - Handler 负责数据准备，Service 负责业务逻辑
+
+**方法签名变更**：
+```go
+// 旧方法（已删除）
+ExecuteFromNode(ctx, instanceId, fromNodeId, businessParams)
+ExecuteFromNodeWithOptionalData(ctx, instanceId, fromNodeId, businessParams, optionalWorkflow, optionalInstance)
+
+// 新方法（统一签名）
+ExecuteFromNode(ctx, workflow, workflowInstance, fromNodeId, businessParams)
+```
+
+**数据准备职责**：
+- `POST /api/execute/:workflowInstanceId` - Handler 通过 ID 从数据库查询 workflow 和 instance
+- `POST /api/execute` - Handler 从 request body 直接获取 workflow 和 instance
+
+**好处**：
+1. 职责清晰：Handler 层负责数据获取，Service 层专注业务逻辑
+2. 简化依赖：ExecuteFromNode 不再依赖 workflowSvc 和 instanceSvc
+3. 易于测试：可以直接传入 mock 对象，无需数据库
+4. 代码简洁：移除不必要的 GetInstance 和 GetWorkflow 拦截器调用
+
 #### 后端实现
 1. **添加通配符支持** (`server/internal/interceptor/interceptor.go`)
    - 更新 `InterceptConfig.GetMode()` 方法支持通配符 `"*"`
@@ -535,20 +579,44 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
    api.POST("/execute/:workflowInstanceId", executorHandler.ExecuteWorkflow)   // Normal mode
    ```
 
-3. **新增 ExecuteWorkflowMock Handler** (`server/internal/handlers/workflow_executor.go`)
-   - 创建专门的 Mock 模式处理器
-   - 要求 `workflow` 和 `workflowInstance` 必须在请求体中提供
-   - 使用 `workflowInstance.Id` 作为 instanceId
-   - 调用 `ExecuteFromNodeWithOptionalData` 传递完整数据
+3. **重构 Handler 层数据准备逻辑** (`server/internal/handlers/workflow_executor.go`)
+   - `ExecuteWorkflow` (正常模式)：从数据库查询 workflow 和 instance
+     ```go
+     // 1. 获取 workflow 和 instance
+     workflow, err := workflowSvc.GetWorkflowByID(ctx, workflowId)
+     instance, err := instanceSvc.GetWorkflowInstanceByID(ctx, workflowInstanceId)
+
+     // 2. 调用执行引擎
+     result, err := h.engineService.ExecuteFromNode(ctx, workflow, instance, fromNodeId, businessParams)
+     ```
+   - `ExecuteWorkflowMock` (Mock 模式)：从 request body 获取数据
+     ```go
+     // 1. 从 request body 获取 workflow 和 instance
+     var req struct {
+         Workflow         *models.Workflow         `json:"workflow" binding:"required"`
+         WorkflowInstance *models.WorkflowInstance `json:"workflowInstance" binding:"required"`
+         // ...
+     }
+
+     // 2. 调用执行引擎
+     result, err := h.engineService.ExecuteFromNode(ctx, req.Workflow, req.WorkflowInstance, req.FromNodeId, req.BusinessParams)
+     ```
+
+4. **简化 ExecuteFromNode 方法** (`server/internal/services/workflow_engine.go`)
+   - 删除 `ExecuteFromNodeWithOptionalData` 方法
+   - 修改 `ExecuteFromNode` 签名为接收 workflow 和 workflowInstance 对象
+   - 移除内部的 GetInstance 和 GetWorkflow 拦截器调用
+   - 移除对 workflowSvc 和 instanceSvc 的依赖
    ```go
-   func (h *WorkflowExecutorHandler) ExecuteWorkflowMock(c *gin.Context) {
-       var req struct {
-           FromNodeId       string                   `json:"fromNodeId"`
-           BusinessParams   map[string]interface{}   `json:"businessParams,omitempty"`
-           Workflow         *models.Workflow         `json:"workflow" binding:"required"`
-           WorkflowInstance *models.WorkflowInstance `json:"workflowInstance" binding:"required"`
-       }
-       // ... 验证和调用 ExecuteFromNodeWithOptionalData
+   func (s *WorkflowEngineService) ExecuteFromNode(
+       ctx context.Context,
+       workflow *models.Workflow,
+       instance *models.WorkflowInstance,
+       fromNodeId string,
+       businessParams map[string]interface{},
+   ) (*ExecuteResult, error) {
+       // 直接使用传入的 workflow 和 instance，无需查询数据库
+       // ...
    }
    ```
 
@@ -575,8 +643,14 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
 - ✅ 后端编译通过 (`go build ./...`)
 - ✅ 路由正确注册：`POST /api/execute` 和 `POST /api/execute/:workflowInstanceId`
 - ✅ 拦截器通配符支持已实现
+- ✅ Proposal 文档已更新，说明新的架构设计
 
-#### 待实施
+#### 待实施（下一步）
+- ⏳ **重构 ExecuteFromNode 方法签名**（设计已完成，代码待实施）
+  - 修改方法签名接收 workflow 和 workflowInstance 对象
+  - Handler 层实现数据准备逻辑（从 request body 或数据库获取）
+  - 移除 Service 层的 GetInstance 和 GetWorkflow 拦截器调用
+  - 删除 ExecuteFromNodeWithOptionalData 冗余方法
 - ⏳ 前端起始节点选择器 UI（当前仍为"执行接口"选择器）
 - ⏳ 从 BPMN XML 提取可用起始节点（StartEvent, BoundaryEvent, IntermediateCatchEvent）
 - ⏳ 更新 UI 显示格式为"节点类型:节点名称:节点ID"
