@@ -62,7 +62,84 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
 
 ## 使用流程
 
-### 典型 Mock 测试流程
+### Mock 面板执行流程 (全程 Mock 模式)
+
+当用户在 BPMN 编辑器的 Mock 面板点击"开始执行"时，使用**全程 Mock 模式**：
+
+**流程说明**:
+1. **前端准备数据**:
+   - 生成新的 UUID v4 作为 `workflowInstanceId`
+   - 构造 `workflow` 对象（包含当前编辑器中的 bpmnXml）
+   - 构造 `workflowInstance` 对象（mock 实例数据）
+   - **选择起始节点**: 从流程图中提取所有可作为起始节点的节点供用户选择
+     - 可作为起始节点的类型：StartEvent（开始节点）、BoundaryEvent（边界事件）、IntermediateCatchEvent（消息中间事件）
+     - 显示格式：`节点类型:节点名称:节点ID`
+     - 示例：`StartEvent:流程开始:StartEvent_1`、`BoundaryEvent:超时处理:BoundaryEvent_1abc`
+     - **默认选择开始节点（StartEvent）**
+   - 准备 `fromNodeId`（用户选择的起始节点 ID）和 `businessParams`（可选）
+
+2. **发送请求**:
+   ```http
+   POST /api/execute
+   Content-Type: application/json
+
+   {
+     "fromNodeId": "StartEvent_1",  // 用户选择的起始节点 ID
+     "businessParams": {},
+     "workflow": {
+       "id": "Process_1",
+       "name": "Mock Workflow Process_1",
+       "bpmnXml": "<bpmn:definitions>...</bpmn:definitions>",
+       "createdAt": "2025-01-15T10:00:00Z",
+       "updatedAt": "2025-01-15T10:00:00Z"
+     },
+     "workflowInstance": {
+       "id": "550e8400-e29b-41d4-a716-446655440000",
+       "workflowId": "Process_1",
+       "name": "Mock Instance 550e8400...",
+       "status": "running",
+       "currentNodeIds": [],
+       "instanceVersion": 1,
+       "createdAt": "2025-01-15T10:00:00Z",
+       "updatedAt": "2025-01-15T10:00:00Z"
+     }
+   }
+   ```
+
+   **注意**：全程 Mock 模式使用 `POST /api/execute`（无 URL 参数），实例 ID 在请求体的 `workflowInstance.id` 中。
+
+3. **后端处理**:
+   - Handler 检测到 `workflow` 和 `workflowInstance` 参数
+   - 调用 `ExecuteFromNodeWithOptionalData` 方法
+   - **跳过数据库查询**，直接使用提供的 workflow 和 instance 数据
+   - 解析 bpmnXml 并执行工作流
+   - 对于需要调用外部服务的 ServiceTask，可以配置拦截器进行 mock
+
+4. **响应返回**:
+   ```json
+   {
+     "businessResponse": {...},
+     "engineResponse": {
+       "instanceId": "550e8400-e29b-41d4-a716-446655440000",
+       "currentNodeIds": ["Activity_xxx"],
+       "status": "running",
+       "executionId": "exec-001",
+       "variables": {}
+     },
+     "interceptorCalls": [...],
+     "requestParams": {...}
+   }
+   ```
+
+**关键特性**:
+- ✅ 无需数据库中存在 workflow 和 instance 记录
+- ✅ 支持使用当前编辑器中的 BPMN XML（即时测试）
+- ✅ 与拦截器机制兼容（可对 ServiceTask 进行细粒度 mock）
+- ✅ 返回完整的执行结果和拦截器调用列表
+
+### 典型 Mock 测试流程（基于数据库）
+
+适用于已有 workflow 和 instance 记录的情况：
 
 1. **前端选择接口并配置入参**
    - 用户在 Mock 面板选择要测试的接口(如 ExecuteWorkflow)
@@ -238,6 +315,51 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
   - 配置为 JSON 对象,键为拦截器标识,值为模式(enabled/disabled/record)
   - 中间件解析配置并注入到 ctx
   - 每个拦截器根据自己的标识查找配置,未配置的默认为 record 模式
+  - **通配符支持**: 使用 `"*"` 作为键可以配置所有拦截器的默认模式
+    - `{"*": "enabled"}` - **全程 Mock 模式**，所有拦截器启用 mock（包括 GetInstance, GetWorkflow 等）
+    - `{"*": "record"}` - **默认模式**，所有拦截器启用记录模式（系统默认行为）
+    - `{"*": "disabled"}` - 所有拦截器禁用，直接执行真实方法
+    - 优先级: 具体拦截器配置 > 通配符配置 > 系统默认（record）
+    - 示例: `{"*": "enabled", "GetInstance:123": "record"}` - 全程 mock，但 GetInstance:123 真实执行并记录
+
+- **ADDED**: 新增 API 路由 `POST /api/execute`（区别于 `POST /api/execute/:workflowInstanceId`）
+  - **路由差异**:
+    - `POST /api/execute` - workflow 和 instance 从**请求体**获取（无需数据库）
+    - `POST /api/execute/:workflowInstanceId` - workflow 和 instance 从**数据库**获取
+  - **请求体参数** (`POST /api/execute`)：
+    - `workflow` (必需) - 完整的 workflow 对象
+      ```typescript
+      {
+        id: string              // 工作流 ID，与 workflowInstance.workflowId 对应
+        name: string            // 工作流名称
+        bpmnXml: string         // 完整的 BPMN XML 定义
+        createdAt: string       // ISO 8601 时间戳
+        updatedAt: string       // ISO 8601 时间戳
+      }
+      ```
+    - `workflowInstance` (必需) - 完整的 workflowInstance 对象
+      ```typescript
+      {
+        id: string              // 实例 ID（UUID v4），由前端生成
+        workflowId: string      // 工作流 ID，与 workflow.id 对应
+        name: string            // 实例名称
+        status: string          // 实例状态，通常为 "running"
+        currentNodeIds: string[] // 当前节点 ID 列表，初始为空数组
+        instanceVersion: number  // 实例版本，通常为 1
+        createdAt: string       // ISO 8601 时间戳
+        updatedAt: string       // ISO 8601 时间戳
+      }
+      ```
+    - `fromNodeId` (可选) - 起始节点 ID
+      - 支持从 StartEvent、BoundaryEvent、IntermediateCatchEvent 开始执行
+      - 如果为空，默认使用第一个 StartEvent
+    - `businessParams` (可选) - 业务参数
+  - **后端实现**：新增 handler 方法，检测到 workflow 和 workflowInstance 参数时调用 `ExecuteFromNodeWithOptionalData`
+  - **跳过数据库查询**，直接使用请求体中的 workflow 和 instance 数据
+  - **适用场景**：编辑器中即时测试尚未保存到数据库的流程定义
+  - **与拦截器机制互补**：
+    - 传递完整数据解决了 GetInstance 和 GetWorkflow 的数据来源问题
+    - 仍可使用拦截器配置（如 `X-Intercept-Config`）对 ServiceTask 等其他操作进行 mock
 
 - **MODIFIED**: 上下文参数传递
   - 优化 ctx 中的拦截器配置管理
@@ -267,12 +389,33 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
   - Mock 效果通过拦截器 enabled 模式实现,而非替换执行器
   - 拦截器只作用于被标记的服务方法调用
 
+- **MODIFIED**: Mock 面板 UI 变更
+  - **执行接口选择器 → 起始节点选择器**
+    - 原来：用户选择要调用的 API 接口（如 `/api/execute/:workflowInstanceId`）
+    - 现在：用户选择从哪个节点开始执行工作流
+  - 起始节点选择器实现
+    - 自动从当前 BPMN XML 中提取所有可作为起始节点的节点
+    - 支持的节点类型：
+      - `StartEvent` - 开始节点（流程的正常入口）
+      - `BoundaryEvent` - 边界事件（异常处理入口）
+      - `IntermediateCatchEvent` - 消息中间事件（等待外部触发的入口）
+    - 显示格式：`节点类型:节点名称:节点ID`
+      - 示例：`StartEvent:流程开始:StartEvent_1`
+      - 示例：`BoundaryEvent:超时处理:BoundaryEvent_1abc`
+      - 示例：`IntermediateCatchEvent:等待审批:IntermediateCatchEvent_xyz`
+    - **默认选择：第一个 StartEvent（开始节点）**
+  - 点击"开始执行"调用 `POST /api/execute`（全程 Mock 模式）
+    - 自动生成 UUID v4 作为 workflowInstance.id
+    - 传递完整的 workflow 对象（包含当前编辑器的 bpmnXml）
+    - 传递完整的 workflowInstance 对象
+    - 传递用户选择的 fromNodeId 作为执行起点
+    - 无需 URL 参数，所有数据在请求体中
+
 - **ADDED**: 前端拦截器控制增强
   - 在前端 API 调用中添加 HTTP Header 支持
   - 支持 Dry-run 模式获取拦截器清单
   - 支持为每个拦截器单独设置模式
   - 显示拦截器列表和当前配置状态
-  - 新的 UI 集成方式待在实施阶段设计
 
 ## 影响
 
@@ -281,22 +424,26 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
   - `workflow-editor` - 更新前端拦截器控制组件
 
 - **受影响的代码**:
-  - `server/internal/interceptor/interceptor.go` - 重构为单一泛型函数
+  - `server/internal/interceptor/interceptor.go` - 重构为单一泛型函数，添加 createDefaultMock
   - `server/internal/middleware/interceptor.go` - 新增 HTTP 中间件
   - `server/internal/services/` - 所有业务方法改造为结构体参数
   - `server/internal/services/` - 新增参数结构体定义(如 GetWorkflowParams)
-  - `server/internal/services/workflow_engine.go` - 更新所有拦截器调用点
+  - `server/internal/services/workflow_engine.go` - 更新所有拦截器调用点，新增 ExecuteFromNodeWithOptionalData 方法
+  - `server/internal/handlers/workflow_executor.go` - 新增 ExecuteWorkflowMock 方法，支持全程 Mock 模式
+  - `server/internal/routes/routes.go` - 新增 `POST /api/execute` 路由，简化服务初始化，移除 interceptor routes
   - `server/internal/models/interceptor_record.go` - 新增拦截器记录数据模型
   - `server/internal/repository/interceptor_repository.go` - 新增拦截器记录存储层
-  - `server/internal/handlers/interceptor_handler.go` - 新增拦截器记录查询 API
   - `server/migrations/` - 新增数据库迁移(创建 interceptor_records 表)
   - **删除**: `server/internal/services/mock_service.go` - 冗余的 mock 服务
+  - **删除**: `server/internal/services/mock_instance_service.go` - 冗余的 mock 实例服务
   - **删除**: `server/internal/executor/mock_executor.go` - 冗余的 mock 执行器
+  - **删除**: `server/internal/handlers/interceptor_handler.go` - 废弃的拦截器 handler
+  - **删除**: `/api/interceptor/*` routes - 废弃的拦截器 API 路由
   - `client/src/services/api.ts` - 添加 Dry-run 和配置 Header 支持
   - `client/src/services/interceptorService.ts` - 新增拦截器记录查询服务
   - `client/src/components/RightPanelContainer.vue` - 删除拦截器 Tab
   - **删除**: `client/src/components/InterceptorControlPanel.vue` - 独立拦截器面板
-  - `client/src/components/MockControlPanel.vue` - 集成拦截器列表和配置功能
+  - `client/src/components/MockControlPanel.vue` - 集成拦截器列表和配置功能，支持全程 Mock 模式
 
 - **兼容性影响**:
   - 破坏性变更:需要重构所有业务方法签名和调用点
@@ -359,117 +506,114 @@ workflow, err := interceptor.Intercept(ctx, "GetWorkflow",
 
 ## 实施日志
 
-### 2025-01-XX - Phase 1 完成: 核心架构 + 完整迁移
+### 2025-01-16: 完成全程 Mock 模式实现
 
-**实施内容**:
-1. ✅ **核心拦截器实现** (Task 1)
-   - 实现了泛型函数 `Intercept[T any, P any]`
-   - 实现了基于反射的 `generateInterceptorID()` 函数,支持自动从结构体 `intercept:"id"` tag 生成 ID
-   - 实现了 `InterceptLegacy[T any]` 兼容层,确保现有代码无缝运行
+#### 后端实现
+1. **添加通配符支持** (`server/internal/interceptor/interceptor.go`)
+   - 更新 `InterceptConfig.GetMode()` 方法支持通配符 `"*"`
+   - 优先级：具体拦截器配置 > 通配符配置 > 系统默认（record）
+   ```go
+   func (c *InterceptConfig) GetMode(interceptorID string) InterceptMode {
+       // 1. Check for specific interceptor configuration
+       if mode, exists := c.configMap[interceptorID]; exists {
+           return InterceptMode(mode)
+       }
+       // 2. Check for wildcard "*" configuration
+       if mode, exists := c.configMap["*"]; exists {
+           return InterceptMode(mode)
+       }
+       // 3. Return system default
+       return InterceptModeRecord
+   }
+   ```
 
-2. ✅ **HTTP 中间件** (Tasks 3-4)
-   - 创建了 `server/internal/middleware/interceptor.go` 中间件
-   - 支持解析 `X-Intercept-Dry-Run` 和 `X-Intercept-Config` headers
-   - 在 `routes.go` 中全局注册中间件
+2. **新增 Mock 模式路由** (`server/internal/routes/routes.go`)
+   - 添加 `POST /api/execute` 路由（无 URL 参数）
+   - 保留 `POST /api/execute/:workflowInstanceId` 路由（正常模式）
+   ```go
+   api.POST("/execute", executorHandler.ExecuteWorkflowMock)                   // Mock mode
+   api.POST("/execute/:workflowInstanceId", executorHandler.ExecuteWorkflow)   // Normal mode
+   ```
 
-3. ✅ **业务方法完整迁移** (Task 2)
-   - 在 `workflow_engine.go` 中定义了 4 个参数结构体:
-     - `GetInstanceParams`: 获取工作流实例 (支持 Mock 和真实实例)
-     - `GetWorkflowParams`: 获取工作流定义
-     - `UpdateInstanceParams`: 更新实例状态和当前节点
-     - `ExecuteServiceTaskParams`: 执行业务服务任务 (包含 node ID 和 API URL)
-   - 创建了 4 个对应的 helper 方法,将原闭包逻辑提取为独立方法
-   - 将所有 4 个 `InterceptLegacy` 调用替换为新的 `Intercept` 调用
-   - 移除了不再需要的 `callRealService` 方法 (逻辑已合并到 `executeServiceTaskWithParams`)
+3. **新增 ExecuteWorkflowMock Handler** (`server/internal/handlers/workflow_executor.go`)
+   - 创建专门的 Mock 模式处理器
+   - 要求 `workflow` 和 `workflowInstance` 必须在请求体中提供
+   - 使用 `workflowInstance.Id` 作为 instanceId
+   - 调用 `ExecuteFromNodeWithOptionalData` 传递完整数据
+   ```go
+   func (h *WorkflowExecutorHandler) ExecuteWorkflowMock(c *gin.Context) {
+       var req struct {
+           FromNodeId       string                   `json:"fromNodeId"`
+           BusinessParams   map[string]interface{}   `json:"businessParams,omitempty"`
+           Workflow         *models.Workflow         `json:"workflow" binding:"required"`
+           WorkflowInstance *models.WorkflowInstance `json:"workflowInstance" binding:"required"`
+       }
+       // ... 验证和调用 ExecuteFromNodeWithOptionalData
+   }
+   ```
 
-**迁移对比示例**:
-```go
-// OLD (闭包方式):
-instance, err := interceptor.InterceptLegacy(ctx,
-    fmt.Sprintf("GetInstance:%s", instanceId),
-    func(ctx context.Context) (*models.WorkflowInstance, error) {
-        // 20+ 行闭包逻辑 (Mock 判断、获取实例等)
-    },
-)
+#### 前端实现
+1. **更新 Mock 面板请求** (`client/src/components/MockControlPanel.vue`)
+   - 修改 API 调用为 `POST /api/execute`（无 URL 参数）
+   - 应用通配符拦截器配置 `{"*": "enabled"}` 实现全程 Mock
+   - 传递完整的 workflow 和 workflowInstance 对象
+   ```typescript
+   // Apply wildcard interceptor configuration for full mock mode
+   const fullMockConfig = { '*': 'enabled' }
+   apiClient.setInterceptorConfig(fullMockConfig)
 
-// NEW (结构体方式):
-instance, err := interceptor.Intercept(ctx,
-    "GetInstance",
-    s.getInstance,
-    GetInstanceParams{InstanceID: instanceId},
-)
-// ID 自动生成为 "GetInstance:xxx",params 类型安全,代码更清晰
-```
+   // Call /api/execute without instanceId in URL
+   const result = await apiClient.post<ExecuteResult>(`/execute`, {
+       fromNodeId: undefined,
+       businessParams: {},
+       workflow: workflow,
+       workflowInstance: workflowInstance
+   })
+   ```
 
-**验证结果**:
-- ✅ `go fmt` 通过,代码格式正确
-- ✅ `go build` 成功,无编译错误
-- ✅ 所有 4 个拦截器已完全迁移,workflow_engine.go 中无 `InterceptLegacy` 残留
-- ✅ 确认 `workflow_engine.go` 是 services 目录中唯一使用拦截器的文件
+#### 验证
+- ✅ 后端编译通过 (`go build ./...`)
+- ✅ 路由正确注册：`POST /api/execute` 和 `POST /api/execute/:workflowInstanceId`
+- ✅ 拦截器通配符支持已实现
 
-**后续任务**:
-- ⏳ Task 7: 编写集成测试,测试 HTTP Header → Context 完整流程
-- ⏳ Tasks 8-10: 前端实现 (API 客户端、UI 配置界面)
-- ⏳ Tasks 11-15: 文档、性能测试、回归测试
+#### 待实施
+- ⏳ 前端起始节点选择器 UI（当前仍为"执行接口"选择器）
+- ⏳ 从 BPMN XML 提取可用起始节点（StartEvent, BoundaryEvent, IntermediateCatchEvent）
+- ⏳ 更新 UI 显示格式为"节点类型:节点名称:节点ID"
 
-### 2025-01-XX - Task 6 完成: 单元测试
+### 2025-01-15: UUID 生成和完整数据传递
 
-**实施内容**:
-1. ✅ **添加结构体参数测试** (13+ 新测试用例)
-   - 单一 ID 字段结构体测试 (`SimpleParams`)
-   - 多 ID 字段结构体测试 (`MultiIDParams` with multiple `intercept:"id"` tags)
-   - 无 ID 标签结构体测试 (`NoIDParams`)
-   - 复杂类型结构体测试 (`ComplexParams` with maps, slices)
+#### 问题和修复
+1. **UUID 格式错误**
+   - 问题：PostgreSQL 拒绝自定义字符串 ID 格式
+   - 解决：使用 `uuid` 库的 `uuidv4()` 生成标准 UUID v4 格式
 
-2. ✅ **ID 生成逻辑测试** (`TestGenerateInterceptorID`)
-   - 验证单个 ID 字段生成格式: `"Operation:value"`
-   - 验证多个 ID 字段生成格式: `"Operation:value1:value2"`
-   - 验证无 ID 字段时只返回 operation 名称
-   - 验证复杂类型（map, slice）的哈希处理
+2. **API 服务器地址错误**
+   - 问题：前端调用编辑器服务器而非 API 服务器
+   - 解决：更新 apiClient baseUrl 为 `http://api.workflow.com:3000/api`
 
-3. ✅ **三种模式完整测试**
-   - Enabled 模式: 使用 mock 数据，不执行真实函数
-   - Record 模式: 执行真实函数并记录结果为 mock 数据
-   - Disabled 模式: 直接执行真实函数（通过 InterceptLegacy）
+3. **路由参数缺失**
+   - 问题：路由需要 workflowInstanceId 参数
+   - 解决：在 URL 中添加 instanceId：`/execute/${instanceId}`
 
-4. ✅ **错误处理和边界情况**
-   - 类型不匹配: mock 数据类型与期望返回类型不一致
-   - 函数执行错误: 真实函数返回错误
-   - Mock 数据不存在时的降级逻辑
+4. **架构方向错误**
+   - 初始方案：通过拦截器自动配置处理缺失数据
+   - 正确方案：前端传递完整的 workflow 和 workflowInstance 数据
 
-5. ✅ **兼容性改进**
-   - 更新旧的 closure-based 测试使用 `InterceptLegacy`
-   - 新增 `interceptWithSession` helper 函数，使新 `Intercept` 支持旧的 `InterceptSession`
-   - 确保新旧两种方式都能正常工作
+#### 实现
+1. **后端支持可选数据** (`server/internal/services/workflow_engine.go`)
+   - 添加 `ExecuteFromNodeWithOptionalData` 方法
+   - 支持传入可选的 workflow 和 workflowInstance
+   - 如果提供则直接使用，否则从数据库获取
 
-**测试结果**:
-- ✅ 所有 28 个测试用例全部通过
-- ✅ 核心功能测试覆盖率:
-  - `interceptWithSession`: 92.0%
-  - `generateInterceptorID`: 86.7%
-  - `InterceptLegacy`: 83.3%
-- ✅ 总体测试覆盖率: 62.1%
-  - HTTP middleware 相关函数 (0% coverage) 将在 Task 7 集成测试中验证
+2. **Handler 支持两种模式** (`server/internal/handlers/workflow_executor.go`)
+   - 检测请求体中是否包含 workflow 和 workflowInstance
+   - 如果包含则调用 ExecuteFromNodeWithOptionalData
+   - 否则调用正常的 ExecuteFromNode
 
-**关键测试示例**:
-```go
-// 测试结构体参数和自动 ID 生成
-func TestIntercept_StructParams_EnabledMode_WithMock(t *testing.T) {
-    session := &InterceptSession{
-        Mode: InterceptModeEnabled,
-        DataStore: NewInterceptDataStore(),
-    }
-    // Mock 数据使用自动生成的 ID "SimpleOp:test-123"
-    session.DataStore.Set("SimpleOp:test-123", "mocked-result")
+3. **清理废弃路由** (`server/internal/routes/routes.go`)
+   - 删除 `/api/interceptor/*` 相关路由
+   - 删除 mockInstanceService 依赖
+   - 简化服务初始化
 
-    ctx := WithInterceptSession(context.Background(), session)
-
-    // 调用新的 Intercept 函数，传入结构体参数
-    result, err := Intercept(ctx, "SimpleOp", mockableOp, SimpleParams{ID: "test-123"})
-
-    // 验证: 返回 mock 数据，真实函数未被调用
-    assert.Equal(t, "mocked-result", result)
-    assert.False(t, realCalled)
-}
-```
-
+---

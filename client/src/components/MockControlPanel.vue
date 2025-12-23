@@ -150,6 +150,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { apiClient, type InterceptorMode, type InterceptorConfig } from '../services/api'
+import { v4 as uuidv4 } from 'uuid'
 
 // Interceptor call record structure
 interface InterceptorCall {
@@ -264,33 +265,50 @@ const handleStart = async () => {
   errorMessage.value = ''
 
   try {
-    console.log('Starting workflow execution with interceptor config:', interceptorModes.value)
-
-    // Apply interceptor configuration to apiClient before execution
-    if (Object.keys(interceptorModes.value).length > 0) {
-      apiClient.setInterceptorConfig(interceptorModes.value)
-      console.log('Applied interceptor config to apiClient')
-    } else {
-      apiClient.clearInterceptorConfig()
-    }
-
     // Generate or use existing instance ID
     let instanceId = currentInstanceId.value
     if (!instanceId) {
-      // Generate a random instance ID
-      const randomId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-      instanceId = `${props.workflowId}_instance_${randomId}`
+      // Generate a valid UUID v4 using uuid library
+      instanceId = uuidv4()
       console.log('Generated new instance ID:', instanceId)
     }
 
-    // Call real workflow execution API with instanceId in URL
-    // URL: http://api.workflow.com:3000/api/execute/:workflowInstanceId
-    // The interceptor configuration is automatically injected via HTTP headers
-    const result = await apiClient.post<ExecuteResult>(`/execute/${instanceId}`, {
-      workflowId: props.workflowId,
+    console.log('Starting workflow execution with interceptor config:', interceptorModes.value)
+
+    // Apply wildcard interceptor configuration for full mock mode
+    // Set all interceptors to 'enabled' mode by default when workflow and instance data is provided
+    const fullMockConfig = { '*': 'enabled' }
+    apiClient.setInterceptorConfig(fullMockConfig)
+    console.log('Applied full mock mode config:', fullMockConfig)
+
+    // Prepare workflow and instance data for mock mode
+    const workflow = props.bpmnXml ? {
+      id: props.workflowId,
+      name: `Mock Workflow ${props.workflowId}`,
       bpmnXml: props.bpmnXml,
-      initialVariables: {},
-      startNodeId: undefined
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    } : undefined
+
+    const workflowInstance = {
+      id: instanceId,
+      workflowId: props.workflowId,
+      name: `Mock Instance ${instanceId}`,
+      status: 'running',
+      currentNodeIds: [],
+      instanceVersion: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+
+    // Call real workflow execution API WITHOUT instanceId in URL
+    // URL: http://api.workflow.com:3000/api/execute
+    // For mock mode, provide workflow and workflowInstance in request body
+    const result = await apiClient.post<ExecuteResult>(`/execute`, {
+      fromNodeId: undefined,
+      businessParams: {},
+      workflow: workflow,
+      workflowInstance: workflowInstance
     })
 
     console.log('Workflow execution result:', result)

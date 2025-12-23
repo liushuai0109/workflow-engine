@@ -84,11 +84,21 @@ func NewInterceptConfig(configMap map[string]string) *InterceptConfig {
 }
 
 // GetMode returns the mode for the given interceptor ID
+// Supports wildcard "*" for setting default mode for all interceptors
+// Priority: specific interceptor config > wildcard config > system default (record)
 func (c *InterceptConfig) GetMode(interceptorID string) InterceptMode {
+	// 1. Check for specific interceptor configuration
 	if mode, exists := c.configMap[interceptorID]; exists {
 		return InterceptMode(mode)
 	}
-	return InterceptModeRecord // default mode
+
+	// 2. Check for wildcard "*" configuration
+	if mode, exists := c.configMap["*"]; exists {
+		return InterceptMode(mode)
+	}
+
+	// 3. Return system default
+	return InterceptModeRecord
 }
 
 // GetMockData returns mock data for the given interceptor ID
@@ -193,7 +203,21 @@ func Intercept[T any, P any](
 				return result, nil
 			}
 		}
-		// Mock data not found, fallback to real function
+
+		// Mock data not found - check if we can create default mock data
+		// This is useful for mock testing when the resource doesn't exist in database
+		if canCreateDefaultMock(operation) {
+			defaultMock := createDefaultMock[T](operation, interceptorID, params)
+			if defaultMock != nil {
+				// Store the default mock for future use
+				config.SetMockData(interceptorID, *defaultMock)
+				LogExecution(ctx, interceptorID, params, *defaultMock, true, "")
+				RecordCall(ctx, interceptorID, params, *defaultMock)
+				return *defaultMock, nil
+			}
+		}
+
+		// Mock data not found and cannot create default, fallback to real function
 		result, err := fn(ctx, params)
 		LogExecution(ctx, interceptorID, params, result, false, errString(err))
 		RecordCall(ctx, interceptorID, params, result)
@@ -568,4 +592,45 @@ func RecordCall(ctx context.Context, interceptorID string, input, output interfa
 		outputMap := toMapInterface(output)
 		recorder(interceptorID, inputMap, outputMap)
 	}
+}
+
+// canCreateDefaultMock checks if we can create default mock data for the operation
+func canCreateDefaultMock(operation string) bool {
+	// Only GetInstance supports default mock creation
+	return operation == "GetInstance"
+}
+
+// createDefaultMock creates default mock data for supported operations
+func createDefaultMock[T any](operation string, interceptorID string, params interface{}) *T {
+	switch operation {
+	case "GetInstance":
+		// Extract instanceId from interceptor ID (format: "GetInstance:uuid")
+		parts := strings.Split(interceptorID, ":")
+		if len(parts) != 2 {
+			return nil
+		}
+		instanceID := parts[1]
+
+		// Import models package dynamically through interface{}
+		// Create a default mock WorkflowInstance
+		mockInstance := map[string]interface{}{
+			"id":                instanceID,
+			"workflow_id":       "00000000-0000-0000-0000-000000000000", // placeholder
+			"name":              "Mock Instance",
+			"status":            "running",
+			"current_node_ids":  []string{},
+			"instance_version":  1,
+			"created_at":        time.Now(),
+			"updated_at":        time.Now(),
+		}
+
+		// Try to convert to target type
+		var result T
+		data, _ := json.Marshal(mockInstance)
+		if err := json.Unmarshal(data, &result); err == nil {
+			return &result
+		}
+	}
+
+	return nil
 }

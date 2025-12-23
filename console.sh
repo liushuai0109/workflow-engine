@@ -329,8 +329,10 @@ stop_database() {
     fi
 }
 
-# 启动 Server
+# 启动 Server（支持热重载）
 start_server() {
+    local watch_mode="${1:-false}"
+
     if is_running "$SERVER_PID_FILE"; then
         log_warning "Server 已经在运行中 (PID: $(cat $SERVER_PID_FILE))"
         return
@@ -366,13 +368,189 @@ start_server() {
         go mod download
     fi
 
-    # 启动 server 并获取 PID
-    nohup make run > "$SERVER_LOG_FILE" 2>&1 &
+    # 如果启用了 watch 模式，启动文件监听
+    if [ "$watch_mode" = "true" ]; then
+        start_server_with_watch
+    else
+        # 启动 server 并获取 PID
+        nohup make run > "$SERVER_LOG_FILE" 2>&1 &
+        echo $! > "$SERVER_PID_FILE"
+
+        log_success "Server 已启动 (PID: $(cat $SERVER_PID_FILE))"
+        log_info "Server 访问地址: http://$LOCAL_IP:3000"
+        log_info "Server 日志: $SERVER_LOG_FILE"
+    fi
+}
+
+# 启动 Server 并监听文件变化（热重载）
+start_server_with_watch() {
+    local watcher_pid_file="$PID_DIR/server-watcher.pid"
+
+    log_info "启用文件监听模式（热重载）..."
+
+    # 检查文件监听工具
+    local watch_cmd=""
+    if command -v fswatch &> /dev/null; then
+        watch_cmd="fswatch"
+        log_info "使用 fswatch 进行文件监听"
+    elif command -v inotifywait &> /dev/null; then
+        watch_cmd="inotifywait"
+        log_info "使用 inotifywait 进行文件监听"
+    else
+        log_warning "未找到文件监听工具 (fswatch 或 inotifywait)"
+        log_info "将使用普通模式启动（无热重载）"
+        log_info ""
+        log_info "安装文件监听工具:"
+        log_info "  macOS:   brew install fswatch"
+        log_info "  Ubuntu:  sudo apt-get install inotify-tools"
+        log_info "  CentOS:  sudo yum install inotify-tools"
+
+        # 回退到普通模式
+        nohup make run > "$SERVER_LOG_FILE" 2>&1 &
+        echo $! > "$SERVER_PID_FILE"
+        log_success "Server 已启动（普通模式，无热重载）(PID: $(cat $SERVER_PID_FILE))"
+        return
+    fi
+
+    # 创建监听脚本
+    local watch_script="$PID_DIR/server-watch.sh"
+    cat > "$watch_script" << 'WATCH_EOF'
+#!/bin/bash
+set -e
+
+SERVER_DIR="SERVER_DIR_PLACEHOLDER"
+SERVER_PID_FILE="SERVER_PID_FILE_PLACEHOLDER"
+SERVER_LOG_FILE="SERVER_LOG_FILE_PLACEHOLDER"
+WATCH_CMD="WATCH_CMD_PLACEHOLDER"
+
+# 颜色输出
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info() {
+    echo -e "${CYAN}[$(date '+%H:%M:%S')]${NC} $1" >> "$SERVER_LOG_FILE"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $1" >> "$SERVER_LOG_FILE"
+}
+
+log_success() {
+    echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $1" >> "$SERVER_LOG_FILE"
+}
+
+# 重启 Server
+restart_server() {
+    log_info "检测到文件变化，正在重新编译..."
+
+    # 停止当前服务
+    if [ -f "$SERVER_PID_FILE" ]; then
+        local pid=$(cat "$SERVER_PID_FILE")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            kill "$pid" 2>/dev/null || true
+            sleep 1
+            # 如果还在运行，强制杀死
+            if ps -p "$pid" > /dev/null 2>&1; then
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+        fi
+    fi
+
+    # 重新编译和启动
+    cd "$SERVER_DIR"
+    log_info "正在编译..."
+
+    if go build -o ./server-new ./cmd/server/main.go >> "$SERVER_LOG_FILE" 2>&1; then
+        log_success "编译成功"
+
+        # 启动新服务
+        nohup ./server-new >> "$SERVER_LOG_FILE" 2>&1 &
+        echo $! > "$SERVER_PID_FILE"
+
+        log_success "Server 已重启 (PID: $(cat $SERVER_PID_FILE))"
+    else
+        log_warning "编译失败，保持原服务运行"
+    fi
+}
+
+# 初始启动
+log_info "===== Server 启动 (热重载模式) ====="
+cd "$SERVER_DIR"
+
+log_info "正在编译..."
+if go build -o ./server-new ./cmd/server/main.go >> "$SERVER_LOG_FILE" 2>&1; then
+    log_success "编译成功"
+
+    # 启动服务
+    nohup ./server-new >> "$SERVER_LOG_FILE" 2>&1 &
     echo $! > "$SERVER_PID_FILE"
 
     log_success "Server 已启动 (PID: $(cat $SERVER_PID_FILE))"
+    log_info "文件监听已启用，修改 .go 文件将自动重新编译和重启"
+else
+    log_warning "初始编译失败"
+    exit 1
+fi
+
+# 开始监听文件变化
+log_info "开始监听文件变化..."
+
+if [ "$WATCH_CMD" = "fswatch" ]; then
+    # macOS fswatch
+    fswatch -r \
+        -e ".*" \
+        -i "\\.go$" \
+        --exclude="vendor/" \
+        --exclude="node_modules/" \
+        --exclude="\\.git/" \
+        --exclude="server-new$" \
+        --latency=1 \
+        "$SERVER_DIR" | while read -r file; do
+            log_info "文件变化: $file"
+            restart_server
+        done
+else
+    # Linux inotifywait
+    inotifywait -m -r -e modify,create,delete \
+        --exclude '(vendor|node_modules|\.git|server-new)' \
+        --format '%w%f' \
+        "$SERVER_DIR" | grep '\.go$' | while read -r file; do
+            log_info "文件变化: $file"
+            restart_server
+        done
+fi
+WATCH_EOF
+
+    # 替换占位符
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s|SERVER_DIR_PLACEHOLDER|$SERVER_DIR|g" "$watch_script"
+        sed -i '' "s|SERVER_PID_FILE_PLACEHOLDER|$SERVER_PID_FILE|g" "$watch_script"
+        sed -i '' "s|SERVER_LOG_FILE_PLACEHOLDER|$SERVER_LOG_FILE|g" "$watch_script"
+        sed -i '' "s|WATCH_CMD_PLACEHOLDER|$watch_cmd|g" "$watch_script"
+    else
+        sed -i "s|SERVER_DIR_PLACEHOLDER|$SERVER_DIR|g" "$watch_script"
+        sed -i "s|SERVER_PID_FILE_PLACEHOLDER|$SERVER_PID_FILE|g" "$watch_script"
+        sed -i "s|SERVER_LOG_FILE_PLACEHOLDER|$SERVER_LOG_FILE|g" "$watch_script"
+        sed -i "s|WATCH_CMD_PLACEHOLDER|$watch_cmd|g" "$watch_script"
+    fi
+
+    chmod +x "$watch_script"
+
+    # 启动监听脚本
+    nohup "$watch_script" > /dev/null 2>&1 &
+    echo $! > "$watcher_pid_file"
+
+    # 等待服务启动
+    sleep 3
+
+    log_success "Server 已启动（热重载模式）"
     log_info "Server 访问地址: http://$LOCAL_IP:3000"
     log_info "Server 日志: $SERVER_LOG_FILE"
+    log_info "文件监听器 PID: $(cat $watcher_pid_file)"
+    log_info ""
+    log_info "${YELLOW}提示:${NC} 修改 .go 文件后将自动重新编译和重启 Server"
 }
 
 # 停止服务
@@ -415,6 +593,22 @@ stop_client() {
 # 停止 Server
 stop_server() {
     stop_service "Server" "$SERVER_PID_FILE"
+
+    # 同时停止文件监听器
+    local watcher_pid_file="$PID_DIR/server-watcher.pid"
+    if [ -f "$watcher_pid_file" ]; then
+        local watcher_pid=$(cat "$watcher_pid_file")
+        if ps -p "$watcher_pid" > /dev/null 2>&1; then
+            log_info "正在停止文件监听器 (PID: $watcher_pid)..."
+            kill "$watcher_pid" 2>/dev/null || true
+            sleep 1
+            if ps -p "$watcher_pid" > /dev/null 2>&1; then
+                kill -9 "$watcher_pid" 2>/dev/null || true
+            fi
+            log_success "文件监听器已停止"
+        fi
+        rm -f "$watcher_pid_file"
+    fi
 }
 
 # 停止所有服务
@@ -437,7 +631,8 @@ start_all() {
     else
         log_info "数据库已在运行"
     fi
-    start_server
+    # 启动 server，默认启用热重载
+    start_server "true"
     sleep 2  # 等待 server 启动
     start_client
     sleep 1  # 等待 client 启动
@@ -463,7 +658,7 @@ restart_service() {
             log_header "正在重启 Server"
             stop_server
             sleep 1
-            start_server
+            start_server "true"
             sleep 1
             # 进入 watch 模式
             watch_logs "server"
@@ -720,6 +915,13 @@ ${GREEN}日志监控模式说明:${NC}
     - 启动单个服务时：只显示该服务的日志
     退出监控模式不会停止服务，只是退出监控界面（按 Ctrl+B 然后按 D）
 
+${GREEN}Server 热重载说明:${NC}
+    Server 启动时会自动启用文件监听（热重载）功能
+    - 修改 .go 文件后会自动重新编译和重启 Server
+    - 无需手动停止和重启服务，提高开发效率
+    - 需要安装 fswatch (macOS) 或 inotify-tools (Linux)
+    - 如果未安装监听工具，Server 会以普通模式启动（无热重载）
+
 EOF
 }
 
@@ -746,7 +948,8 @@ main() {
                         start_database
                         sleep 2
                     fi
-                    start_server
+                    # 默认启用热重载
+                    start_server "true"
                     sleep 1
                     # 进入 watch 模式
                     watch_logs "server"

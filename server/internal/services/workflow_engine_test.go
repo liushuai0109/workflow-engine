@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/bpmn-explorer/server/internal/models"
 	"github.com/bpmn-explorer/server/internal/parser"
 	"github.com/bpmn-explorer/server/pkg/database"
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -750,7 +750,6 @@ func TestWorkflowEngineService_CheckAndHandleRollback_FallbackNotAllowed(t *test
 	assert.Contains(t, err.Error(), models.ErrFallbackNotAllowed)
 }
 
-
 // ========================================
 // Current Node IDs Auto-Initialization Tests
 // ========================================
@@ -1041,4 +1040,185 @@ func TestWorkflowEngineService_ExecuteFromNode_EmptyFromNodeId_EmptyCurrentNodeI
 
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err)
+}
+
+// TestExecuteNode_ServiceTask_Success tests successful ServiceTask execution
+func TestExecuteNode_ServiceTask_Success(t *testing.T) {
+	engineSvc, _, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	// Setup test HTTP server for business API
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "success",
+			"data":   "test data",
+		})
+	}))
+	defer testServer.Close()
+
+	ctx := context.Background()
+	node := &models.Node{
+		Id:             "ServiceTask_1",
+		Type:           parser.NodeTypeServiceTask,
+		BusinessApiUrl: testServer.URL,
+	}
+
+	params := ExecuteNodeParams{
+		Node:           node,
+		BusinessParams: map[string]interface{}{"key": "value"},
+		Variables:      make(map[string]interface{}),
+	}
+
+	result, err := engineSvc.ExecuteNode(ctx, params)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.NotNil(t, result.BusinessResponse)
+	assert.Equal(t, http.StatusOK, result.BusinessResponse.StatusCode)
+}
+
+// TestExecuteNode_ServiceTask_Failure tests ServiceTask execution failure
+func TestExecuteNode_ServiceTask_Failure(t *testing.T) {
+	engineSvc, _, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	node := &models.Node{
+		Id:             "ServiceTask_1",
+		Type:           parser.NodeTypeServiceTask,
+		BusinessApiUrl: "", // Empty URL will cause error
+	}
+
+	params := ExecuteNodeParams{
+		Node:           node,
+		BusinessParams: nil,
+		Variables:      make(map[string]interface{}),
+	}
+
+	result, err := engineSvc.ExecuteNode(ctx, params)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "ServiceTask")
+}
+
+// TestExecuteNode_UserTask tests UserTask execution
+func TestExecuteNode_UserTask(t *testing.T) {
+	engineSvc, _, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	node := &models.Node{
+		Id:   "UserTask_1",
+		Type: parser.NodeTypeUserTask,
+	}
+
+	params := ExecuteNodeParams{
+		Node:           node,
+		BusinessParams: nil,
+		Variables:      make(map[string]interface{}),
+	}
+
+	result, err := engineSvc.ExecuteNode(ctx, params)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Nil(t, result.BusinessResponse)
+}
+
+// TestExecuteNode_IntermediateCatchEvent tests IntermediateCatchEvent execution
+func TestExecuteNode_IntermediateCatchEvent(t *testing.T) {
+	engineSvc, _, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	node := &models.Node{
+		Id:   "IntermediateCatchEvent_1",
+		Type: parser.NodeTypeIntermediateCatchEvent,
+	}
+
+	params := ExecuteNodeParams{
+		Node:           node,
+		BusinessParams: nil,
+		Variables:      make(map[string]interface{}),
+	}
+
+	result, err := engineSvc.ExecuteNode(ctx, params)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Nil(t, result.BusinessResponse)
+}
+
+// TestExecuteNode_EventBasedGateway tests EventBasedGateway execution
+func TestExecuteNode_EventBasedGateway(t *testing.T) {
+	engineSvc, _, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	node := &models.Node{
+		Id:   "EventBasedGateway_1",
+		Type: parser.NodeTypeEventBasedGateway,
+	}
+
+	params := ExecuteNodeParams{
+		Node:           node,
+		BusinessParams: nil,
+		Variables:      make(map[string]interface{}),
+	}
+
+	result, err := engineSvc.ExecuteNode(ctx, params)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Nil(t, result.BusinessResponse)
+}
+
+// TestExecuteNode_ExclusiveGateway tests ExclusiveGateway execution
+func TestExecuteNode_ExclusiveGateway(t *testing.T) {
+	engineSvc, _, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	node := &models.Node{
+		Id:   "ExclusiveGateway_1",
+		Type: parser.NodeTypeExclusiveGateway,
+	}
+
+	params := ExecuteNodeParams{
+		Node:           node,
+		BusinessParams: nil,
+		Variables:      make(map[string]interface{}),
+	}
+
+	result, err := engineSvc.ExecuteNode(ctx, params)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Nil(t, result.BusinessResponse)
+}
+
+// TestExecuteNode_EndEvent tests EndEvent execution
+func TestExecuteNode_EndEvent(t *testing.T) {
+	engineSvc, _, cleanup := setupWorkflowEngineServiceTest(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	node := &models.Node{
+		Id:   "EndEvent_1",
+		Type: parser.NodeTypeEndEvent,
+	}
+
+	params := ExecuteNodeParams{
+		Node:           node,
+		BusinessParams: nil,
+		Variables:      make(map[string]interface{}),
+	}
+
+	result, err := engineSvc.ExecuteNode(ctx, params)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Nil(t, result.BusinessResponse)
 }

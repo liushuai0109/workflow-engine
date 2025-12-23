@@ -2,7 +2,6 @@ package routes
 
 import (
 	"github.com/bpmn-explorer/server/internal/handlers"
-	"github.com/bpmn-explorer/server/internal/interceptor"
 	"github.com/bpmn-explorer/server/internal/middleware"
 	"github.com/bpmn-explorer/server/internal/services"
 	"github.com/bpmn-explorer/server/pkg/config"
@@ -27,11 +26,6 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 	workflowSvc := services.NewWorkflowService(db, logger)
 	instanceSvc := services.NewWorkflowInstanceService(db, logger)
 	executionSvc := services.NewWorkflowExecutionService(db, logger)
-	mockInstanceSvc := services.NewMockInstanceService(db, logger, workflowSvc)
-	engineService := services.NewWorkflowEngineServiceWithMockInstance(db, logger, workflowSvc, instanceSvc, executionSvc, mockInstanceSvc)
-
-	// Initialize session store for interceptor
-	sessionStore := interceptor.NewMemorySessionStore()
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(db, logger)
@@ -41,7 +35,6 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 	debugHandler := handlers.NewDebugHandler(db, logger)
 	executionHistoryHandler := handlers.NewExecutionHistoryHandler(db, logger)
 	chatHandler := handlers.NewChatConversationHandler(db, logger)
-	interceptorHandler := handlers.NewInterceptorHandler(engineService, mockInstanceSvc, workflowSvc, sessionStore, logger)
 
 	// Health check
 	router.GET("/health", handlers.HealthCheck(db))
@@ -73,7 +66,8 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 		}
 
 		// Workflow execution
-		api.POST("/execute/:workflowInstanceId", executorHandler.ExecuteWorkflow)
+		api.POST("/execute", executorHandler.ExecuteWorkflowMock)                      // Mock mode: workflow and instance in body
+		api.POST("/execute/:workflowInstanceId", executorHandler.ExecuteWorkflow)      // Normal mode: fetch from database
 
 		// Debug sessions
 		debug := api.Group("/workflows/:workflowId/debug")
@@ -101,21 +95,6 @@ func SetupRouter(cfg *config.Config, db *database.Database, logger *zerolog.Logg
 			chat.DELETE("/:id", chatHandler.DeleteConversation)
 			chat.POST("/:id/messages", chatHandler.AddMessage)
 			chat.POST("/:id/messages/batch", chatHandler.BatchAddMessages)
-		}
-
-		// Interceptor routes
-		interceptorGroup := api.Group("/interceptor")
-		{
-			// Initialize interceptor execution
-			interceptorGroup.POST("/workflows/:workflowId/execute", interceptorHandler.ExecuteIntercept)
-
-			// Trigger node execution (for stopping points)
-			interceptorGroup.POST("/instances/:instanceId/trigger", interceptorHandler.TriggerNode)
-
-			// Session management
-			interceptorGroup.GET("/sessions/:sessionId", interceptorHandler.GetInterceptSession)
-			interceptorGroup.GET("/sessions/:sessionId/log", interceptorHandler.GetExecutionLog)
-			interceptorGroup.POST("/sessions/:sessionId/reset", interceptorHandler.ResetIntercept)
 		}
 	}
 

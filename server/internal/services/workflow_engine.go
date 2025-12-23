@@ -19,14 +19,13 @@ import (
 
 // WorkflowEngineService handles workflow execution engine logic
 type WorkflowEngineService struct {
-	db              *database.Database
-	logger          *zerolog.Logger
-	workflowSvc     *WorkflowService
-	instanceSvc     *WorkflowInstanceService
-	executionSvc    *WorkflowExecutionService
-	httpClient      *http.Client
-	mockCaller      *MockServiceCaller
-	mockInstanceSvc *MockInstanceService
+	db           *database.Database
+	logger       *zerolog.Logger
+	workflowSvc  *WorkflowService
+	instanceSvc  *WorkflowInstanceService
+	executionSvc *WorkflowExecutionService
+	httpClient   *http.Client
+	mockCaller   *MockServiceCaller
 }
 
 // --- Parameter Structs for Interceptor (New Architecture) ---
@@ -56,6 +55,28 @@ type ExecuteServiceTaskParams struct {
 	Variables      map[string]interface{} `json:"variables"`
 }
 
+// ExecuteNodeParams holds parameters for ExecuteNode interceptor calls
+type ExecuteNodeParams struct {
+	Node           *models.Node           `json:"node" intercept:"id"`
+	BusinessParams map[string]interface{} `json:"businessParams"`
+	Variables      map[string]interface{} `json:"variables"`
+}
+
+// CreateExecutionParams holds parameters for CreateExecution interceptor calls
+type CreateExecutionParams struct {
+	InstanceID string                 `json:"instanceId" intercept:"id"`
+	WorkflowID string                 `json:"workflowId"`
+	Variables  map[string]interface{} `json:"variables"`
+}
+
+// UpdateExecutionParams holds parameters for UpdateExecution interceptor calls
+type UpdateExecutionParams struct {
+	ExecutionID  string                 `json:"executionId" intercept:"id"`
+	Status       string                 `json:"status"`
+	Variables    map[string]interface{} `json:"variables"`
+	ErrorMessage string                 `json:"errorMessage"`
+}
+
 // NewWorkflowEngineService creates a new WorkflowEngineService
 func NewWorkflowEngineService(
 	db *database.Database,
@@ -73,31 +94,7 @@ func NewWorkflowEngineService(
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		mockCaller:      NewMockServiceCaller(logger),
-		mockInstanceSvc: NewMockInstanceService(db, logger, workflowSvc),
-	}
-}
-
-// NewWorkflowEngineServiceWithMockInstance creates a new WorkflowEngineService with shared MockInstanceService
-func NewWorkflowEngineServiceWithMockInstance(
-	db *database.Database,
-	logger *zerolog.Logger,
-	workflowSvc *WorkflowService,
-	instanceSvc *WorkflowInstanceService,
-	executionSvc *WorkflowExecutionService,
-	mockInstanceSvc *MockInstanceService,
-) *WorkflowEngineService {
-	return &WorkflowEngineService{
-		db:           db,
-		logger:       logger,
-		workflowSvc:  workflowSvc,
-		instanceSvc:  instanceSvc,
-		executionSvc: executionSvc,
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-		mockCaller:      NewMockServiceCaller(logger),
-		mockInstanceSvc: mockInstanceSvc,
+		mockCaller: NewMockServiceCaller(logger),
 	}
 }
 
@@ -142,6 +139,19 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 	fromNodeId string,
 	businessParams map[string]interface{},
 ) (*ExecuteResult, error) {
+	return s.ExecuteFromNodeWithOptionalData(ctx, instanceId, fromNodeId, businessParams, nil, nil)
+}
+
+// ExecuteFromNodeWithOptionalData executes workflow with optional workflow and instance data
+// If workflow or instance is provided, it will be used directly instead of fetching from database
+func (s *WorkflowEngineService) ExecuteFromNodeWithOptionalData(
+	ctx context.Context,
+	instanceId string,
+	fromNodeId string,
+	businessParams map[string]interface{},
+	optionalWorkflow *models.Workflow,
+	optionalInstance *models.WorkflowInstance,
+) (*ExecuteResult, error) {
 	// Create interceptor call recorder and add to context
 	recorder := NewInterceptorCallRecorder()
 	ctx = WithInterceptorRecorder(ctx, recorder)
@@ -159,26 +169,45 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		"businessParams": businessParams,
 	}
 
-	// 1. 获取工作流实例 (使用拦截器支持 Mock 实例和真实实例)
-	instance, err := interceptor.Intercept(ctx,
-		"GetInstance",
-		s.getInstance,
-		GetInstanceParams{InstanceID: instanceId},
-	)
+	// 1. 获取工作流实例 (如果提供了 optionalInstance 则直接使用，否则从数据库获取)
+	var instance *models.WorkflowInstance
+	var err error
 
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", models.ErrWorkflowInstanceNotFound, err)
+	if optionalInstance != nil {
+		// Use provided instance directly (mock mode)
+		instance = optionalInstance
+		s.logger.Info().Str("instanceId", instanceId).Msg("Using provided workflow instance (mock mode)")
+	} else {
+		// Fetch from database (使用拦截器支持 Mock 实例和真实实例)
+		instance, err = interceptor.Intercept(ctx,
+			"GetInstance",
+			s.getInstance,
+			GetInstanceParams{InstanceID: instanceId},
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", models.ErrWorkflowInstanceNotFound, err)
+		}
 	}
 
-	// 2. 获取工作流定义 (使用拦截器)
-	workflow, err := interceptor.Intercept(ctx,
-		"GetWorkflow",
-		s.getWorkflow,
-		GetWorkflowParams{WorkflowID: instance.WorkflowId},
-	)
+	// 2. 获取工作流定义 (如果提供了 optionalWorkflow 则直接使用，否则从数据库获取)
+	var workflow *models.Workflow
 
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", models.ErrWorkflowNotFound, err)
+	if optionalWorkflow != nil {
+		// Use provided workflow directly (mock mode)
+		workflow = optionalWorkflow
+		s.logger.Info().Str("workflowId", workflow.Id).Msg("Using provided workflow (mock mode)")
+	} else {
+		// Fetch from database (使用拦截器)
+		workflow, err = interceptor.Intercept(ctx,
+			"GetWorkflow",
+			s.getWorkflow,
+			GetWorkflowParams{WorkflowID: instance.WorkflowId},
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", models.ErrWorkflowNotFound, err)
+		}
 	}
 
 	// 3. 解析 BPMN XML
@@ -212,31 +241,18 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 			Strs("startEvents", wd.StartEvents).
 			Msg("Initializing current_node_ids with start events")
 
-		// 更新实例的 current_node_ids
-		if isMockInstance(instanceId) {
-			// 更新 Mock 实例
-			mockInstance, err := s.mockInstanceSvc.UpdateMockInstance(
-				ctx,
-				instanceId,
-				instance.Status,
-				wd.StartEvents,
-				nil, // 不更新 variables
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to initialize mock instance current_node_ids: %w", err)
-			}
-			instance = convertMockInstanceToWorkflowInstance(mockInstance)
-		} else {
-			// 更新真实实例
-			instance, err = s.instanceSvc.UpdateWorkflowInstance(
-				ctx,
-				instanceId,
-				instance.Status,
-				wd.StartEvents,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to initialize current_node_ids: %w", err)
-			}
+		// 更新实例的 current_node_ids (使用拦截器)
+		instance, err = interceptor.Intercept(ctx,
+			"UpdateInstance",
+			s.updateInstance,
+			UpdateInstanceParams{
+				InstanceID: instanceId,
+				Status:     instance.Status,
+				NextNodes:  wd.StartEvents,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize current_node_ids: %w", err)
 		}
 	}
 
@@ -265,47 +281,38 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		instance.CurrentNodeIds = rollbackAction.TargetNodeIds
 	}
 
-	// 5. 获取或创建执行记录
-	var execution *models.WorkflowExecution
-	if isMockInstance(instanceId) {
-		// For Mock instances, create in-memory execution record (skip database)
-		variables := make(map[string]interface{})
-		if businessParams != nil {
-			variables = businessParams
-		}
-		execution = &models.WorkflowExecution{
-			Id:               fmt.Sprintf("mock-exec-%d", time.Now().UnixNano()),
-			InstanceId:       instanceId,
-			WorkflowId:       workflow.Id,
-			Status:           models.ExecutionStatusRunning,
-			Variables:        variables,
-			ExecutionVersion: 1,
-			StartedAt:        time.Now(),
-		}
-		s.logger.Debug().Str("executionId", execution.Id).Msg("Created in-memory execution for Mock instance")
-	} else {
-		// For real instances, create new execution record with Running status
-		variables := make(map[string]interface{})
-		if businessParams != nil {
-			variables = businessParams
-		}
-		execution, err = s.executionSvc.CreateWorkflowExecution(ctx, instanceId, workflow.Id, variables)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create execution: %w", err)
-		}
-		// Immediately update to Running status
-		execution, err = s.executionSvc.UpdateWorkflowExecution(
-			ctx,
-			execution.Id,
-			models.ExecutionStatusRunning,
-			nil, // Don't override variables yet
-			"",
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update execution to running status: %w", err)
-		}
-		s.logger.Info().Str("executionId", execution.Id).Msg("Created execution record with Running status")
+	// 5. 获取或创建执行记录 (使用拦截器)
+	variables := make(map[string]interface{})
+	if businessParams != nil {
+		variables = businessParams
 	}
+	execution, err := interceptor.Intercept(ctx,
+		"CreateExecution",
+		s.createExecution,
+		CreateExecutionParams{
+			InstanceID: instanceId,
+			WorkflowID: workflow.Id,
+			Variables:  variables,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create execution: %w", err)
+	}
+	// Immediately update to Running status (使用拦截器)
+	execution, err = interceptor.Intercept(ctx,
+		"UpdateExecution",
+		s.updateExecution,
+		UpdateExecutionParams{
+			ExecutionID:  execution.Id,
+			Status:       models.ExecutionStatusRunning,
+			Variables:    nil, // Don't override variables yet
+			ErrorMessage: "",
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update execution to running status: %w", err)
+	}
+	s.logger.Info().Str("executionId", execution.Id).Msg("Created execution record with Running status")
 
 	// 6. 执行节点并持续推进，直到遇到需要等待的节点
 	var businessResponse *BusinessResponse
@@ -320,40 +327,26 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 			Uint32("nodeType", currentNode.Type).
 			Msg("Executing node")
 
-		// 6.1 执行当前节点
-		switch currentNode.Type {
-		case parser.NodeTypeServiceTask:
-			businessResponse, err = s.executeServiceTask(ctx, currentNode, businessParams, execution.Variables)
-			if err != nil {
-				s.logger.Error().Err(err).Str("nodeId", currentNodeId).Msg("Failed to execute ServiceTask")
-				// 更新执行状态为失败
-				s.updateExecutionStatus(ctx, execution, models.ExecutionStatusFailed, err.Error())
-				return nil, fmt.Errorf("failed to execute ServiceTask: %w", err)
-			}
-			// 将业务接口响应存储到 variables
-			if businessResponse != nil {
-				if execution.Variables == nil {
-					execution.Variables = make(map[string]interface{})
-				}
-				execution.Variables["businessResponse"] = businessResponse
-			}
-		case parser.NodeTypeUserTask:
-			// UserTask 返回待处理状态，不执行实际操作
-			s.logger.Info().Str("nodeId", currentNodeId).Msg("UserTask encountered, returning pending status")
-		case parser.NodeTypeIntermediateCatchEvent:
-			// IntermediateCatchEvent 等待外部事件，不执行实际操作
-			s.logger.Info().Str("nodeId", currentNodeId).Msg("IntermediateCatchEvent encountered, waiting for external event")
-		case parser.NodeTypeEventBasedGateway:
-			// EventBasedGateway 等待事件分支，不执行实际操作
-			s.logger.Info().Str("nodeId", currentNodeId).Msg("EventBasedGateway encountered, waiting for event branch")
-		case parser.NodeTypeExclusiveGateway:
-			// Gateway 在推进逻辑中处理
-			s.logger.Info().Str("nodeId", currentNodeId).Msg("ExclusiveGateway encountered, evaluating conditions")
-		case parser.NodeTypeEndEvent:
-			// EndEvent 标记流程结束
-			s.logger.Info().Str("nodeId", currentNodeId).Msg("EndEvent encountered, workflow completed")
-		default:
-			s.logger.Info().Str("nodeId", currentNodeId).Uint32("nodeType", currentNode.Type).Msg("Node type not requiring special execution")
+		// 6.1 执行当前节点（使用拦截器）
+		nodeResult, err := interceptor.Intercept(ctx,
+			"ExecuteNode",
+			s.ExecuteNode,
+			ExecuteNodeParams{
+				Node:           currentNode,
+				BusinessParams: businessParams,
+				Variables:      execution.Variables,
+			},
+		)
+		if err != nil {
+			s.logger.Error().Err(err).Str("nodeId", currentNodeId).Msg("Failed to execute node")
+			// Update execution status to failed
+			s.updateExecutionStatus(ctx, execution, models.ExecutionStatusFailed, err.Error())
+			return nil, fmt.Errorf("failed to execute node: %w", err)
+		}
+
+		// Extract businessResponse from nodeResult
+		if nodeResult != nil && nodeResult.BusinessResponse != nil {
+			businessResponse = nodeResult.BusinessResponse
 		}
 
 		// 6.2 检查是否应该自动推进到下一个节点
@@ -368,7 +361,6 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		}
 
 		// 6.3 推进到下一个节点
-		var err error
 		nextNodeIds, err = s.advanceToNextNode(ctx, wd, currentNode, execution.Variables)
 		if err != nil {
 			s.logger.Error().Err(err).Str("nodeId", currentNodeId).Msg("Failed to advance to next node")
@@ -428,38 +420,28 @@ func (s *WorkflowEngineService) ExecuteFromNode(
 		}
 	}
 
-	// 8. 更新执行状态为 Completed/Failed
-	if isMockInstance(instanceId) {
-		// For Mock executions, update in-memory execution status
-		execution.Status = executionStatus
-		if executionStatus == models.ExecutionStatusCompleted {
-			execution.CompletedAt = &[]time.Time{time.Now()}[0]
-		}
+	// 8. 更新执行状态为 Completed/Failed (使用拦截器)
+	_, err = interceptor.Intercept(ctx,
+		"UpdateExecution",
+		s.updateExecution,
+		UpdateExecutionParams{
+			ExecutionID:  execution.Id,
+			Status:       executionStatus,
+			Variables:    execution.Variables,
+			ErrorMessage: "",
+		},
+	)
+	if err != nil {
+		s.logger.Error().Err(err).
+			Str("executionId", execution.Id).
+			Str("status", executionStatus).
+			Msg("Failed to update execution status")
+		// Don't return error, continue to update instance
+	} else {
 		s.logger.Info().
 			Str("executionId", execution.Id).
 			Str("status", executionStatus).
-			Msg("Updated Mock execution status")
-	} else {
-		// For real executions, update in database
-		_, err = s.executionSvc.UpdateWorkflowExecution(
-			ctx,
-			execution.Id,
-			executionStatus,
-			execution.Variables,
-			"",
-		)
-		if err != nil {
-			s.logger.Error().Err(err).
-				Str("executionId", execution.Id).
-				Str("status", executionStatus).
-				Msg("Failed to update execution status")
-			// Don't return error, continue to update instance
-		} else {
-			s.logger.Info().
-				Str("executionId", execution.Id).
-				Str("status", executionStatus).
-				Msg("Updated execution status")
-		}
+			Msg("Updated execution status")
 	}
 
 	// 9. 更新实例状态 (使用拦截器)
@@ -514,6 +496,59 @@ func (s *WorkflowEngineService) executeServiceTask(
 			Variables:      variables,
 		},
 	)
+}
+
+// ExecuteNode executes a workflow node based on its type
+// This method encapsulates all node execution logic and can be intercepted for testing and debugging
+// It focuses purely on node execution without managing workflow execution state
+// Returns ExecuteResult to maintain consistency with ExecuteFromNode
+func (s *WorkflowEngineService) ExecuteNode(
+	ctx context.Context,
+	params ExecuteNodeParams,
+) (*ExecuteResult, error) {
+	nodeId := params.Node.Id
+
+	// Execute node based on type
+	switch params.Node.Type {
+	case parser.NodeTypeServiceTask:
+		businessResponse, err := s.executeServiceTask(ctx, params.Node, params.BusinessParams, params.Variables)
+		if err != nil {
+			s.logger.Error().Err(err).Str("nodeId", nodeId).Msg("Failed to execute ServiceTask")
+			return nil, fmt.Errorf("failed to execute ServiceTask: %w", err)
+		}
+		return &ExecuteResult{
+			BusinessResponse: businessResponse,
+		}, nil
+
+	case parser.NodeTypeUserTask:
+		// UserTask returns pending status, no actual operation
+		s.logger.Info().Str("nodeId", nodeId).Msg("UserTask encountered, returning pending status")
+		return &ExecuteResult{}, nil
+
+	case parser.NodeTypeIntermediateCatchEvent:
+		// IntermediateCatchEvent waits for external event, no actual operation
+		s.logger.Info().Str("nodeId", nodeId).Msg("IntermediateCatchEvent encountered, waiting for external event")
+		return &ExecuteResult{}, nil
+
+	case parser.NodeTypeEventBasedGateway:
+		// EventBasedGateway waits for event branch, no actual operation
+		s.logger.Info().Str("nodeId", nodeId).Msg("EventBasedGateway encountered, waiting for event branch")
+		return &ExecuteResult{}, nil
+
+	case parser.NodeTypeExclusiveGateway:
+		// Gateway logic is handled in advance logic
+		s.logger.Info().Str("nodeId", nodeId).Msg("ExclusiveGateway encountered, evaluating conditions")
+		return &ExecuteResult{}, nil
+
+	case parser.NodeTypeEndEvent:
+		// EndEvent marks workflow completion
+		s.logger.Info().Str("nodeId", nodeId).Msg("EndEvent encountered, workflow completed")
+		return &ExecuteResult{}, nil
+
+	default:
+		s.logger.Info().Str("nodeId", nodeId).Uint32("nodeType", params.Node.Type).Msg("Node type not requiring special execution")
+		return &ExecuteResult{}, nil
+	}
 }
 
 // advanceToNextNode advances workflow to the next node based on sequence flows and conditions
@@ -603,53 +638,26 @@ func (s *WorkflowEngineService) evaluateCondition(
 	return false, fmt.Errorf("condition expression did not return a boolean value")
 }
 
-// updateExecutionStatus updates execution status and error message
-// For Mock executions, updates the in-memory execution object
-// For real executions, updates in database
+// updateExecutionStatus updates execution status and error message in database (使用拦截器)
 func (s *WorkflowEngineService) updateExecutionStatus(
 	ctx context.Context,
 	execution *models.WorkflowExecution,
 	status string,
 	errorMessage string,
 ) {
-	// Update Mock execution in-memory
-	if len(execution.Id) >= 10 && execution.Id[:10] == "mock-exec-" {
-		execution.Status = status
-		execution.ErrorMessage = errorMessage
-		if status == models.ExecutionStatusFailed || status == models.ExecutionStatusCompleted {
-			execution.CompletedAt = &[]time.Time{time.Now()}[0]
-		}
-		s.logger.Info().
-			Str("executionId", execution.Id).
-			Str("status", status).
-			Msg("Updated Mock execution status")
-		return
-	}
-
-	// Update real execution in database
-	_, err := s.executionSvc.UpdateWorkflowExecution(ctx, execution.Id, status, nil, errorMessage)
+	_, err := interceptor.Intercept(ctx,
+		"UpdateExecution",
+		s.updateExecution,
+		UpdateExecutionParams{
+			ExecutionID:  execution.Id,
+			Status:       status,
+			Variables:    nil,
+			ErrorMessage: errorMessage,
+		},
+	)
 	if err != nil {
 		s.logger.Error().Err(err).Str("executionId", execution.Id).Msg("Failed to update execution status")
 	}
-}
-
-// convertMockInstanceToWorkflowInstance converts a MockWorkflowInstance to models.WorkflowInstance
-func convertMockInstanceToWorkflowInstance(mockInstance *MockWorkflowInstance) *models.WorkflowInstance {
-	return &models.WorkflowInstance{
-		Id:              mockInstance.Id,
-		WorkflowId:      mockInstance.WorkflowId,
-		Name:            mockInstance.Id, // Use ID as name for mock instances
-		Status:          mockInstance.Status,
-		CurrentNodeIds:  mockInstance.CurrentNodeIds,
-		InstanceVersion: mockInstance.InstanceVersion,
-		CreatedAt:       mockInstance.CreatedAt,
-		UpdatedAt:       mockInstance.UpdatedAt,
-	}
-}
-
-// isMockInstance checks if the instanceId belongs to a mock instance
-func isMockInstance(instanceId string) bool {
-	return len(instanceId) >= 14 && instanceId[:14] == "mock-instance-"
 }
 
 // shouldAutoAdvance checks if the node type should automatically advance to the next node
@@ -860,24 +868,9 @@ func (s *WorkflowEngineService) isNodeAfterCurrentNodes(
 
 // --- Helper Methods for New Interceptor Architecture ---
 
-// getInstance gets a workflow instance (supports both Mock and real instances)
+// getInstance gets a workflow instance from database
 // This method uses struct parameters for the new interceptor architecture
 func (s *WorkflowEngineService) getInstance(ctx context.Context, params GetInstanceParams) (*models.WorkflowInstance, error) {
-	// Check if Mock instance
-	session := interceptor.GetInterceptSession(ctx)
-	if session != nil && session.InstanceID == params.InstanceID {
-		// Mock instance: get from Mock data
-		if s.mockInstanceSvc.MockInstanceExists(params.InstanceID) {
-			mockInstance, err := s.mockInstanceSvc.GetMockInstance(ctx, params.InstanceID)
-			if err != nil {
-				return nil, err
-			}
-			// Convert to standard instance format
-			return convertMockInstanceToWorkflowInstance(mockInstance), nil
-		}
-	}
-
-	// Real instance: get from database
 	return s.instanceSvc.GetWorkflowInstanceByID(ctx, params.InstanceID)
 }
 
@@ -887,34 +880,32 @@ func (s *WorkflowEngineService) getWorkflow(ctx context.Context, params GetWorkf
 	return s.workflowSvc.GetWorkflowByID(ctx, params.WorkflowID)
 }
 
-// updateInstance updates a workflow instance
+// updateInstance updates a workflow instance in database
 // This method uses struct parameters for the new interceptor architecture
 func (s *WorkflowEngineService) updateInstance(ctx context.Context, params UpdateInstanceParams) (*models.WorkflowInstance, error) {
-	// Check if Mock instance
-	session := interceptor.GetInterceptSession(ctx)
-	if session != nil && session.InstanceID == params.InstanceID {
-		// Mock instance: update memory data
-		if s.mockInstanceSvc.MockInstanceExists(params.InstanceID) {
-			mockInstance, err := s.mockInstanceSvc.UpdateMockInstance(
-				ctx,
-				params.InstanceID,
-				params.Status,
-				params.NextNodes,
-				nil, // Don't update variables here
-			)
-			if err != nil {
-				return nil, err
-			}
-			return convertMockInstanceToWorkflowInstance(mockInstance), nil
-		}
-	}
-
-	// Real instance: update database
 	return s.instanceSvc.UpdateWorkflowInstance(
 		ctx,
 		params.InstanceID,
 		params.Status,
 		params.NextNodes,
+	)
+}
+
+// createExecution creates a workflow execution in database
+// This method uses struct parameters for the new interceptor architecture
+func (s *WorkflowEngineService) createExecution(ctx context.Context, params CreateExecutionParams) (*models.WorkflowExecution, error) {
+	return s.executionSvc.CreateWorkflowExecution(ctx, params.InstanceID, params.WorkflowID, params.Variables)
+}
+
+// updateExecution updates a workflow execution in database
+// This method uses struct parameters for the new interceptor architecture
+func (s *WorkflowEngineService) updateExecution(ctx context.Context, params UpdateExecutionParams) (*models.WorkflowExecution, error) {
+	return s.executionSvc.UpdateWorkflowExecution(
+		ctx,
+		params.ExecutionID,
+		params.Status,
+		params.Variables,
+		params.ErrorMessage,
 	)
 }
 
