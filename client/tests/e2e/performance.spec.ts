@@ -19,11 +19,11 @@ test.describe('编辑器性能测试', () => {
   test('编辑器加载时间应该小于 3 秒 @performance', async ({ page }) => {
     const startTime = Date.now();
     
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       
@@ -52,13 +52,13 @@ test.describe('编辑器性能测试', () => {
   </bpmn:process>
 </bpmn:definitions>`;
     
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     const startTime = Date.now();
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 await newButton.click();
       await page.waitForTimeout(2000);
@@ -69,37 +69,43 @@ await newButton.click();
   });
 
   test('元素添加响应时间', async ({ page }) => {
-    await page.goto('/');
+    // 直接导航到编辑器页面
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
-    
+
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
-await newButton.click();
-      await page.waitForTimeout(2000);
-      
-      const startTime = Date.now();
-      
-      // 尝试添加元素（通过调色板）
-      const palette = page.locator('.djs-palette, [class*="palette"]').first();
-      expect(await palette.count()).not.toBe(0);
-const startEventButton = palette.locator('[title*="Start"], [title*="开始"]').first();
-        if (await startEventButton.count() > 0) {
-          await startEventButton.click();
-          await page.waitForTimeout(500);
-          
-          const responseTime = Date.now() - startTime;
-          // 元素添加响应时间应该小于 1 秒
-          expect(responseTime).toBeLessThan(1000);
+    await newButton.click();
+    await page.waitForTimeout(3000);
+
+    // 等待 BPMN 编辑器加载
+    const editor = page.locator('.bpmn-container, .bpmn-editor').first();
+    await editor.waitFor({ state: 'visible', timeout: 10000 });
+
+    const startTime = Date.now();
+
+    // 尝试添加元素（通过调色板）
+    const palette = page.locator('.djs-palette, [class*="palette"]').first();
+    await palette.waitFor({ state: 'attached', timeout: 5000 });
+    expect(await palette.count()).not.toBe(0);
+    const startEventButton = palette.locator('[title*="Start"], [title*="开始"]').first();
+    if (await startEventButton.count() > 0) {
+      await startEventButton.click();
+      await page.waitForTimeout(500);
+
+      const responseTime = Date.now() - startTime;
+      // 元素添加响应时间应该小于 1 秒
+      expect(responseTime).toBeLessThan(1000);
     }
   });
 
   test('连线创建响应时间', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -124,28 +130,37 @@ const startEventButton = palette.locator('[title*="Start"], [title*="开始"]').
   });
 
   test('属性编辑响应时间', async ({ page }) => {
-    await page.goto('/');
+    // 直接导航到编辑器页面
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
-    
+
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
-await newButton.click();
-      await page.waitForTimeout(2000);
-      
-      const startTime = Date.now();
-      
-      // 尝试编辑属性
-      const propertiesPanel = page.locator('#properties-panel, .properties-panel').first();
-      expect(await propertiesPanel.count()).not.toBe(0);
-const nameInput = propertiesPanel.locator('input[name*="name"]').first();
-        if (await nameInput.count() > 0) {
-          await nameInput.fill('Test Name');
-          await page.waitForTimeout(300);
-          
-          const responseTime = Date.now() - startTime;
-          // 属性编辑响应时间应该小于 500ms
-          expect(responseTime).toBeLessThan(500);
+    await newButton.click();
+    await page.waitForTimeout(3000);
+
+    // 等待 BPMN 编辑器和右侧面板加载
+    const editor = page.locator('.bpmn-container, .bpmn-editor').first();
+    await editor.waitFor({ state: 'visible', timeout: 10000 });
+
+    const rightPanel = page.locator('.right-panel-container').first();
+    await rightPanel.waitFor({ state: 'visible', timeout: 5000 });
+
+    const startTime = Date.now();
+
+    // 尝试编辑属性
+    const propertiesPanel = page.locator('.right-panel-container #properties-panel, .right-panel-container .properties-panel-mount').first();
+    await propertiesPanel.waitFor({ state: 'attached', timeout: 5000 });
+    expect(await propertiesPanel.count()).not.toBe(0);
+    const nameInput = propertiesPanel.locator('input[name*="name"]').first();
+    if (await nameInput.count() > 0) {
+      await nameInput.fill('Test Name');
+      await page.waitForTimeout(300);
+
+      const responseTime = Date.now() - startTime;
+      // 属性编辑响应时间应该小于 500ms
+      expect(responseTime).toBeLessThan(500);
     }
   });
 });
@@ -222,7 +237,7 @@ test.describe('API 性能测试', () => {
 
 test.describe('内存泄漏测试', () => {
   test('长时间运行后内存使用应该稳定', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 获取初始内存使用（如果可用）
@@ -232,7 +247,7 @@ test.describe('内存泄漏测试', () => {
     
     // 执行多次操作
     for (let i = 0; i < 10; i++) {
-      const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+      const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
       if (await newButton.count() > 0) {
         await newButton.click();
         await page.waitForTimeout(1000);
@@ -256,7 +271,7 @@ test.describe('内存泄漏测试', () => {
   });
 
   test('多次加载/卸载后内存使用应该稳定', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 获取初始内存使用
@@ -266,7 +281,7 @@ test.describe('内存泄漏测试', () => {
     
     // 多次加载和卸载
     for (let i = 0; i < 5; i++) {
-      const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+      const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
       if (await newButton.count() > 0) {
         await newButton.click();
         await page.waitForTimeout(1000);
@@ -290,11 +305,11 @@ test.describe('内存泄漏测试', () => {
   });
 
   test('编辑器实例应该正确清理', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -308,7 +323,7 @@ test.describe('内存泄漏测试', () => {
       await page.waitForLoadState('networkidle');
       
       // 验证编辑器可以重新创建
-      const newButton2 = page.locator('button:has-text("New"), button:has-text("新建")').first();
+      const newButton2 = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
       if (await newButton2.count() > 0) {
         await newButton2.click();
         await page.waitForTimeout(2000);

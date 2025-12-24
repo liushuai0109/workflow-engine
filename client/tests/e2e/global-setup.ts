@@ -1,18 +1,21 @@
 /**
  * Playwright 全局设置
  * 在所有测试运行前执行，用于准备测试环境
- * 
+ *
  * 按照 Playwright 规范，此文件负责：
- * 1. 检查数据库可用性
- * 2. 启动后端服务（如果需要）
- * 3. 验证服务健康状态
- * 4. 准备测试数据环境
- * 
+ * 1. 自动启动 PostgreSQL（如果未运行）
+ * 2. 检查数据库可用性
+ * 3. 启动后端服务（如果需要）
+ * 4. 验证服务健康状态
+ * 5. 准备测试数据环境
+ *
  * 使用方式：
  * 设置环境变量 AUTO_START_BACKEND=true 来自动启动后端
  * export AUTO_START_BACKEND=true && npm run test:e2e
- * 
+ *
  * 或者使用 npm run test:e2e:auto* 命令（已自动设置）
+ *
+ * 注意：测试会自动检测 PostgreSQL 状态并尝试启动服务（通过 Homebrew）
  */
 
 import { FullConfig } from '@playwright/test';
@@ -73,27 +76,82 @@ async function waitForService(url: string, serviceName: string, maxWait: number)
 }
 
 /**
+ * 启动 PostgreSQL 服务（如果未运行）
+ */
+function startPostgreSQL(): boolean {
+  console.log('🔍 检查 PostgreSQL 服务状态...');
+
+  // 检查 PostgreSQL 是否已经运行
+  try {
+    execSync(`lsof -i :${DB_PORT} -sTCP:LISTEN -t`, { stdio: 'ignore' });
+    console.log('✅ PostgreSQL 服务已运行');
+    return true;
+  } catch {
+    // PostgreSQL 未运行，尝试启动
+  }
+
+  console.log('🚀 PostgreSQL 未运行，正在尝试启动...');
+
+  try {
+    // 检查是否安装了 Homebrew PostgreSQL
+    try {
+      execSync('brew services list | grep postgresql', { stdio: 'ignore' });
+    } catch {
+      console.log('⚠️  未检测到 Homebrew PostgreSQL 安装');
+      return false;
+    }
+
+    // 启动 PostgreSQL 服务
+    console.log('⏳ 正在启动 PostgreSQL 服务...');
+    execSync('brew services start postgresql@15 2>/dev/null || brew services start postgresql', {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    });
+
+    // 等待 PostgreSQL 启动（最多等待 10 秒）
+    console.log('⏳ 等待 PostgreSQL 启动...');
+    for (let i = 0; i < 10; i++) {
+      try {
+        execSync(`lsof -i :${DB_PORT} -sTCP:LISTEN -t`, { stdio: 'ignore' });
+        console.log(`✅ PostgreSQL 服务已启动 (耗时 ${i + 1} 秒)`);
+        // 再等待 1 秒确保完全就绪
+        execSync('sleep 1');
+        return true;
+      } catch {
+        execSync('sleep 1');
+      }
+    }
+
+    console.log('⚠️  PostgreSQL 启动超时');
+    return false;
+  } catch (error) {
+    console.log('❌ PostgreSQL 启动失败:', error);
+    return false;
+  }
+}
+
+/**
  * 检查 PostgreSQL 数据库是否可用
  */
 function checkDatabase(): boolean {
   console.log('📊 检查 PostgreSQL 数据库可用性...');
-  
+
   const projectRoot = join(__dirname, '../../..');
   const serverDir = join(projectRoot, 'server');
   const envFile = join(serverDir, '.env');
-  
+
   // 读取数据库配置
   let dbName = 'workflow_engine';
   let dbUser = 'postgres';
   let dbPassword = '';
-  
+
   if (existsSync(envFile)) {
     try {
       const envContent = readFileSync(envFile, 'utf-8');
       const dbNameMatch = envContent.match(/^DB_NAME=(.+)$/m);
       const dbUserMatch = envContent.match(/^DB_USER=(.+)$/m);
       const dbPasswordMatch = envContent.match(/^DB_PASSWORD=(.+)$/m);
-      
+
       if (dbNameMatch) dbName = dbNameMatch[1].trim();
       if (dbUserMatch) dbUser = dbUserMatch[1].trim();
       if (dbPasswordMatch) dbPassword = dbPasswordMatch[1].trim();
@@ -101,43 +159,43 @@ function checkDatabase(): boolean {
       // 忽略读取错误，使用默认值
     }
   }
-  
+
   // 检查端口是否开放
   let portOpen = false;
   try {
-    // 尝试使用 nc (netcat)
-    execSync(`timeout 2 nc -z localhost ${DB_PORT}`, { stdio: 'ignore' });
+    // 尝试使用 lsof
+    execSync(`lsof -i :${DB_PORT} -sTCP:LISTEN -t`, { stdio: 'ignore' });
     portOpen = true;
   } catch {
     try {
-      // 尝试使用 telnet
-      execSync(`echo "quit" | timeout 2 telnet localhost ${DB_PORT}`, { stdio: 'ignore' });
+      // 尝试使用 nc (netcat)
+      execSync(`nc -z localhost ${DB_PORT}`, { stdio: 'ignore', timeout: 2000 });
       portOpen = true;
     } catch {
       // 端口未开放
     }
   }
-  
+
   if (!portOpen) {
     console.log(`⚠️  PostgreSQL 端口 ${DB_PORT} 不可访问`);
     return false;
   }
-  
+
   // 尝试连接数据库
   try {
     // 检查 psql 是否可用
     execSync('which psql', { stdio: 'ignore' });
     const passwordEnv = dbPassword ? `PGPASSWORD="${dbPassword}" ` : '';
     execSync(
-      `${passwordEnv}timeout 3 psql -h localhost -p ${DB_PORT} -U ${dbUser} -d ${dbName} -c '\\q'`,
-      { stdio: 'ignore' }
+      `${passwordEnv}psql -h localhost -p ${DB_PORT} -U ${dbUser} -d ${dbName} -c '\\q'`,
+      { stdio: 'ignore', timeout: 3000 }
     );
     console.log(`✅ PostgreSQL 数据库 '${dbName}' 可访问`);
     return true;
   } catch {
     // psql 不可用或连接失败
   }
-  
+
   console.log(`⚠️  PostgreSQL 运行中但数据库 '${dbName}' 不可访问`);
   console.log(`   可能原因：数据库不存在、凭据错误或认证问题`);
   return false;
@@ -149,7 +207,7 @@ function checkDatabase(): boolean {
 async function startBackend(): Promise<void> {
   const projectRoot = join(__dirname, '../../..');
   const serverDir = join(projectRoot, 'server');
-  
+
   // 检查服务是否已运行
   const wasRunning = isPortInUse(Number(BACKEND_PORT));
   if (wasRunning) {
@@ -158,47 +216,77 @@ async function startBackend(): Promise<void> {
     writeFileSync(BACKEND_WAS_RUNNING_FILE, 'true');
     return;
   }
-  
+
   // 检查服务器目录
   if (!existsSync(serverDir)) {
     throw new Error(`服务器目录不存在: ${serverDir}`);
   }
-  
+
   // 检查 Go 环境
   try {
     execSync('go version', { stdio: 'ignore' });
   } catch {
     throw new Error('Go 未安装或不在 PATH 中');
   }
-  
+
+  // 先尝试启动 PostgreSQL（如果未运行）
+  const pgStarted = startPostgreSQL();
+  if (!pgStarted) {
+    console.log('⚠️  无法自动启动 PostgreSQL，将尝试检查数据库可用性...');
+  }
+
   // 检查数据库可用性
   const dbAvailable = checkDatabase();
   if (!dbAvailable) {
     throw new Error('PostgreSQL 数据库不可用 - 测试需要数据库支持。请确保 PostgreSQL 已启动并且数据库已创建。');
   }
   console.log('✅ 数据库可用 - 后端将正常连接数据库');
-  
+
   console.log('🚀 启动后端服务...');
-  
+
   // 启动后端服务（后台运行）
-  // 使用 bash -c 确保正确执行后台命令并获取 PID
-  const startCommand = `cd ${serverDir} && make run > /tmp/workflow-backend.log 2>&1 & echo $!`;
-  const pidOutput = execSync(
-    `bash -c "${startCommand}"`,
-    { encoding: 'utf-8', cwd: serverDir }
-  );
-  
-  const pid = pidOutput.trim();
+  // 使用更可靠的方式启动服务并获取 PID
+  // 1. 先删除旧的 nohup.out
+  try {
+    execSync('rm -f /tmp/nohup.out', { stdio: 'ignore' });
+  } catch {
+    // 忽略错误
+  }
+
+  // 2. 启动服务
+  const startScript = `
+    cd ${serverDir} || exit 1
+    # 加载环境变量
+    if [ -f .env ]; then
+      export $(grep -v '^#' .env | grep -v '^$' | xargs)
+    fi
+    # 启动服务
+    nohup go run cmd/server/main.go > /tmp/workflow-backend.log 2>&1 &
+    # 获取实际的 go 进程 PID
+    sleep 1
+    pgrep -f "go run cmd/server/main.go" | tail -1
+  `;
+
+  const pidOutput = execSync(startScript, {
+    encoding: 'utf-8',
+    shell: '/bin/bash'
+  });
+
+  const pid = pidOutput.trim().split('\n').pop()?.trim();
   if (!pid || isNaN(Number(pid))) {
     throw new Error('无法获取后端服务 PID');
   }
-  
+
   writeFileSync(BACKEND_PID_FILE, pid);
   // 记录后端不是原本在运行的
   writeFileSync(BACKEND_WAS_RUNNING_FILE, 'false');
   console.log(`📝 后端服务 PID: ${pid}`);
   console.log(`📋 日志文件: /tmp/workflow-backend.log`);
-  
+
+  // 等待 2 秒让进程完全启动
+  console.log('⏳ 等待后端进程完全启动...');
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
   // 等待服务就绪
   if (!(await waitForService(BACKEND_URL, '后端', MAX_WAIT_TIME))) {
     // 读取日志以便调试

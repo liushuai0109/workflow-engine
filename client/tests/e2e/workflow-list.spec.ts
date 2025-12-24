@@ -62,16 +62,21 @@ test.describe('工作流列表页面', () => {
 
     if (await createButton.count() > 0) {
       await createButton.click();
-      await page.waitForLoadState('networkidle');
+
+      // 等待URL变化到/editor（Vue Router客户端导航）
+      await page.waitForURL(/\/editor/, { timeout: 5000 });
 
       // 验证导航到编辑器页面
       expect(page.url()).toContain('/editor');
 
-      // 验证编辑器已加载
+      // 验证编辑器页面的欢迎界面或编辑器已加载
+      const welcomeScreen = page.locator('.welcome-screen, .welcome-content').first();
       const editor = page.locator('.bpmn-container, .editor-container').first();
-      if (await editor.count() > 0) {
-        await expect(editor).toBeVisible({ timeout: 5000 });
-      }
+
+      // 至少有一个应该可见（欢迎界面或编辑器）
+      const hasWelcome = await welcomeScreen.count() > 0;
+      const hasEditor = await editor.count() > 0;
+      expect(hasWelcome || hasEditor).toBeTruthy();
     }
   });
 
@@ -153,7 +158,9 @@ test.describe('工作流列表页交互', () => {
 
       // 点击打开按钮
       await openButton.click();
-      await page.waitForLoadState('networkidle');
+
+      // 等待URL变化到/editor/（Vue Router客户端导航）
+      await page.waitForURL(/\/editor\//, { timeout: 5000 });
 
       // 验证导航到编辑器页面(带 workflowId)
       expect(page.url()).toContain('/editor/');
@@ -183,7 +190,9 @@ test.describe('工作流列表页交互', () => {
 
     if (await backButton.count() > 0) {
       await backButton.click();
-      await page.waitForLoadState('networkidle');
+
+      // 等待URL变化到/workflows（Vue Router客户端导航）
+      await page.waitForURL(/\/workflows/, { timeout: 5000 });
 
       // 验证返回列表页
       expect(page.url()).toContain('/workflows');

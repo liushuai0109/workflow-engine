@@ -45,51 +45,38 @@ function stopBackend(): void {
   }
 
   if (!existsSync(BACKEND_PID_FILE)) {
+    // 即使没有 PID 文件，也尝试杀掉所有相关进程
+    console.log('🛑 清理所有后端相关进程...');
+    try {
+      execSync('pkill -f "go run cmd/server/main.go" || true', { stdio: 'ignore' });
+      console.log('✅ 后端进程已清理');
+    } catch {
+      // 忽略错误
+    }
     return;
   }
 
   try {
     const pid = readFileSync(BACKEND_PID_FILE, 'utf-8').trim();
-    
-    // 检查进程是否还在运行
-    try {
-      execSync(`ps -p ${pid}`, { stdio: 'ignore' });
-    } catch {
-      // 进程已不存在
-      try {
-        unlinkSync(BACKEND_PID_FILE);
-        if (existsSync(BACKEND_WAS_RUNNING_FILE)) {
-          unlinkSync(BACKEND_WAS_RUNNING_FILE);
-        }
-      } catch {
-        // 忽略删除错误
-      }
-      return;
-    }
 
     console.log(`🛑 停止后端服务 (PID: ${pid})...`);
-    
-    // 尝试优雅停止
+
+    // 停止所有相关的 go run 进程
     try {
-      execSync(`kill ${pid}`, { stdio: 'ignore' });
+      // 先尝试优雅停止主进程
+      execSync(`kill ${pid} 2>/dev/null || true`, { stdio: 'ignore' });
       // 等待 2 秒
       execSync('sleep 2', { stdio: 'ignore' });
-      
-      // 检查是否还在运行
-      try {
-        execSync(`ps -p ${pid}`, { stdio: 'ignore' });
-        // 还在运行，强制停止
-        console.log('⚠️  后端服务未优雅停止，强制终止...');
-        execSync(`kill -9 ${pid}`, { stdio: 'ignore' });
-      } catch {
-        // 已停止
-      }
-      
+
+      // 强制清理所有相关进程
+      execSync('pkill -f "go run cmd/server/main.go" 2>/dev/null || true', { stdio: 'ignore' });
+      execSync('pkill -f "cmd/server/main.go" 2>/dev/null || true', { stdio: 'ignore' });
+
       console.log('✅ 后端服务已停止');
     } catch (error) {
       console.warn('⚠️  停止后端服务时出错:', error);
     }
-    
+
     // 删除 PID 文件和标记文件
     try {
       unlinkSync(BACKEND_PID_FILE);

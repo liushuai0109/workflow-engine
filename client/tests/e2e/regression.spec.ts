@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('回归测试', () => {
   test('应用启动时不会出现白屏', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     
     // 等待页面加载
     await page.waitForLoadState('networkidle');
@@ -30,7 +30,7 @@ test.describe('回归测试', () => {
     });
 
     // 测试多个路由导航
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 尝试导航到其他路由（如果存在）
@@ -50,7 +50,7 @@ test.describe('回归测试', () => {
   });
 
   test('BPMN编辑器加载不会导致内存泄漏', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 多次加载编辑器（如果存在）
@@ -68,7 +68,7 @@ test.describe('回归测试', () => {
   });
 
   test('API调用失败时不会导致应用崩溃', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     
     // 拦截所有API请求并返回错误
     await page.route('**/api/**', (route) => {
@@ -101,7 +101,7 @@ test.describe('回归测试', () => {
   });
 
   test('本地存储操作不会导致错误', async ({ page, context }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     
     // 测试localStorage操作
     await page.evaluate(() => {
@@ -131,7 +131,7 @@ test.describe('回归测试', () => {
   });
 
   test('窗口大小改变不会导致布局问题', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 测试不同的窗口大小

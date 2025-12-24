@@ -15,19 +15,27 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 /**
  * 辅助函数：创建新的 BPMN 图表
- * 点击 "Create New Diagram" 按钮并等待编辑器加载完成
+ * 点击 "创建新工作流" 按钮并等待编辑器加载完成
  * 这是访问右侧 Tab Panel 的前置条件
  */
 async function createNewDiagram(page: any) {
-  // 定位并点击 "Create New Diagram" 按钮
-  const createButton = page.locator('button').filter({ hasText: 'Create New Diagram' });
+  // 定位并点击 "创建新工作流" 按钮
+  const createButton = page.locator('button:has-text("创建新工作流"), button:has-text("Create New Diagram")').first();
   await createButton.click();
 
-  // 等待编辑器加载完成 - 右侧面板和 Tab 会在编辑器加载后出现
-  await page.waitForTimeout(1000);
+  // 等待编辑器加载完成 - 先等待 BpmnEditor 出现（说明 diagram 已创建）
+  const editor = page.locator('.bpmn-container, .bpmn-editor').first();
+  await editor.waitFor({ state: 'visible', timeout: 10000 });
 
-  // 等待右侧 Tab Panel 出现
-  const tabsContainer = page.locator('.ant-tabs');
+  // 再等待一下让编辑器完全初始化
+  await page.waitForTimeout(2000);
+
+  // 等待右侧面板容器出现（RightPanelContainer 只在 currentDiagram 存在时显示）
+  const rightPanel = page.locator('.right-panel-container').first();
+  await rightPanel.waitFor({ state: 'visible', timeout: 5000 });
+
+  // 最后等待 Tab Panel 出现（使用更具体的选择器，因为页面上可能有多个 .ant-tabs）
+  const tabsContainer = page.locator('.right-panel-container .ant-tabs').first();
   await tabsContainer.waitFor({ state: 'visible', timeout: 5000 });
 }
 
@@ -53,7 +61,8 @@ function getChatBoxInTab(page: any) {
 
 test.describe('聊天界面测试 - Tab Panel 集成', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // 直接导航到编辑器页面
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表以显示右侧 Tab Panel
@@ -138,7 +147,8 @@ test.describe('聊天界面测试 - Tab Panel 集成', () => {
 
 test.describe('聊天会话测试 - 会话管理功能', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // 直接导航到编辑器页面
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表以显示右侧 Tab Panel
@@ -305,7 +315,8 @@ test.describe('聊天会话测试 - 会话管理功能', () => {
 
 test.describe('消息交互测试 - 消息发送和接收', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // 直接导航到编辑器页面
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表以显示右侧 Tab Panel

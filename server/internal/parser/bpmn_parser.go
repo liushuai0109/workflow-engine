@@ -26,6 +26,7 @@ const (
 	NodeTypeIntermediateCatchEvent  uint32 = 9
 	NodeTypeEventBasedGateway       uint32 = 10
 	NodeTypeBoundaryEvent           uint32 = 11
+	NodeTypeTask                    uint32 = 12 // 普通 Task（抽象任务）
 )
 
 // XML 结构体定义，用于解析 BPMN XML
@@ -43,6 +44,7 @@ type process struct {
 	// 支持多种节点类型
 	StartEvents              []startEvent              `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL startEvent"`
 	EndEvents                []endEvent                `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL endEvent"`
+	Tasks                    []task                    `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL task"`
 	UserTasks                []userTask                `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL userTask"`
 	ServiceTasks             []serviceTask             `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL serviceTask"`
 	ExclusiveGateways        []exclusiveGateway        `xml:"http://www.omg.org/spec/BPMN/20100524/MODEL exclusiveGateway"`
@@ -67,6 +69,10 @@ type startEvent struct {
 }
 
 type endEvent struct {
+	baseElement
+}
+
+type task struct {
 	baseElement
 }
 
@@ -210,6 +216,19 @@ func parseNodes(proc *process, wd *models.WorkflowDefinition) {
 			Type:                    NodeTypeEndEvent,
 			IncomingSequenceFlowIds: ee.Incoming,
 			OutgoingSequenceFlowIds: ee.Outgoing,
+			CanFallback:             true,
+		}
+		wd.Nodes[node.Id] = node
+	}
+
+	// 解析普通任务（Task）
+	for _, t := range proc.Tasks {
+		node := models.Node{
+			Id:                      t.ID,
+			Name:                    t.Name,
+			Type:                    NodeTypeTask,
+			IncomingSequenceFlowIds: t.Incoming,
+			OutgoingSequenceFlowIds: t.Outgoing,
 			CanFallback:             true,
 		}
 		wd.Nodes[node.Id] = node

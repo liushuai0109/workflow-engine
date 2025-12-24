@@ -782,6 +782,50 @@ install_go_dependencies() {
     return 0
 }
 
+# 安装 Playwright 浏览器
+install_playwright_browsers() {
+    if ! command_exists npm; then
+        log_error "npm 未安装，无法安装 Playwright 浏览器"
+        return 1
+    fi
+
+    log_info "检查并安装 Playwright 浏览器..."
+
+    local playwright_installed=false
+
+    # 检查 client 目录是否安装了 Playwright
+    if [ -d "client/node_modules/@playwright" ] || [ -d "client/node_modules/playwright" ]; then
+        log_info "在 client 目录中检测到 Playwright，正在安装浏览器..."
+        cd client
+        if npx playwright install 2>/dev/null; then
+            log_success "client Playwright 浏览器安装完成"
+            playwright_installed=true
+        else
+            log_warn "client Playwright 浏览器安装失败"
+        fi
+        cd ..
+    fi
+
+    # 检查 biz-sample 目录是否安装了 Playwright
+    if [ -d "biz-sample/node_modules/@playwright" ] || [ -d "biz-sample/node_modules/playwright" ]; then
+        log_info "在 biz-sample 目录中检测到 Playwright，正在安装浏览器..."
+        cd biz-sample
+        if npx playwright install 2>/dev/null; then
+            log_success "biz-sample Playwright 浏览器安装完成"
+            playwright_installed=true
+        else
+            log_warn "biz-sample Playwright 浏览器安装失败"
+        fi
+        cd ..
+    fi
+
+    if [ "$playwright_installed" = false ]; then
+        log_info "未检测到 Playwright 安装，跳过浏览器安装"
+    fi
+
+    return 0
+}
+
 # 配置 server 环境变量
 setup_server_env() {
     log_info "配置 server 环境变量..."
@@ -1142,6 +1186,7 @@ main() {
 
     # 安装项目依赖
     install_npm_dependencies
+    install_playwright_browsers
     install_go_dependencies
 
     # 配置 server 环境

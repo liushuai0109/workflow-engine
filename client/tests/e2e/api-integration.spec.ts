@@ -26,7 +26,7 @@ test.describe('接口集成测试', () => {
   });
 
   test('前端可以调用后端API', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 监听网络请求
@@ -52,7 +52,7 @@ test.describe('接口集成测试', () => {
   });
 
   test('错误处理 - 错误消息显示', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     
     // 拦截API请求并返回错误
     await page.route('**/api/**', (route) => {

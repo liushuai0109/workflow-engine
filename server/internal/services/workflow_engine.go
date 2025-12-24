@@ -520,6 +520,11 @@ func (s *WorkflowEngineService) ExecuteNode(
 
 	// Execute node based on type
 	switch params.Node.Type {
+	case parser.NodeTypeTask:
+		// 普通 Task 直接执行，不调用外部服务
+		s.logger.Info().Str("nodeId", nodeId).Msg("Task executed (no operation)")
+		return &ExecuteResult{}, nil
+
 	case parser.NodeTypeServiceTask:
 		businessResponse, err := s.executeServiceTask(ctx, params.Node, params.BusinessParams, params.Variables)
 		if err != nil {

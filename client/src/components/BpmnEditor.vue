@@ -101,10 +101,11 @@ const debouncedSave = () => {
         if (LocalStorageService.isAvailable()) {
           LocalStorageService.saveDiagram(result.xml, 'Auto-saved Diagram')
         }
-        
-        // 注意：不在这里触发 changed 事件，避免在属性编辑时重新渲染
-        // 只在用户主动保存时才更新父组件的 currentDiagram
-        
+
+        // 触发 changed 事件，通知父组件 BPMN XML 已更新
+        // 这样可以确保在执行工作流时使用最新的 XML
+        emit('changed', result.xml)
+
         // 保存完成后恢复视口位置
         setTimeout(() => {
           // restoreViewbox()

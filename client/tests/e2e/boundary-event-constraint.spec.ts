@@ -13,7 +13,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 test.describe('BoundaryEvent 创建功能测试', () => {
   test('通过 Claude 创建带 BoundaryEvent 的 UserTask', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
@@ -48,7 +48,7 @@ test.describe('BoundaryEvent 创建功能测试', () => {
   });
 
   test('BoundaryEvent 正确附加到 UserTask', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 加载包含 BoundaryEvent 的 BPMN（通过聊天或文件上传）
@@ -131,7 +131,7 @@ test.describe('保存验证：阻止直接 UserTask outgoing', () => {
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 通过文件上传加载违规 BPMN
@@ -224,7 +224,7 @@ test.describe('保存验证：阻止直接 UserTask outgoing', () => {
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 通过文件上传加载符合约束的 BPMN
@@ -261,7 +261,7 @@ test.describe('保存验证：阻止直接 UserTask outgoing', () => {
 
 test.describe('LLM 生成符合约束的流程图', () => {
   test('LLM 自动遵守 UserTask 约束规则', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
@@ -333,7 +333,7 @@ test.describe('LLM 生成符合约束的流程图', () => {
     // 设置更长的超时时间，因为 AI 生成需要时间
     test.setTimeout(120000); // 2 分钟
 
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
@@ -443,7 +443,7 @@ test.describe('错误提示和用户体验', () => {
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
 
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     const fileInput = page.locator('input[type="file"]');

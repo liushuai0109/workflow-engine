@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Headless Browser Verification', () => {
   test('应用可以正常加载', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     
     // 等待页面加载完成
     await page.waitForLoadState('networkidle');
@@ -30,7 +30,7 @@ test.describe('Headless Browser Verification', () => {
 
   test('主要路由可以访问', async ({ page }) => {
     // 测试根路径
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     expect(page.url()).toContain('/');
     
@@ -46,7 +46,7 @@ test.describe('Headless Browser Verification', () => {
   });
 
   test('关键组件可以渲染', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 验证页面有内容（不是空白页）
@@ -69,7 +69,7 @@ test.describe('Headless Browser Verification', () => {
       }
     });
     
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 等待一段时间确保没有错误

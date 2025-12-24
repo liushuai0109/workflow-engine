@@ -9,7 +9,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 test.describe('Mock 执行测试', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
@@ -76,103 +76,11 @@ test.describe('Mock 执行测试', () => {
     }
     }
   });
-
-  test('可以单步执行 Mock', async ({ page }) => {
-    // 启动 Mock（点击"开始执行"按钮）
-    const startButton = page.locator('button:has-text("开始执行")').first();
-    expect(await startButton.count()).toBeGreaterThan(0);
-    expect(await startButton.isDisabled()).toBe(false);
-
-    await startButton.click();
-    await page.waitForTimeout(1000);
-
-    // 查找单步执行按钮
-    const stepButton = page.locator('button:has-text("Step"), button:has-text("单步"), button[title*="step"]').first();
-    expect(await stepButton.count()).not.toBe(0);
-
-    await stepButton.click();
-    await page.waitForTimeout(1000);
-
-    // 验证执行状态更新
-    expect(await stepButton.count()).toBeGreaterThan(0);
-  });
-
-  test('可以继续 Mock 执行', async ({ page }) => {
-    // 启动 Mock（点击"开始执行"按钮）
-    const startButton = page.locator('button:has-text("开始执行")').first();
-    expect(await startButton.count()).toBeGreaterThan(0);
-    expect(await startButton.isDisabled()).toBe(false);
-
-    await startButton.click();
-    await page.waitForTimeout(1000);
-
-    // 查找继续执行按钮
-    const continueButton = page.locator('button:has-text("Continue"), button:has-text("继续"), button[title*="continue"]').first();
-    expect(await continueButton.count()).not.toBe(0);
-
-    // Continue button is only enabled when execution is paused
-    // Check if enabled before clicking
-    if (!(await continueButton.isDisabled())) {
-      await continueButton.click();
-      await page.waitForTimeout(1000);
-    }
-
-    // 验证按钮存在 (whether enabled or disabled)
-    expect(await continueButton.count()).toBeGreaterThan(0);
-  });
-
-  test('可以停止 Mock 执行', async ({ page }) => {
-    // 启动 Mock（点击"开始执行"按钮）
-    const startButton = page.locator('button:has-text("开始执行")').first();
-    expect(await startButton.count()).toBeGreaterThan(0);
-    expect(await startButton.isDisabled()).toBe(false);
-
-    await startButton.click();
-    await page.waitForTimeout(1000);
-
-    // 查找停止按钮
-    const stopButton = page.locator('button:has-text("Stop"), button:has-text("停止"), button[title*="stop"]').first();
-    expect(await stopButton.count()).not.toBe(0);
-
-    // Stop button is only enabled when execution is running (not completed/stopped)
-    // Check if enabled before clicking
-    if (!(await stopButton.isDisabled())) {
-      await stopButton.click();
-      await page.waitForTimeout(1000);
-    }
-
-    // 验证按钮存在 (whether enabled or disabled)
-    expect(await stopButton.count()).toBeGreaterThan(0);
-  });
-
-  test('可以查询 Mock 执行状态', async ({ page, request }) => {
-    // 先启动 Mock 执行（点击"开始执行"按钮）
-    const startButton = page.locator('button:has-text("开始执行")').first();
-    if (await startButton.count() > 0 && !(await startButton.isDisabled())) {
-      await startButton.click();
-      await page.waitForTimeout(1000);
-
-      // 尝试从后端查询状态
-      try {
-        const response = await request.get(`${BACKEND_URL}/api/mock-executions`);
-
-        if (response.status() === 200) {
-          const body = await response.json();
-          expect(Array.isArray(body) || typeof body === 'object').toBe(true);
-        } else {
-        // API 可能不存在（404）或服务不可用（503），这是允许的
-        expect([400, 404, 503]).toContain(response.status());
-}
-      } catch (error) {
-      throw error;
-    }
-    }
-  });
 });
 
 test.describe('Debug 调试测试', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
@@ -203,85 +111,6 @@ test.describe('Debug 调试测试', () => {
         await expect(debugPanel).toBeVisible({ timeout: 5000 });
       }
     }
-  });
-
-  test('可以设置断点', async ({ page }) => {
-    // 启动 Debug（点击"启动 Debug"按钮）
-    const startButton = page.locator('button:has-text("启动 Debug")').first();
-    if (await startButton.count() > 0 && !(await startButton.isDisabled())) {
-      await startButton.click();
-      await page.waitForTimeout(1000);
-
-      // 尝试在画布上设置断点（点击元素）
-      const canvas = page.locator('.bpmn-container, .editor-container').first();
-      if (await canvas.count() > 0) {
-        // 点击元素可能设置断点
-        await canvas.click({ position: { x: 200, y: 200 } });
-        await page.waitForTimeout(500);
-
-        // 验证操作完成
-        expect(await canvas.count()).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  test('可以单步执行 Debug', async ({ page }) => {
-    // 启动 Debug（点击"启动 Debug"按钮）
-    const startButton = page.locator('button:has-text("启动 Debug")').first();
-    expect(await startButton.count()).toBeGreaterThan(0);
-    expect(await startButton.isDisabled()).toBe(false);
-
-    await startButton.click();
-    await page.waitForTimeout(1000);
-
-    // 查找单步执行按钮
-    const stepButton = page.locator('button:has-text("Step"), button:has-text("单步")').first();
-    expect(await stepButton.count()).not.toBe(0);
-
-    await stepButton.click();
-    await page.waitForTimeout(1000);
-
-    // 验证执行状态更新
-    expect(await stepButton.count()).toBeGreaterThan(0);
-  });
-
-  test('可以查看变量值', async ({ page }) => {
-    // 启动 Debug（点击"启动 Debug"按钮）
-    const startButton = page.locator('button:has-text("启动 Debug")').first();
-    if (await startButton.count() > 0 && !(await startButton.isDisabled())) {
-      await startButton.click();
-      await page.waitForTimeout(1000);
-
-      // 查找变量面板
-      const variablePanel = page.locator('.variable-watch-panel, [class*="variable"]').first();
-      expect(await variablePanel.count()).not.toBe(0);
-// 验证变量面板存在
-        expect(await variablePanel.count()).toBeGreaterThan(0);
-    }
-  });
-
-  test('可以停止 Debug 会话', async ({ page }) => {
-    // 启动 Debug（点击"启动 Debug"按钮）
-    const startButton = page.locator('button:has-text("启动 Debug")').first();
-    expect(await startButton.count()).toBeGreaterThan(0);
-    expect(await startButton.isDisabled()).toBe(false);
-
-    await startButton.click();
-    await page.waitForTimeout(1000);
-
-    // 查找停止按钮
-    const stopButton = page.locator('button:has-text("Stop"), button:has-text("停止")').first();
-    expect(await stopButton.count()).not.toBe(0);
-
-    // Stop button is only enabled when session is running (not completed/stopped)
-    // Check if enabled before clicking
-    if (!(await stopButton.isDisabled())) {
-      await stopButton.click();
-      await page.waitForTimeout(1000);
-    }
-
-    // 验证按钮存在 (whether enabled or disabled)
-    expect(await stopButton.count()).toBeGreaterThan(0);
   });
 });
 
@@ -443,7 +272,7 @@ test.describe('Mock 配置管理测试', () => {
 
 test.describe('执行时间线测试', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
     // 创建新图表

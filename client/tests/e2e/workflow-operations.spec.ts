@@ -9,7 +9,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 test.describe('工作流创建和编辑测试', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
   });
 
@@ -150,7 +150,7 @@ test.describe('工作流加载测试', () => {
   </bpmn:process>
 </bpmn:definitions>`;
     
-    await page.goto('/');
+    await page.goto('/editor');
     await page.waitForLoadState('networkidle');
     
     // 创建新图表并验证可以加载 XML

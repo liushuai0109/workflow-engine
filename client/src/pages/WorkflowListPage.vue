@@ -152,7 +152,9 @@ const loadWorkflows = async () => {
     )
 
     // Handle response structure safely
-    if (response && response.data) {
+    // Backend returns {success: true, data: [...] | null, metadata: {...}}
+    if (response && typeof response === 'object' && 'data' in response) {
+      // Handle null or undefined data as empty array
       workflows.value = Array.isArray(response.data) ? response.data : []
 
       if (response.metadata) {
