@@ -54,8 +54,8 @@ class LLMService {
   private model: string
 
   constructor() {
-    // 从环境变量或配置中获取，这里先硬编码
-    this.apiKey = '***REMOVED***'
+    // 从环境变量或配置中获取
+    this.apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
     this.baseUrl = 'https://api.aicodewith.com/api'
     this.model = 'gemini-3-pro-preview'
   }
