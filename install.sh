@@ -315,9 +315,9 @@ install_git() {
         log_success "git 已安装: $(git --version)"
         return 0
     fi
-    
+
     log_info "正在安装 git..."
-    
+
     if [ "$OS" == "macos" ]; then
         if ! command_exists brew; then
             install_homebrew
@@ -334,8 +334,50 @@ install_git() {
         log_error "无法自动安装 git，请手动安装"
         return 1
     fi
-    
+
     log_success "git 安装完成"
+}
+
+# 安装项目 npm 依赖
+install_npm_dependencies() {
+    if ! command_exists npm; then
+        log_error "npm 未安装，无法安装项目依赖"
+        return 1
+    fi
+
+    log_info "检查并安装项目 npm 依赖..."
+
+    # 安装 client 目录依赖
+    if [ -d "client" ]; then
+        if [ -d "client/node_modules" ] && [ -f "client/package.json" ]; then
+            log_success "client 依赖已安装"
+        else
+            log_info "正在安装 client 依赖..."
+            cd client
+            npm install
+            cd ..
+            log_success "client 依赖安装完成"
+        fi
+    else
+        log_warn "client 目录不存在，跳过"
+    fi
+
+    # 安装 biz-sample 目录依赖
+    if [ -d "biz-sample" ]; then
+        if [ -d "biz-sample/node_modules" ] && [ -f "biz-sample/package.json" ]; then
+            log_success "biz-sample 依赖已安装"
+        else
+            log_info "正在安装 biz-sample 依赖..."
+            cd biz-sample
+            npm install
+            cd ..
+            log_success "biz-sample 依赖安装完成"
+        fi
+    else
+        log_warn "biz-sample 目录不存在，跳过"
+    fi
+
+    return 0
 }
 
 # 验证安装
@@ -433,6 +475,9 @@ main() {
     install_go
     install_tmux
     install_postgresql
+
+    # 安装项目依赖
+    install_npm_dependencies
     
     echo ""
     log_info "安装完成，开始验证..."
@@ -442,10 +487,9 @@ main() {
     
     echo ""
     log_info "下一步操作："
-    echo "  1. 安装前端依赖: cd client && npm install"
-    echo "  2. 安装后端依赖: cd server && go mod download"
-    echo "  3. 配置数据库: 参考 server/DATABASE_SETUP.md"
-    echo "  4. 启动服务: ./console.sh start"
+    echo "  1. 安装后端依赖: cd server && go mod download"
+    echo "  2. 配置数据库: 参考 server/DATABASE_SETUP.md"
+    echo "  3. 启动服务: ./console.sh start"
     echo ""
 }
 
