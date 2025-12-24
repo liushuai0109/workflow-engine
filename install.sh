@@ -544,6 +544,54 @@ install_git() {
     log_success "git 安装完成"
 }
 
+# 安装 openspec
+install_openspec() {
+    # 检查 openspec 是否已经全局安装
+    if command_exists openspec; then
+        local current_version=$(openspec --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
+        log_success "openspec 已安装: v$current_version"
+        return 0
+    fi
+
+    log_info "正在全局安装 openspec..."
+
+    # 确保 npm 已安装
+    if ! command_exists npm; then
+        log_error "npm 未安装，无法安装 openspec"
+        return 1
+    fi
+
+    # 检查是否需要 sudo
+    local npm_prefix=$(npm config get prefix)
+    local use_sudo=false
+
+    # 如果 npm 全局安装目录需要 root 权限，则使用 sudo
+    if [ "$npm_prefix" = "/usr" ] || [ "$npm_prefix" = "/usr/local" ]; then
+        if [ ! -w "$npm_prefix/lib/node_modules" ]; then
+            use_sudo=true
+            check_sudo
+        fi
+    fi
+
+    # 执行全局安装
+    if [ "$use_sudo" = true ]; then
+        log_info "需要管理员权限安装全局 npm 包..."
+        sudo npm install -g @fission-ai/openspec@latest
+    else
+        npm install -g @fission-ai/openspec@latest
+    fi
+
+    # 验证安装
+    if command_exists openspec; then
+        local installed_version=$(openspec --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
+        log_success "openspec 安装完成: v$installed_version"
+        return 0
+    else
+        log_error "openspec 安装失败，请手动安装: npm install -g @fission-ai/openspec@latest"
+        return 1
+    fi
+}
+
 # 安装项目 npm 依赖
 install_npm_dependencies() {
     if ! command_exists npm; then
@@ -749,7 +797,15 @@ verify_installation() {
     else
         log_warn "⚠ git 未安装（可选，但推荐安装）"
     fi
-    
+
+    # 检查 openspec
+    if command_exists openspec; then
+        local openspec_version=$(openspec --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
+        log_success "✓ openspec: v$openspec_version"
+    else
+        log_warn "⚠ openspec 未安装（推荐安装以管理项目规范）"
+    fi
+
     if [ "$all_ok" = true ]; then
         log_success "所有必需工具已安装并验证通过！"
         return 0
@@ -778,6 +834,7 @@ main() {
     install_go
     install_tmux
     install_postgresql
+    install_openspec
 
     # 安装项目依赖
     install_npm_dependencies
