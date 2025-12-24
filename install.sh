@@ -51,7 +51,57 @@ detect_os() {
 
 # 检测命令是否存在
 command_exists() {
-    command -v "$1" >/dev/null 2>&1
+    # 先检查 PATH 中是否存在
+    if command -v "$1" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # 特殊处理 brew：检查常见的安装路径
+    if [ "$1" = "brew" ]; then
+        # Apple Silicon Mac
+        if [ -f "/opt/homebrew/bin/brew" ]; then
+            # 添加到 PATH
+            export PATH="/opt/homebrew/bin:$PATH"
+            return 0
+        fi
+        # Intel Mac
+        if [ -f "/usr/local/bin/brew" ]; then
+            export PATH="/usr/local/bin:$PATH"
+            return 0
+        fi
+    fi
+
+    # 特殊处理 go：检查常见的安装路径
+    if [ "$1" = "go" ]; then
+        # Homebrew 安装的 Go (Apple Silicon)
+        if [ -f "/opt/homebrew/bin/go" ]; then
+            export PATH="/opt/homebrew/bin:$PATH"
+            return 0
+        fi
+        # Homebrew 安装的 Go (Intel)
+        if [ -f "/usr/local/bin/go" ]; then
+            export PATH="/usr/local/bin:$PATH"
+            return 0
+        fi
+        # 标准 Go 安装路径
+        if [ -f "/usr/local/go/bin/go" ]; then
+            export PATH="/usr/local/go/bin:$PATH"
+            return 0
+        fi
+    fi
+
+    # 特殊处理 psql：检查常见的 PostgreSQL 安装路径
+    if [ "$1" = "psql" ]; then
+        # 检查常见的 Homebrew PostgreSQL 路径
+        for pg_path in /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin /opt/homebrew/opt/postgresql/bin /usr/local/opt/postgresql/bin; do
+            if [ -f "$pg_path/psql" ]; then
+                export PATH="$pg_path:$PATH"
+                return 0
+            fi
+        done
+    fi
+
+    return 1
 }
 
 # 检查是否需要 sudo
@@ -69,11 +119,102 @@ install_homebrew() {
     if ! command_exists brew; then
         log_info "正在安装 Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        
-        # 添加 Homebrew 到 PATH (Apple Silicon Mac)
+
+        # 添加 Homebrew 到 PATH
         if [[ $(uname -m) == "arm64" ]]; then
-            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+            # Apple Silicon Mac
+            export PATH="/opt/homebrew/bin:$PATH"
+
+            # 检测当前使用的 shell
+            local current_shell=$(basename "$SHELL")
+            local primary_rc=""
+
+            case "$current_shell" in
+                zsh)
+                    primary_rc="$HOME/.zshrc"
+                    ;;
+                bash)
+                    primary_rc="$HOME/.bash_profile"
+                    ;;
+                *)
+                    primary_rc="$HOME/.profile"
+                    ;;
+            esac
+
+            # 确保至少主配置文件有 Homebrew 配置
+            if [ ! -f "$primary_rc" ] || ! grep -q '/opt/homebrew/bin/brew' "$primary_rc" 2>/dev/null; then
+                log_info "添加 Homebrew 配置到 $primary_rc"
+                echo '' >> "$primary_rc"
+                echo '# Homebrew' >> "$primary_rc"
+                echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$primary_rc"
+            fi
+
+            # 更新其他已存在的配置文件
+            for rc_file in ~/.zprofile ~/.bash_profile ~/.bashrc ~/.zshrc ~/.profile; do
+                # 跳过主配置文件（已处理）
+                if [ "$rc_file" = "$primary_rc" ]; then
+                    continue
+                fi
+
+                if [ -f "$rc_file" ]; then
+                    if ! grep -q '/opt/homebrew/bin/brew' "$rc_file" 2>/dev/null; then
+                        log_info "添加 Homebrew 配置到 $rc_file"
+                        echo '' >> "$rc_file"
+                        echo '# Homebrew' >> "$rc_file"
+                        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$rc_file"
+                    fi
+                fi
+            done
+
+            # 执行 brew shellenv
             eval "$(/opt/homebrew/bin/brew shellenv)"
+        else
+            # Intel Mac
+            export PATH="/usr/local/bin:$PATH"
+
+            # 检测当前使用的 shell
+            local current_shell=$(basename "$SHELL")
+            local primary_rc=""
+
+            case "$current_shell" in
+                zsh)
+                    primary_rc="$HOME/.zshrc"
+                    ;;
+                bash)
+                    primary_rc="$HOME/.bash_profile"
+                    ;;
+                *)
+                    primary_rc="$HOME/.profile"
+                    ;;
+            esac
+
+            # 确保至少主配置文件有 Homebrew 配置
+            if [ ! -f "$primary_rc" ] || ! grep -q '/usr/local/bin/brew' "$primary_rc" 2>/dev/null; then
+                log_info "添加 Homebrew 配置到 $primary_rc"
+                echo '' >> "$primary_rc"
+                echo '# Homebrew' >> "$primary_rc"
+                echo 'eval "$(/usr/local/bin/brew shellenv)"' >> "$primary_rc"
+            fi
+
+            # 更新其他已存在的配置文件
+            for rc_file in ~/.bash_profile ~/.bashrc ~/.zshrc ~/.profile; do
+                # 跳过主配置文件（已处理）
+                if [ "$rc_file" = "$primary_rc" ]; then
+                    continue
+                fi
+
+                if [ -f "$rc_file" ]; then
+                    if ! grep -q '/usr/local/bin/brew' "$rc_file" 2>/dev/null; then
+                        log_info "添加 Homebrew 配置到 $rc_file"
+                        echo '' >> "$rc_file"
+                        echo '# Homebrew' >> "$rc_file"
+                        echo 'eval "$(/usr/local/bin/brew shellenv)"' >> "$rc_file"
+                    fi
+                fi
+            done
+
+            # 执行 brew shellenv
+            eval "$(/usr/local/bin/brew shellenv)"
         fi
         log_success "Homebrew 安装完成"
     else
@@ -202,24 +343,89 @@ install_go() {
 
 # 安装 PostgreSQL
 install_postgresql() {
+    # 检查 psql 是否可用
+    local psql_found=false
+
     if command_exists psql; then
-        log_info "PostgreSQL 已安装: $(psql --version)"
+        psql_found=true
+    else
+        # 检查常见的 PostgreSQL 安装路径
+        if [ "$OS" == "macos" ]; then
+            for pg_path in /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin /opt/homebrew/opt/postgresql/bin /usr/local/opt/postgresql/bin; do
+                if [ -f "$pg_path/psql" ]; then
+                    export PATH="$pg_path:$PATH"
+                    psql_found=true
+                    break
+                fi
+            done
+        fi
+    fi
+
+    if [ "$psql_found" = true ]; then
+        log_success "PostgreSQL 已安装: $(psql --version)"
         return 0
     fi
-    
+
     log_info "正在安装 PostgreSQL..."
-    
+
     if [ "$OS" == "macos" ]; then
         if ! command_exists brew; then
             install_homebrew
         fi
         brew install postgresql@15 || brew install postgresql
-        brew services start postgresql@15 || brew services start postgresql
-        
+
+        # 添加 PostgreSQL 到 PATH
+        local pg_bin_path=""
+        if [ -d "/opt/homebrew/opt/postgresql@15/bin" ]; then
+            pg_bin_path="/opt/homebrew/opt/postgresql@15/bin"
+        elif [ -d "/usr/local/opt/postgresql@15/bin" ]; then
+            pg_bin_path="/usr/local/opt/postgresql@15/bin"
+        elif [ -d "/opt/homebrew/opt/postgresql/bin" ]; then
+            pg_bin_path="/opt/homebrew/opt/postgresql/bin"
+        elif [ -d "/usr/local/opt/postgresql/bin" ]; then
+            pg_bin_path="/usr/local/opt/postgresql/bin"
+        fi
+
+        if [ -n "$pg_bin_path" ]; then
+            export PATH="$pg_bin_path:$PATH"
+
+            # 检测当前使用的 shell
+            local current_shell=$(basename "$SHELL")
+            local primary_rc=""
+
+            case "$current_shell" in
+                zsh)
+                    primary_rc="$HOME/.zshrc"
+                    ;;
+                bash)
+                    primary_rc="$HOME/.bash_profile"
+                    ;;
+                *)
+                    primary_rc="$HOME/.profile"
+                    ;;
+            esac
+
+            # 添加到主配置文件
+            if [ ! -f "$primary_rc" ] || ! grep -q "$pg_bin_path" "$primary_rc" 2>/dev/null; then
+                log_info "添加 PostgreSQL 到 $primary_rc"
+                echo '' >> "$primary_rc"
+                echo '# PostgreSQL' >> "$primary_rc"
+                echo "export PATH=\"$pg_bin_path:\$PATH\"" >> "$primary_rc"
+            fi
+        fi
+
+        # 启动服务
+        brew services start postgresql@15 2>/dev/null || brew services start postgresql 2>/dev/null
+        sleep 2  # 等待服务启动
+
         # 创建数据库（如果不存在）
-        if ! psql -lqt | cut -d \| -f 1 | grep -qw lifecycle_ops 2>/dev/null; then
-            log_info "创建数据库 lifecycle_ops..."
-            createdb lifecycle_ops 2>/dev/null || log_warn "无法自动创建数据库，请手动创建: createdb lifecycle_ops"
+        if command -v psql >/dev/null 2>&1; then
+            if ! psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw workflow_engine; then
+                log_info "创建数据库 workflow_engine..."
+                createdb workflow_engine 2>/dev/null || log_warn "无法自动创建数据库，请手动创建: createdb workflow_engine"
+            fi
+        else
+            log_warn "psql 命令不可用，跳过数据库创建"
         fi
     elif [ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ]; then
         check_sudo
@@ -229,8 +435,8 @@ install_postgresql() {
         sudo systemctl enable postgresql
         
         # 创建数据库
-        log_info "创建数据库 lifecycle_ops..."
-        sudo -u postgres psql -c "CREATE DATABASE lifecycle_ops;" 2>/dev/null || log_warn "数据库可能已存在"
+        log_info "创建数据库 workflow_engine..."
+        sudo -u postgres psql -c "CREATE DATABASE workflow_engine;" 2>/dev/null || log_warn "数据库可能已存在"
     elif [ "$OS" == "fedora" ] || [ "$OS" == "rhel" ] || [ "$OS" == "centos" ]; then
         check_sudo
         sudo yum install -y postgresql-server postgresql
@@ -239,8 +445,8 @@ install_postgresql() {
         sudo systemctl enable postgresql
         
         # 创建数据库
-        log_info "创建数据库 lifecycle_ops..."
-        sudo -u postgres psql -c "CREATE DATABASE lifecycle_ops;" 2>/dev/null || log_warn "数据库可能已存在"
+        log_info "创建数据库 workflow_engine..."
+        sudo -u postgres psql -c "CREATE DATABASE workflow_engine;" 2>/dev/null || log_warn "数据库可能已存在"
     else
         log_error "无法自动安装 PostgreSQL，请手动安装"
         return 1
@@ -380,6 +586,103 @@ install_npm_dependencies() {
     return 0
 }
 
+# 安装 Go 项目依赖
+install_go_dependencies() {
+    if ! command_exists go; then
+        log_error "Go 未安装，无法安装项目依赖"
+        return 1
+    fi
+
+    log_info "检查并安装 Go 项目依赖..."
+
+    # 安装 server 目录依赖
+    if [ -d "server" ]; then
+        if [ -f "server/go.mod" ]; then
+            cd server
+
+            # 检查是否需要下载依赖
+            if [ ! -f "go.sum" ] || [ ! -d "vendor" ]; then
+                log_info "正在下载 server Go 依赖..."
+                go mod download
+                log_success "server Go 依赖下载完成"
+            else
+                log_success "server Go 依赖已安装"
+            fi
+
+            # 检查依赖是否需要更新
+            if go mod verify >/dev/null 2>&1; then
+                log_success "server Go 依赖验证通过"
+            else
+                log_warn "server Go 依赖需要更新，正在更新..."
+                go mod download
+                log_success "server Go 依赖更新完成"
+            fi
+
+            cd ..
+        else
+            log_warn "server/go.mod 不存在，跳过"
+        fi
+    else
+        log_warn "server 目录不存在，跳过"
+    fi
+
+    return 0
+}
+
+# 配置 server 环境变量
+setup_server_env() {
+    log_info "配置 server 环境变量..."
+
+    if [ ! -d "server" ]; then
+        log_warn "server 目录不存在，跳过"
+        return 0
+    fi
+
+    # 检查 .env 文件是否存在
+    if [ -f "server/.env" ]; then
+        log_success "server/.env 已存在"
+        return 0
+    fi
+
+    # 检查 .env.example 是否存在
+    if [ ! -f "server/.env.example" ]; then
+        log_warn "server/.env.example 不存在，无法自动配置"
+        return 0
+    fi
+
+    # 复制 .env.example 到 .env
+    log_info "从 .env.example 创建 .env 文件..."
+    cp server/.env.example server/.env
+
+    # 根据操作系统配置数据库密码
+    if [ "$OS" == "macos" ]; then
+        # macOS 上 Homebrew 安装的 PostgreSQL 默认不需要密码
+        # 使用当前用户名作为数据库用户
+        local current_user=$(whoami)
+
+        # 更新 .env 文件中的数据库配置
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/DB_USER=postgres/DB_USER=$current_user/g" server/.env
+            sed -i '' "s/DB_PASSWORD=your_password_here/DB_PASSWORD=/g" server/.env
+            sed -i '' "s/DB_NAME=workflow_engine/DB_NAME=workflow_engine/g" server/.env
+        else
+            sed -i "s/DB_USER=postgres/DB_USER=$current_user/g" server/.env
+            sed -i "s/DB_PASSWORD=your_password_here/DB_PASSWORD=/g" server/.env
+            sed -i "s/DB_NAME=workflow_engine/DB_NAME=workflow_engine/g" server/.env
+        fi
+
+        log_success "server/.env 已创建（macOS 默认配置）"
+        log_info "数据库用户: $current_user"
+        log_info "数据库密码: (空)"
+        log_info "数据库名称: workflow_engine"
+    else
+        log_success "server/.env 已创建"
+        log_warn "请手动编辑 server/.env 文件，配置数据库密码"
+    fi
+
+    return 0
+}
+
 # 验证安装
 verify_installation() {
     log_info "验证安装..."
@@ -478,7 +781,11 @@ main() {
 
     # 安装项目依赖
     install_npm_dependencies
-    
+    install_go_dependencies
+
+    # 配置 server 环境
+    setup_server_env
+
     echo ""
     log_info "安装完成，开始验证..."
     echo ""
@@ -487,9 +794,8 @@ main() {
     
     echo ""
     log_info "下一步操作："
-    echo "  1. 安装后端依赖: cd server && go mod download"
-    echo "  2. 配置数据库: 参考 server/DATABASE_SETUP.md"
-    echo "  3. 启动服务: ./console.sh start"
+    echo "  1. 配置数据库: 参考 server/DATABASE_SETUP.md"
+    echo "  2. 启动服务: ./console.sh start"
     echo ""
 }
 

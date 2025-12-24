@@ -9,6 +9,30 @@
 
 set -e
 
+# 初始化环境：确保 Homebrew 和其他工具在 PATH 中
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS: 添加 Homebrew 路径
+    if [[ $(uname -m) == "arm64" ]]; then
+        # Apple Silicon
+        if [ -f "/opt/homebrew/bin/brew" ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        fi
+    else
+        # Intel Mac
+        if [ -f "/usr/local/bin/brew" ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+        fi
+    fi
+
+    # 添加 PostgreSQL 路径
+    for pg_path in /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin; do
+        if [ -d "$pg_path" ]; then
+            export PATH="$pg_path:$PATH"
+            break
+        fi
+    done
+fi
+
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -48,7 +72,7 @@ get_local_ip() {
 
     # 方法 2: 使用 ip 命令 (Linux)
     if [ -z "$ip" ] && command -v ip &> /dev/null; then
-        ip=$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'src \K\S+')
+        ip=$(ip route get 1.1.1.1 2>/dev/null | grep -o 'src [0-9.]*' | awk '{print $2}')
     fi
 
     # 方法 3: 使用 ifconfig (macOS/BSD)
@@ -117,12 +141,12 @@ get_port_pid() {
 
     # 方法 2: 使用 ss (Linux)
     if [ -z "$pid" ] && command -v ss &> /dev/null; then
-        pid=$(ss -tlnp 2>/dev/null | grep ":$port " | grep -oP 'pid=\K\d+' | head -n 1)
+        pid=$(ss -tlnp 2>/dev/null | grep ":$port " | sed -n 's/.*pid=\([0-9]*\).*/\1/p' | head -n 1)
     fi
 
     # 方法 3: 使用 netstat (Linux/macOS)
     if [ -z "$pid" ] && command -v netstat &> /dev/null; then
-        pid=$(netstat -tlnp 2>/dev/null | grep ":$port " | grep -oP '\d+/\w+' | cut -d'/' -f1 | head -n 1)
+        pid=$(netstat -tlnp 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1 | head -n 1)
         # macOS 的 netstat 格式不同
         if [ -z "$pid" ]; then
             pid=$(netstat -anv 2>/dev/null | grep ":$port " | grep LISTEN | awk '{print $9}' | head -n 1)
@@ -352,12 +376,34 @@ start_server() {
 
     # 检查 Go 是否安装
     if ! command -v go &> /dev/null; then
-        # 尝试使用已知的 Go 路径
-        if [ -f "/data/mm64/simonsliu/go/bin/go" ]; then
+        # 尝试常见的 Go 安装路径
+        local go_found=false
+
+        # Homebrew 安装的 Go (Apple Silicon)
+        if [ -f "/opt/homebrew/bin/go" ]; then
+            export PATH="/opt/homebrew/bin:$PATH"
+            go_found=true
+            log_info "使用 Go: /opt/homebrew/bin/go"
+        # Homebrew 安装的 Go (Intel)
+        elif [ -f "/usr/local/bin/go" ]; then
+            export PATH="/usr/local/bin:$PATH"
+            go_found=true
+            log_info "使用 Go: /usr/local/bin/go"
+        # 标准 Go 安装路径
+        elif [ -f "/usr/local/go/bin/go" ]; then
+            export PATH="/usr/local/go/bin:$PATH"
+            go_found=true
+            log_info "使用 Go: /usr/local/go/bin/go"
+        # 自定义路径
+        elif [ -f "/data/mm64/simonsliu/go/bin/go" ]; then
             export PATH="/data/mm64/simonsliu/go/bin:$PATH"
+            go_found=true
             log_info "使用 Go: /data/mm64/simonsliu/go/bin/go"
-        else
+        fi
+
+        if [ "$go_found" = false ]; then
             log_error "Go 未安装，请先安装 Go"
+            log_info "安装方法: brew install go"
             exit 1
         fi
     fi

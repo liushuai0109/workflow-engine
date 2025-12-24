@@ -84,7 +84,7 @@ npm run test:e2e:auto:headless
 
 要启用数据库支持，确保：
 1. PostgreSQL 已安装并运行
-2. 数据库 `lifecycle_ops` 已创建
+2. 数据库 `workflow_engine` 已创建
 3. 用户权限配置正确
 
 参考：`server/DATABASE_SETUP.md`
@@ -117,7 +117,7 @@ pg_isready -h localhost -p 5432
 cat server/.env | grep DB_
 
 # 手动连接测试
-psql -h localhost -p 5432 -U postgres -d lifecycle_ops
+psql -h localhost -p 5432 -U postgres -d workflow_engine
 ```
 
 ##### 3. 前端启动失败

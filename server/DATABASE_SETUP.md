@@ -46,9 +46,9 @@ sudo systemctl status postgresql
 sudo -u postgres psql
 
 # 在 psql 中执行以下命令：
-CREATE DATABASE lifecycle_ops;
+CREATE DATABASE workflow_engine;
 CREATE USER postgres WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE lifecycle_ops TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE workflow_engine TO postgres;
 \q
 ```
 
@@ -78,7 +78,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=your_password  # 使用上面设置的密码
-DB_NAME=lifecycle_ops
+DB_NAME=workflow_engine
 DB_DISABLED=false
 ```
 
@@ -98,7 +98,7 @@ make migrate-up
 
 ```bash
 # 测试连接
-psql -h localhost -U postgres -d lifecycle_ops -c "\dt"
+psql -h localhost -U postgres -d workflow_engine -c "\dt"
 
 # 应该能看到表列表，包括 chat_conversations 和 chat_messages
 ```
@@ -112,7 +112,7 @@ DB_HOST=your-db-host
 DB_PORT=5432
 DB_USER=your-username
 DB_PASSWORD=your-password
-DB_NAME=lifecycle_ops
+DB_NAME=workflow_engine
 DB_DISABLED=false
 ```
 
@@ -149,7 +149,7 @@ sudo tail -f /var/lib/pgsql/data/log/postgresql-*.log
    - 解决：检查 `.env` 文件中的 `DB_USER` 和 `DB_PASSWORD`
 
 3. **database does not exist**: 数据库不存在
-   - 解决：运行 `CREATE DATABASE lifecycle_ops;`
+   - 解决：运行 `CREATE DATABASE workflow_engine;`
 
 4. **relation does not exist**: 表不存在
    - 解决：运行 `make migrate-up` 创建表结构

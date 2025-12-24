@@ -28,7 +28,7 @@ Anthropic Claude API
 
 ```bash
 # Claude API Configuration
-CLAUDE_API_KEY=***REMOVED***
+CLAUDE_API_KEY=your_claude_api_key_here
 CLAUDE_BASE_URL=https://api.jiekou.ai
 ```
 

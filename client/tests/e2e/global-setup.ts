@@ -83,7 +83,7 @@ function checkDatabase(): boolean {
   const envFile = join(serverDir, '.env');
   
   // 读取数据库配置
-  let dbName = 'lifecycle_ops';
+  let dbName = 'workflow_engine';
   let dbUser = 'postgres';
   let dbPassword = '';
   

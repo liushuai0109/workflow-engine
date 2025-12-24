@@ -283,7 +283,7 @@ CMD ["./server"]
 | `DB_PORT` | 5432 | 数据库端口 |
 | `DB_USER` | postgres | 数据库用户 |
 | `DB_PASSWORD` | - | 数据库密码 |
-| `DB_NAME` | lifecycle_ops | 数据库名称 |
+| `DB_NAME` | workflow_engine | 数据库名称 |
 | `DB_DISABLED` | false | 是否禁用数据库 |
 | `CLAUDE_API_BASE_URL` | https://api.jiekou.ai | Claude API 基础 URL |
 | `CLAUDE_API_KEY` | - | Claude API 密钥 |

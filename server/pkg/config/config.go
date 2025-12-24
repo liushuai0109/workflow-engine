@@ -46,7 +46,7 @@ func LoadConfig() (*Config, error) {
 			Port:     getEnvAsInt("DB_PORT", 5432),
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", ""),
-			DBName:   getEnv("DB_NAME", "lifecycle_ops"),
+			DBName:   getEnv("DB_NAME", "workflow_engine"),
 			Disabled: getEnvAsBool("DB_DISABLED", false),
 		},
 		Claude: ClaudeConfig{

@@ -17,7 +17,7 @@
 
 3. **数据库** - PostgreSQL
    - 默认端口：5432
-   - 数据库名：`lifecycle_ops`
+   - 数据库名：`workflow_engine`
    - 需要运行 migrations
 
 ## Kubernetes 化方案
@@ -350,7 +350,7 @@ spec:
             sleep 2
           done
           # 运行迁移（需要 migrate 工具）
-          # migrate -path /app/migrations -database "postgres://postgres:$(DB_PASSWORD)@postgres-service:5432/lifecycle_ops?sslmode=disable" up
+          # migrate -path /app/migrations -database "postgres://postgres:$(DB_PASSWORD)@postgres-service:5432/workflow_engine?sslmode=disable" up
         env:
         - name: DB_HOST
           valueFrom:
@@ -550,7 +550,7 @@ data:
   DB_HOST: "postgres-service"
   DB_PORT: "5432"
   DB_USER: "postgres"
-  DB_NAME: "lifecycle_ops"
+  DB_NAME: "workflow_engine"
   DB_DISABLED: "false"
   CORS_ORIGIN: "http://localhost:8000,http://editor.workflow.com:8000"
   CLAUDE_API_BASE_URL: "https://api.jiekou.ai"
@@ -817,7 +817,7 @@ DB_HOST=postgres-service
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
-DB_NAME=lifecycle_ops
+DB_NAME=workflow_engine
 DB_DISABLED=false
 
 # 服务器配置
