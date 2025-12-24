@@ -101,6 +101,18 @@ command_exists() {
         done
     fi
 
+    # 特殊处理 migrate：检查 GOPATH/bin
+    if [ "$1" = "migrate" ]; then
+        # 检查 GOPATH/bin
+        if command -v go >/dev/null 2>&1; then
+            local gopath=$(go env GOPATH 2>/dev/null)
+            if [ -n "$gopath" ] && [ -f "$gopath/bin/migrate" ]; then
+                export PATH="$gopath/bin:$PATH"
+                return 0
+            fi
+        fi
+    fi
+
     return 1
 }
 
@@ -420,9 +432,36 @@ install_postgresql() {
 
         # 创建数据库（如果不存在）
         if command -v psql >/dev/null 2>&1; then
+            local current_user=$(whoami)
             if ! psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw workflow_engine; then
                 log_info "创建数据库 workflow_engine..."
-                createdb workflow_engine 2>/dev/null || log_warn "无法自动创建数据库，请手动创建: createdb workflow_engine"
+                if createdb workflow_engine 2>/dev/null; then
+                    log_success "数据库创建成功"
+
+                    # 确保 public schema 的所有者是当前用户（PostgreSQL 15+ 需要）
+                    log_info "配置数据库权限..."
+                    psql -d workflow_engine -c "ALTER SCHEMA public OWNER TO $current_user;" 2>/dev/null || log_warn "设置 schema 所有者可能失败"
+
+                    # 确保当前用户有所有权限
+                    psql -d workflow_engine -c "GRANT ALL ON SCHEMA public TO $current_user;" 2>/dev/null || true
+                    psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $current_user;" 2>/dev/null || true
+                    psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $current_user;" 2>/dev/null || true
+                    psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $current_user;" 2>/dev/null || true
+                    psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $current_user;" 2>/dev/null || true
+                else
+                    log_warn "无法自动创建数据库，请手动创建: createdb workflow_engine"
+                fi
+            else
+                log_success "数据库已存在"
+
+                # 即使数据库已存在，也要确保权限正确（PostgreSQL 15+ 兼容性）
+                log_info "检查并配置数据库权限..."
+                psql -d workflow_engine -c "ALTER SCHEMA public OWNER TO $current_user;" 2>/dev/null || log_warn "设置 schema 所有者可能失败"
+                psql -d workflow_engine -c "GRANT ALL ON SCHEMA public TO $current_user;" 2>/dev/null || true
+                psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $current_user;" 2>/dev/null || true
+                psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $current_user;" 2>/dev/null || true
+                psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $current_user;" 2>/dev/null || true
+                psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $current_user;" 2>/dev/null || true
             fi
         else
             log_warn "psql 命令不可用，跳过数据库创建"
@@ -592,6 +631,72 @@ install_openspec() {
     fi
 }
 
+# 安装 golang-migrate
+install_migrate() {
+    # 检查 migrate 是否已经安装
+    if command_exists migrate; then
+        log_success "golang-migrate 已安装: $(migrate -version 2>/dev/null || echo 'unknown')"
+        return 0
+    fi
+
+    log_info "正在安装 golang-migrate..."
+
+    # 确保 Go 已安装
+    if ! command_exists go; then
+        log_error "Go 未安装，无法安装 golang-migrate"
+        return 1
+    fi
+
+    # 使用 go install 安装 migrate 工具
+    log_info "使用 go install 安装 migrate 工具..."
+    if go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest; then
+        log_success "golang-migrate 安装完成"
+
+        # 确保 GOPATH/bin 在 PATH 中
+        local gopath=$(go env GOPATH)
+        if [ -n "$gopath" ]; then
+            export PATH="$gopath/bin:$PATH"
+
+            # 检测当前使用的 shell
+            local current_shell=$(basename "$SHELL")
+            local primary_rc=""
+
+            case "$current_shell" in
+                zsh)
+                    primary_rc="$HOME/.zshrc"
+                    ;;
+                bash)
+                    primary_rc="$HOME/.bash_profile"
+                    ;;
+                *)
+                    primary_rc="$HOME/.profile"
+                    ;;
+            esac
+
+            # 添加 GOPATH/bin 到配置文件
+            if [ ! -f "$primary_rc" ] || ! grep -q "GOPATH/bin" "$primary_rc" 2>/dev/null; then
+                log_info "添加 GOPATH/bin 到 $primary_rc"
+                echo '' >> "$primary_rc"
+                echo '# Go binaries' >> "$primary_rc"
+                echo 'export PATH="$(go env GOPATH)/bin:$PATH"' >> "$primary_rc"
+            fi
+        fi
+
+        # 验证安装
+        if command_exists migrate; then
+            log_success "✓ migrate: $(migrate -version 2>/dev/null || echo 'installed')"
+            return 0
+        else
+            log_warn "migrate 已安装但不在 PATH 中，请重启终端或运行: export PATH=\"\$(go env GOPATH)/bin:\$PATH\""
+            return 0
+        fi
+    else
+        log_error "golang-migrate 安装失败"
+        log_info "你可以稍后手动安装: go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest"
+        return 1
+    fi
+}
+
 # 安装项目 npm 依赖
 install_npm_dependencies() {
     if ! command_exists npm; then
@@ -731,6 +836,197 @@ setup_server_env() {
     return 0
 }
 
+# 配置 hosts 文件
+configure_hosts() {
+    log_info "配置 hosts 文件..."
+
+    local hosts_file="/etc/hosts"
+    local hosts_entries=(
+        "127.0.0.1 editor.workflow.com"
+        "127.0.0.1 api.workflow.com"
+    )
+
+    # 检查 hosts 文件是否存在
+    if [ ! -f "$hosts_file" ]; then
+        log_error "hosts 文件不存在: $hosts_file"
+        return 1
+    fi
+
+    # 检查是否需要添加配置
+    local needs_update=false
+    for entry in "${hosts_entries[@]}"; do
+        local domain=$(echo "$entry" | awk '{print $2}')
+        if ! grep -q "$domain" "$hosts_file" 2>/dev/null; then
+            needs_update=true
+            break
+        fi
+    done
+
+    if [ "$needs_update" = false ]; then
+        log_success "hosts 配置已存在"
+        return 0
+    fi
+
+    # 需要 sudo 权限来修改 hosts 文件
+    check_sudo
+
+    # 备份 hosts 文件
+    log_info "备份 hosts 文件..."
+    sudo cp "$hosts_file" "${hosts_file}.backup.$(date +%Y%m%d_%H%M%S)"
+
+    # 添加配置
+    log_info "添加 hosts 配置..."
+    for entry in "${hosts_entries[@]}"; do
+        local domain=$(echo "$entry" | awk '{print $2}')
+        if ! grep -q "$domain" "$hosts_file" 2>/dev/null; then
+            echo "$entry" | sudo tee -a "$hosts_file" >/dev/null
+            log_success "已添加: $entry"
+        else
+            log_success "已存在: $entry"
+        fi
+    done
+
+    log_success "hosts 配置完成"
+    return 0
+}
+
+# 配置数据库用户权限
+configure_database_permissions() {
+    log_info "配置数据库用户权限..."
+
+    # 检查 server/.env 文件是否存在
+    if [ ! -f "server/.env" ]; then
+        log_warn "server/.env 不存在，跳过权限配置"
+        return 0
+    fi
+
+    # 检查 PostgreSQL 是否可用
+    if ! command_exists psql; then
+        log_warn "PostgreSQL 未安装，跳过权限配置"
+        return 0
+    fi
+
+    # 读取 .env 文件中的数据库配置
+    local db_user=$(grep "^DB_USER=" server/.env | cut -d'=' -f2 | tr -d ' "')
+    local db_name=$(grep "^DB_NAME=" server/.env | cut -d'=' -f2 | tr -d ' "')
+    local db_disabled=$(grep "^DB_DISABLED=" server/.env | cut -d'=' -f2 | tr -d ' "' || echo "false")
+
+    if [ "$db_disabled" = "true" ]; then
+        log_info "数据库已禁用（DB_DISABLED=true），跳过权限配置"
+        return 0
+    fi
+
+    if [ -z "$db_user" ] || [ -z "$db_name" ]; then
+        log_warn "数据库配置不完整，跳过权限配置"
+        return 0
+    fi
+
+    # 检查数据库是否存在
+    if ! psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "$db_name"; then
+        log_warn "数据库 $db_name 不存在，跳过权限配置"
+        return 0
+    fi
+
+    log_info "为用户 $db_user 配置数据库 $db_name 的权限..."
+
+    # 设置 public schema 的所有者为 DB_USER（PostgreSQL 15+ 需要）
+    if psql -d "$db_name" -c "ALTER SCHEMA public OWNER TO $db_user;" 2>/dev/null; then
+        log_success "成功设置 schema 所有者为 $db_user"
+    else
+        log_warn "设置 schema 所有者失败，可能用户不存在或权限不足"
+    fi
+
+    # 授予所有权限
+    psql -d "$db_name" -c "GRANT ALL ON SCHEMA public TO $db_user;" 2>/dev/null || true
+    psql -d "$db_name" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $db_user;" 2>/dev/null || true
+    psql -d "$db_name" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $db_user;" 2>/dev/null || true
+    psql -d "$db_name" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $db_user;" 2>/dev/null || true
+    psql -d "$db_name" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $db_user;" 2>/dev/null || true
+
+    log_success "数据库权限配置完成"
+    return 0
+}
+
+# 运行数据库迁移
+run_database_migration() {
+    log_info "运行数据库迁移..."
+
+    # 检查 server 目录是否存在
+    if [ ! -d "server" ]; then
+        log_warn "server 目录不存在，跳过数据库迁移"
+        return 0
+    fi
+
+    # 检查 .env 文件是否存在
+    if [ ! -f "server/.env" ]; then
+        log_warn "server/.env 不存在，跳过数据库迁移"
+        log_info "请先配置 server/.env 文件后手动运行: cd server && make migrate-up"
+        return 0
+    fi
+
+    # 检查 migrations 目录是否存在
+    if [ ! -d "server/migrations" ]; then
+        log_warn "server/migrations 目录不存在，跳过数据库迁移"
+        return 0
+    fi
+
+    # 读取 .env 文件中的 DB_DISABLED 配置
+    local db_disabled=$(grep "^DB_DISABLED=" server/.env | cut -d'=' -f2 | tr -d ' "' || echo "false")
+    if [ "$db_disabled" = "true" ]; then
+        log_info "数据库已禁用（DB_DISABLED=true），跳过数据库迁移"
+        return 0
+    fi
+
+    # 检查 Go 是否安装
+    if ! command_exists go; then
+        log_error "Go 未安装，无法运行数据库迁移"
+        return 1
+    fi
+
+    # 检查 PostgreSQL 是否可用
+    if ! command_exists psql; then
+        log_warn "PostgreSQL 未安装，跳过数据库迁移"
+        return 0
+    fi
+
+    # 进入 server 目录
+    cd server
+
+    # 加载环境变量
+    log_info "加载数据库配置..."
+    export $(grep -v '^#' .env | grep -v '^$' | xargs)
+
+    # 检查必需的环境变量
+    if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ]; then
+        log_error "数据库配置不完整，请检查 server/.env 文件"
+        cd ..
+        return 1
+    fi
+
+    # 检查数据库连接
+    log_info "检查数据库连接..."
+    if ! psql -h "${DB_HOST}" -U "${DB_USER}" -d "${DB_NAME}" -c "SELECT 1" >/dev/null 2>&1; then
+        log_warn "无法连接到数据库，跳过迁移"
+        log_info "请确保 PostgreSQL 服务正在运行，并且配置正确"
+        cd ..
+        return 0
+    fi
+
+    # 运行迁移
+    log_info "正在运行数据库迁移..."
+    if make migrate-up; then
+        log_success "数据库迁移完成"
+    else
+        log_error "数据库迁移失败"
+        log_info "你可以稍后手动运行: cd server && make migrate-up"
+        cd ..
+        return 1
+    fi
+
+    cd ..
+    return 0
+}
+
 # 验证安装
 verify_installation() {
     log_info "验证安装..."
@@ -798,6 +1094,13 @@ verify_installation() {
         log_warn "⚠ git 未安装（可选，但推荐安装）"
     fi
 
+    # 检查 migrate
+    if command_exists migrate; then
+        log_success "✓ migrate: $(migrate -version 2>/dev/null || echo 'installed')"
+    else
+        log_warn "⚠ migrate 未安装（数据库迁移工具，推荐安装）"
+    fi
+
     # 检查 openspec
     if command_exists openspec; then
         local openspec_version=$(openspec --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
@@ -834,6 +1137,7 @@ main() {
     install_go
     install_tmux
     install_postgresql
+    install_migrate
     install_openspec
 
     # 安装项目依赖
@@ -842,6 +1146,15 @@ main() {
 
     # 配置 server 环境
     setup_server_env
+
+    # 配置数据库用户权限
+    configure_database_permissions
+
+    # 运行数据库迁移
+    run_database_migration
+
+    # 配置 hosts 文件
+    configure_hosts
 
     echo ""
     log_info "安装完成，开始验证..."
