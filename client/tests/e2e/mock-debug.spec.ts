@@ -13,7 +13,7 @@ test.describe('Mock 执行测试', () => {
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -84,7 +84,7 @@ test.describe('Debug 调试测试', () => {
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -276,7 +276,7 @@ test.describe('执行时间线测试', () => {
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);

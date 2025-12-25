@@ -4,7 +4,8 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/workflows'
+    name: 'Home',
+    component: () => import('../pages/HomePage.vue')
   },
   {
     path: '/workflows',

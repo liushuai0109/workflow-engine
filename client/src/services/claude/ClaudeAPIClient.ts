@@ -226,6 +226,17 @@ export class ClaudeAPIClient {
   ): Promise<ClaudeAPIResponse> {
     const requestBody = this.buildRequestBody(messages, options, false, tools)
 
+    // 调试：打印请求信息
+    console.log('🌐 API Request:', {
+      model: requestBody.model,
+      messagesCount: requestBody.messages.length,
+      hasSystem: !!requestBody.system,
+      systemType: typeof requestBody.system,
+      systemPreview: requestBody.system ? (typeof requestBody.system === 'string' ? requestBody.system.substring(0, 100) : JSON.stringify(requestBody.system).substring(0, 100)) : 'none',
+      toolsCount: requestBody.tools?.length || 0,
+      temperature: requestBody.temperature
+    })
+
     const response = await fetch(`${this.baseUrl}/v1/messages`, {
       method: 'POST',
       headers: this.getHeaders(),

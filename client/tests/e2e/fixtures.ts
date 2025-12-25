@@ -171,7 +171,7 @@ export async function waitForEditorLoad(page: Page, timeout = 10000): Promise<vo
 
 // 辅助函数：创建新图表
 export async function createNewDiagram(page: Page): Promise<void> {
-  const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("新")').first();
+  const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("新")').first();
   if (await newButton.count() > 0) {
     await newButton.click();
     await waitForEditorLoad(page);

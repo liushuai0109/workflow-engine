@@ -1,0 +1,18 @@
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "exec": "./start-wrapper.sh",
+  "delay": 2000,
+  "signal": "SIGTERM",
+  "verbose": true,
+  "restartable": "rs",
+  "legacyWatch": false,
+  "killTimeout": 3000,
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "events": {
+    "restart": "echo '[nodemon] Restarting due to file changes...'"
+  }
+}

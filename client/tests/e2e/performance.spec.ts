@@ -23,7 +23,7 @@ test.describe('编辑器性能测试', () => {
     await page.waitForLoadState('networkidle');
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       
@@ -58,7 +58,7 @@ test.describe('编辑器性能测试', () => {
     const startTime = Date.now();
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 await newButton.click();
       await page.waitForTimeout(2000);
@@ -74,7 +74,7 @@ await newButton.click();
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
     await newButton.click();
     await page.waitForTimeout(3000);
@@ -105,7 +105,7 @@ await newButton.click();
     await page.waitForLoadState('networkidle');
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -135,7 +135,7 @@ await newButton.click();
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
     await newButton.click();
     await page.waitForTimeout(3000);
@@ -247,7 +247,7 @@ test.describe('内存泄漏测试', () => {
     
     // 执行多次操作
     for (let i = 0; i < 10; i++) {
-      const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+      const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
       if (await newButton.count() > 0) {
         await newButton.click();
         await page.waitForTimeout(1000);
@@ -281,7 +281,7 @@ test.describe('内存泄漏测试', () => {
     
     // 多次加载和卸载
     for (let i = 0; i < 5; i++) {
-      const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+      const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
       if (await newButton.count() > 0) {
         await newButton.click();
         await page.waitForTimeout(1000);
@@ -309,7 +309,7 @@ test.describe('内存泄漏测试', () => {
     await page.waitForLoadState('networkidle');
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -323,7 +323,7 @@ test.describe('内存泄漏测试', () => {
       await page.waitForLoadState('networkidle');
       
       // 验证编辑器可以重新创建
-      const newButton2 = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+      const newButton2 = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
       if (await newButton2.count() > 0) {
         await newButton2.click();
         await page.waitForTimeout(2000);

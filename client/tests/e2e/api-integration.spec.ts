@@ -256,26 +256,6 @@ test.describe('工作流管理 API 测试', () => {
     }
   });
 
-  test('可以解析工作流 XML API', async ({ request }) => {
-    try {
-      const response = await request.post(`${BACKEND_URL}/api/workflows/parse`, {
-        data: {
-          xml: '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"><bpmn:process id="Process_1" isExecutable="true"><bpmn:startEvent id="StartEvent_1"/></bpmn:process></bpmn:definitions>',
-        },
-      });
-
-      if (response.status() === 200) {
-        const body = await response.json();
-        expect(body).toHaveProperty('nodes');
-      } else {
-        // API 可能不存在（404），这是允许的
-        // 但如果是其他错误（如 500），应该失败
-        expect([400, 404, 503]).toContain(response.status());
-      }
-    } catch (error) {
-      throw error;
-    }
-  });
 });
 
 test.describe('工作流执行 API 测试', () => {

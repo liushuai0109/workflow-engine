@@ -15,7 +15,7 @@ test.describe('工作流创建和编辑测试', () => {
 
   test('可以创建完整工作流', async ({ page }) => {
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -34,7 +34,7 @@ test.describe('工作流创建和编辑测试', () => {
 
   test('可以编辑工作流元素', async ({ page }) => {
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -50,7 +50,7 @@ test.describe('工作流创建和编辑测试', () => {
 
   test('工作流保存到后端', async ({ page, request }) => {
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -154,7 +154,7 @@ test.describe('工作流加载测试', () => {
     await page.waitForLoadState('networkidle');
     
     // 创建新图表并验证可以加载 XML
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);

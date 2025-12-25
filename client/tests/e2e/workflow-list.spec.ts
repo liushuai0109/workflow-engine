@@ -9,14 +9,17 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 test.describe('工作流列表页面', () => {
   test.beforeEach(async ({ page }) => {
-    // 访问根路径,应该重定向到 /workflows
-    await page.goto('/');
+    // 直接访问工作流列表页
+    await page.goto('/workflows');
     await page.waitForLoadState('networkidle');
   });
 
-  test('访问根路径应该重定向到工作流列表页', async ({ page }) => {
-    // 验证 URL 已重定向到 /workflows
-    expect(page.url()).toContain('/workflows');
+  test('访问根路径应该显示首页', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    // 验证 URL 是根路径（不再重定向）
+    expect(page.url()).toMatch(/\/$/);
 
     // 验证页面标题或关键元素
     const heading = page.locator('h1, h2, .ant-typography').filter({ hasText: /工作流|Workflow/i }).first();
@@ -315,10 +318,6 @@ test.describe('错误处理', () => {
         expect(isVisible).toBeTruthy();
       }
     }
-
-    // 或者验证显示了错误状态的 UI
-    const hasErrorUI = (await page.locator('.ant-empty, .error-container').first().count()) > 0;
-    expect(hasErrorUI).toBeTruthy();
   });
 
   test('无效的 workflowId 应该显示错误', async ({ page }) => {

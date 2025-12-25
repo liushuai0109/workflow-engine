@@ -18,7 +18,7 @@ test.describe('网络错误测试', () => {
     });
     
     // 尝试触发 API 调用
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 await newButton.click();
       await page.waitForTimeout(1000);
@@ -39,7 +39,7 @@ await newButton.click();
     });
     
     // 尝试触发 API 调用
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 await newButton.click();
       
@@ -78,7 +78,7 @@ await newButton.click();
     await page.unroute('**/api/**');
     
     // 验证可以正常操作
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -193,7 +193,7 @@ test.describe('边界条件测试', () => {
     await page.waitForLoadState('networkidle');
     
     // 创建新图表（空工作流）
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -331,7 +331,7 @@ test.describe('错误恢复机制测试', () => {
     });
     
     // 尝试触发 API 调用
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 await newButton.click();
       await page.waitForTimeout(1000);
@@ -347,7 +347,7 @@ await newButton.click();
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
     await newButton.click();
     await page.waitForTimeout(3000);

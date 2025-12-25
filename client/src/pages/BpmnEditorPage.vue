@@ -5,23 +5,23 @@
       <div class="toolbar-left">
         <a-button @click="backToList">
           <template #icon><UnorderedListOutlined /></template>
-          Workflows
+          工作流列表
         </a-button>
         <a-button @click="openFile" type="primary">
           <template #icon><FolderOpenOutlined /></template>
-          Open BPMN
+          打开 BPMN 文件
         </a-button>
         <a-button @click="saveToDatabase" :disabled="!currentDiagram" :loading="isSaving">
           <template #icon><SaveOutlined /></template>
-          {{ isSaving ? '保存中...' : 'Save' }}
+          {{ isSaving ? '保存中...' : '保存' }}
         </a-button>
         <a-button @click="downloadFile" :disabled="!currentDiagram">
           <template #icon><DownloadOutlined /></template>
-          Download
+          下载
         </a-button>
         <a-button @click="newDiagram">
           <template #icon><FileAddOutlined /></template>
-          New
+          创建新工作流
         </a-button>
         <a-button
           @click="toggleFlowVisualization"
@@ -40,35 +40,13 @@
       <!-- BPMN 编辑器 -->
       <div class="editor-container">
         <a-spin :spinning="isAIProcessing" tip="AI 正在处理流程图..." size="large">
-          <BpmnEditor v-if="currentDiagram" ref="bpmnEditor" :xml="currentDiagram" @error="handleError"
+          <BpmnEditor ref="bpmnEditor" :xml="currentDiagram" @error="handleError"
             @shown="handleShown" @loading="handleLoading" @changed="handleDiagramChanged" />
-
-          <!-- 欢迎界面 -->
-          <div v-else class="welcome-screen">
-            <div class="welcome-content">
-              <h1>BPMN Explorer</h1>
-              <p>Create and edit BPMN diagrams with ease</p>
-              <div class="welcome-actions">
-                <a-button @click="openFile" type="primary" size="large">
-                  <template #icon><FolderOpenOutlined /></template>
-                  Open BPMN File
-                </a-button>
-                <a-button @click="newDiagram" size="large">
-                  <template #icon><FileAddOutlined /></template>
-                  Create New Diagram
-                </a-button>
-              </div>
-              <div class="drag-hint">
-                <p>Or drag and drop a BPMN file here</p>
-              </div>
-            </div>
-          </div>
         </a-spin>
       </div>
 
       <!-- 右侧统一面板 -->
       <RightPanelContainer
-        v-if="currentDiagram"
         ref="rightPanelRef"
         :active-tab="activeRightPanelTab"
         :workflow-id="getWorkflowId"
@@ -731,7 +709,7 @@ const handleHistorySelected = (history: ExecutionHistory) => {
   }
 }
 
-const handleShown = (): void => {
+const handleShown = async (): Promise<void> => {
   console.log('=== BPMN diagram shown ===')
   console.log('currentDiagram value:', currentDiagram.value ? `exists (${currentDiagram.value.length} chars)` : 'empty')
   console.log('Button should be visible:', !!currentDiagram.value)
@@ -740,6 +718,17 @@ const handleShown = (): void => {
   isLoading.value = false
   hasError.value = false
   errorMessage.value = ''
+
+  // 如果 currentDiagram 为空，说明是自动创建的默认图表，需要更新
+  if (!currentDiagram.value && bpmnEditor.value) {
+    try {
+      const xml = await bpmnEditor.value.getXml()
+      currentDiagram.value = xml
+      console.log('Updated currentDiagram with default diagram')
+    } catch (error) {
+      console.error('Failed to get XML from editor:', error)
+    }
+  }
 
   // 初始化可视化服务和右键菜单服务
   setTimeout(() => {
@@ -1607,45 +1596,6 @@ onBeforeUnmount(() => {
 
 .editor-container :deep(.bpmn-editor) {
   height: 100%;
-}
-
-.welcome-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.welcome-content {
-  text-align: center;
-  max-width: 500px;
-  padding: 40px;
-}
-
-.welcome-content h1 {
-  font-size: 3rem;
-  margin-bottom: 16px;
-  font-weight: 700;
-}
-
-.welcome-content p {
-  font-size: 1.2rem;
-  margin-bottom: 32px;
-  opacity: 0.9;
-}
-
-.welcome-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-bottom: 32px;
-}
-
-.drag-hint {
-  opacity: 0.8;
-  font-size: 14px;
 }
 
 .status-bar {

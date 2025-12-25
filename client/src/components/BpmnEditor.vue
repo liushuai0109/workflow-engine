@@ -88,6 +88,10 @@ const isPropertiesPanelVisible = ref<boolean>(true)
 const isPaletteVisible = ref<boolean>(true)
 const selectedElement = ref<any>(null)
 
+// 标志：用于区分内部编辑产生的 XML 变化和外部传入的 XML 变化
+// 当为 true 时，表示 XML 变化来自内部编辑（拖拽、修改等），不需要重新加载
+let isInternalChange = false
+
 // 防抖函数
 let saveTimeout: NodeJS.Timeout | null = null
 const debouncedSave = () => {
@@ -102,9 +106,17 @@ const debouncedSave = () => {
           LocalStorageService.saveDiagram(result.xml, 'Auto-saved Diagram')
         }
 
+        // 标记为内部变化，防止 watch 触发重新加载
+        isInternalChange = true
+
         // 触发 changed 事件，通知父组件 BPMN XML 已更新
         // 这样可以确保在执行工作流时使用最新的 XML
         emit('changed', result.xml)
+
+        // 在下一个 tick 后重置标志
+        setTimeout(() => {
+          isInternalChange = false
+        }, 100)
 
         // 保存完成后恢复视口位置
         setTimeout(() => {
@@ -392,9 +404,16 @@ const getModeler = (): BpmnModelerInstance => {
 
 // 监听 XML 属性变化
 watch(() => props.xml, (newXml, oldXml) => {
+  // 如果是内部编辑产生的变化，跳过重新加载
+  if (isInternalChange) {
+    console.log('XML changed from internal edit, skipping reload')
+    return
+  }
+
   // 只有当 XML 真正发生变化且 modeler 已初始化时才重新加载
+  // 这处理的是外部传入的 XML 变化（如打开新文件）
   if (newXml !== oldXml && newXml && modeler) {
-    console.log('XML changed, reloading diagram...')
+    console.log('XML changed from external source, reloading diagram...')
     loadXml(newXml)
   }
 }, { immediate: false })

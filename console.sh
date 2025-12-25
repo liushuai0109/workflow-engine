@@ -44,7 +44,22 @@ NC='\033[0m' # No Color
 # 项目根目录
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 CLIENT_DIR="$PROJECT_ROOT/client"
-SERVER_DIR="$PROJECT_ROOT/server"
+
+# 加载服务端配置
+SERVER_TYPE="go"  # 默认使用 Go
+if [ -f "$PROJECT_ROOT/server.config" ]; then
+    source "$PROJECT_ROOT/server.config"
+fi
+
+# 根据配置选择服务端目录
+case "$SERVER_TYPE" in
+    "nodejs")
+        SERVER_DIR="$PROJECT_ROOT/server-nodejs"
+        ;;
+    "go"|*)
+        SERVER_DIR="$PROJECT_ROOT/server-go"
+        ;;
+esac
 
 # PID 文件
 PID_DIR="$PROJECT_ROOT/.pids"
@@ -362,7 +377,61 @@ start_server() {
         return
     fi
 
-    log_info "正在启动 Server (Go)..."
+    # 根据 SERVER_TYPE 选择启动方式
+    case "$SERVER_TYPE" in
+        "nodejs")
+            start_nodejs_server "$watch_mode"
+            ;;
+        "go"|*)
+            start_go_server "$watch_mode"
+            ;;
+    esac
+}
+
+# 启动 Node.js Server
+start_nodejs_server() {
+    local watch_mode="${1:-false}"
+
+    log_info "正在启动 Server (Node.js + TypeScript + Koa)..."
+
+    # 检查并 kill 占用端口的进程
+    kill_port_process 3000 "Server"
+
+    if [ ! -d "$SERVER_DIR" ]; then
+        log_error "Server 目录不存在: $SERVER_DIR"
+        exit 1
+    fi
+
+    cd "$SERVER_DIR"
+
+    # 检查 Node.js 是否安装
+    if ! command -v node &> /dev/null; then
+        log_error "Node.js 未安装，请先安装 Node.js"
+        log_info "安装方法: brew install node"
+        exit 1
+    fi
+
+    # 检查是否需要安装依赖
+    if [ ! -d "node_modules" ]; then
+        log_warning "Server 依赖未安装，正在安装..."
+        npm install
+    fi
+
+    # 启动 server 并获取 PID
+    nohup npm start > "$SERVER_LOG_FILE" 2>&1 &
+    echo $! > "$SERVER_PID_FILE"
+
+    log_success "Server 已启动 (PID: $(cat $SERVER_PID_FILE))"
+    log_info "Server 访问地址: http://$LOCAL_IP:3000"
+    log_info "Server 日志: $SERVER_LOG_FILE"
+    log_info "Server 类型: Node.js (TypeScript + Koa)"
+}
+
+# 启动 Go Server
+start_go_server() {
+    local watch_mode="${1:-false}"
+
+    log_info "正在启动 Server (Go + Gin)..."
 
     # 检查并 kill 占用端口的进程
     kill_port_process 3000 "Server"
@@ -425,6 +494,7 @@ start_server() {
         log_success "Server 已启动 (PID: $(cat $SERVER_PID_FILE))"
         log_info "Server 访问地址: http://$LOCAL_IP:3000"
         log_info "Server 日志: $SERVER_LOG_FILE"
+        log_info "Server 类型: Go (Gin)"
     fi
 }
 

@@ -17,7 +17,7 @@ test.describe('BoundaryEvent 创建功能测试', () => {
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     await newButton.click();
     await page.waitForTimeout(1000);
 
@@ -52,7 +52,7 @@ test.describe('BoundaryEvent 创建功能测试', () => {
     await page.waitForLoadState('networkidle');
 
     // 加载包含 BoundaryEvent 的 BPMN（通过聊天或文件上传）
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     await newButton.click();
     await page.waitForTimeout(1000);
 
@@ -265,7 +265,7 @@ test.describe('LLM 生成符合约束的流程图', () => {
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     await newButton.click();
     await page.waitForTimeout(1000);
 
@@ -336,7 +336,7 @@ test.describe('LLM 生成符合约束的流程图', () => {
     await page.goto('/editor');
     await page.waitForLoadState('networkidle');
 
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     await newButton.click();
     await page.waitForTimeout(1000);
 

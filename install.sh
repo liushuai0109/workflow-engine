@@ -12,7 +12,32 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 日志函数
+# 获取项目根目录
+PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+
+# 读取服务端配置
+SERVER_TYPE="go"  # 默认使用 Go
+DB_USER=""  # 默认为空，如果未配置则使用当前用户
+DB_NAME="workflow_engine"  # 默认数据库名
+if [ -f "$PROJECT_ROOT/server.config" ]; then
+    source "$PROJECT_ROOT/server.config"
+fi
+
+# 根据配置选择服务端目录
+case "$SERVER_TYPE" in
+    "nodejs")
+        SERVER_DIR="server-nodejs"
+        ;;
+    "go"|*)
+        SERVER_DIR="server-go"
+        ;;
+esac
+
+# 如果 DB_USER 未配置，使用当前用户
+if [ -z "$DB_USER" ]; then
+    DB_USER=$(whoami)
+fi
+
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -27,6 +52,18 @@ log_warn() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# 显示配置信息
+show_config_info() {
+    echo ""
+    log_info "==================== 配置信息 ===================="
+    log_info "服务端类型: $SERVER_TYPE"
+    log_info "服务端目录: $SERVER_DIR"
+    log_info "数据库名称: $DB_NAME"
+    log_info "数据库用户: $DB_USER"
+    log_info "=================================================="
+    echo ""
 }
 
 # 检测操作系统
@@ -373,14 +410,10 @@ install_postgresql() {
         fi
     fi
 
-    if [ "$psql_found" = true ]; then
-        log_success "PostgreSQL 已安装: $(psql --version)"
-        return 0
-    fi
+    if [ "$psql_found" = false ]; then
+        log_info "正在安装 PostgreSQL..."
 
-    log_info "正在安装 PostgreSQL..."
-
-    if [ "$OS" == "macos" ]; then
+        if [ "$OS" == "macos" ]; then
         if ! command_exists brew; then
             install_homebrew
         fi
@@ -429,43 +462,6 @@ install_postgresql() {
         # 启动服务
         brew services start postgresql@15 2>/dev/null || brew services start postgresql 2>/dev/null
         sleep 2  # 等待服务启动
-
-        # 创建数据库（如果不存在）
-        if command -v psql >/dev/null 2>&1; then
-            local current_user=$(whoami)
-            if ! psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw workflow_engine; then
-                log_info "创建数据库 workflow_engine..."
-                if createdb workflow_engine 2>/dev/null; then
-                    log_success "数据库创建成功"
-
-                    # 确保 public schema 的所有者是当前用户（PostgreSQL 15+ 需要）
-                    log_info "配置数据库权限..."
-                    psql -d workflow_engine -c "ALTER SCHEMA public OWNER TO $current_user;" 2>/dev/null || log_warn "设置 schema 所有者可能失败"
-
-                    # 确保当前用户有所有权限
-                    psql -d workflow_engine -c "GRANT ALL ON SCHEMA public TO $current_user;" 2>/dev/null || true
-                    psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $current_user;" 2>/dev/null || true
-                    psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $current_user;" 2>/dev/null || true
-                    psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $current_user;" 2>/dev/null || true
-                    psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $current_user;" 2>/dev/null || true
-                else
-                    log_warn "无法自动创建数据库，请手动创建: createdb workflow_engine"
-                fi
-            else
-                log_success "数据库已存在"
-
-                # 即使数据库已存在，也要确保权限正确（PostgreSQL 15+ 兼容性）
-                log_info "检查并配置数据库权限..."
-                psql -d workflow_engine -c "ALTER SCHEMA public OWNER TO $current_user;" 2>/dev/null || log_warn "设置 schema 所有者可能失败"
-                psql -d workflow_engine -c "GRANT ALL ON SCHEMA public TO $current_user;" 2>/dev/null || true
-                psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $current_user;" 2>/dev/null || true
-                psql -d workflow_engine -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $current_user;" 2>/dev/null || true
-                psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $current_user;" 2>/dev/null || true
-                psql -d workflow_engine -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $current_user;" 2>/dev/null || true
-            fi
-        else
-            log_warn "psql 命令不可用，跳过数据库创建"
-        fi
     elif [ "$OS" == "ubuntu" ] || [ "$OS" == "debian" ]; then
         check_sudo
         sudo apt-get update
@@ -486,11 +482,63 @@ install_postgresql() {
         # 创建数据库
         log_info "创建数据库 workflow_engine..."
         sudo -u postgres psql -c "CREATE DATABASE workflow_engine;" 2>/dev/null || log_warn "数据库可能已存在"
-    else
-        log_error "无法自动安装 PostgreSQL，请手动安装"
-        return 1
+        else
+            log_error "无法自动安装 PostgreSQL，请手动安装"
+            return 1
+        fi
     fi
-    
+
+    # 创建数据库用户和数据库（所有平台通用逻辑）
+    if [ "$OS" == "macos" ] && command -v psql >/dev/null 2>&1; then
+        local current_user=$(whoami)
+
+        # 检查数据库用户是否存在（如果配置的用户不是当前用户）
+        if [ "$DB_USER" != "$current_user" ]; then
+            if ! psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" 2>/dev/null | grep -q 1; then
+                log_info "创建数据库用户 $DB_USER..."
+                if psql -d postgres -c "CREATE ROLE $DB_USER WITH LOGIN CREATEDB;" 2>/dev/null; then
+                    log_success "数据库用户 $DB_USER 创建成功"
+                else
+                    log_warn "无法自动创建数据库用户，请手动创建: psql -d postgres -c \"CREATE ROLE $DB_USER WITH LOGIN CREATEDB;\""
+                fi
+            else
+                log_success "数据库用户 $DB_USER 已存在"
+            fi
+        fi
+
+        # 创建数据库
+        if ! psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+            log_info "创建数据库 $DB_NAME..."
+            if createdb -O "$DB_USER" "$DB_NAME" 2>/dev/null; then
+                log_success "数据库 $DB_NAME 创建成功"
+
+                # 确保 public schema 的所有者是配置的数据库用户（PostgreSQL 15+ 需要）
+                log_info "配置数据库权限..."
+                psql -d "$DB_NAME" -c "ALTER SCHEMA public OWNER TO $DB_USER;" 2>/dev/null || log_warn "设置 schema 所有者可能失败"
+
+                # 确保配置的数据库用户有所有权限
+                psql -d "$DB_NAME" -c "GRANT ALL ON SCHEMA public TO $DB_USER;" 2>/dev/null || true
+                psql -d "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $DB_USER;" 2>/dev/null || true
+                psql -d "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $DB_USER;" 2>/dev/null || true
+                psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;" 2>/dev/null || true
+                psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $DB_USER;" 2>/dev/null || true
+            else
+                log_warn "无法自动创建数据库，请手动创建: createdb -O $DB_USER $DB_NAME"
+            fi
+        else
+            log_success "数据库 $DB_NAME 已存在"
+
+            # 即使数据库已存在，也要确保权限正确（PostgreSQL 15+ 兼容性）
+            log_info "检查并配置数据库权限..."
+            psql -d "$DB_NAME" -c "ALTER SCHEMA public OWNER TO $DB_USER;" 2>/dev/null || log_warn "设置 schema 所有者可能失败"
+            psql -d "$DB_NAME" -c "GRANT ALL ON SCHEMA public TO $DB_USER;" 2>/dev/null || true
+            psql -d "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO $DB_USER;" 2>/dev/null || true
+            psql -d "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $DB_USER;" 2>/dev/null || true
+            psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;" 2>/dev/null || true
+            psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $DB_USER;" 2>/dev/null || true
+        fi
+    fi
+
     log_success "PostgreSQL 安装完成"
     log_warn "请确保 PostgreSQL 服务正在运行，并配置好数据库连接信息"
 }
@@ -721,6 +769,31 @@ install_npm_dependencies() {
         log_warn "client 目录不存在，跳过"
     fi
 
+    # 根据 SERVER_TYPE 安装对应的 npm 依赖
+    if [ "$SERVER_TYPE" = "nodejs" ]; then
+        if [ -d "$SERVER_DIR" ]; then
+            if [ -d "$SERVER_DIR/node_modules" ] && [ -f "$SERVER_DIR/package.json" ]; then
+                log_success "$SERVER_DIR 依赖已安装"
+            else
+                log_info "正在安装 $SERVER_DIR 依赖..."
+                cd "$SERVER_DIR"
+                npm install
+                cd ..
+                log_success "$SERVER_DIR 依赖安装完成"
+            fi
+        else
+            log_warn "$SERVER_DIR 目录不存在，跳过"
+        fi
+    else
+        # 非 nodejs 类型，但如果存在 server-nodejs，也给出提示
+        if [ -d "server-nodejs" ]; then
+            log_info "检测到 server-nodejs 目录（当前使用 $SERVER_TYPE）"
+            if [ ! -d "server-nodejs/node_modules" ]; then
+                log_info "可以运行: cd server-nodejs && npm install"
+            fi
+        fi
+    fi
+
     # 安装 biz-sample 目录依赖
     if [ -d "biz-sample" ]; then
         if [ -d "biz-sample/node_modules" ] && [ -f "biz-sample/package.json" ]; then
@@ -748,35 +821,56 @@ install_go_dependencies() {
 
     log_info "检查并安装 Go 项目依赖..."
 
-    # 安装 server 目录依赖
-    if [ -d "server" ]; then
-        if [ -f "server/go.mod" ]; then
-            cd server
+    # 根据 SERVER_TYPE 决定处理哪个目录
+    local target_dir=""
 
-            # 检查是否需要下载依赖
-            if [ ! -f "go.sum" ] || [ ! -d "vendor" ]; then
-                log_info "正在下载 server Go 依赖..."
-                go mod download
-                log_success "server Go 依赖下载完成"
-            else
-                log_success "server Go 依赖已安装"
-            fi
-
-            # 检查依赖是否需要更新
-            if go mod verify >/dev/null 2>&1; then
-                log_success "server Go 依赖验证通过"
-            else
-                log_warn "server Go 依赖需要更新，正在更新..."
-                go mod download
-                log_success "server Go 依赖更新完成"
-            fi
-
-            cd ..
-        else
-            log_warn "server/go.mod 不存在，跳过"
+    if [ "$SERVER_TYPE" = "go" ]; then
+        if [ -d "$SERVER_DIR" ]; then
+            target_dir="$SERVER_DIR"
+        elif [ -d "server-go" ]; then
+            target_dir="server-go"
+        elif [ -d "server" ]; then
+            target_dir="server"
         fi
     else
-        log_warn "server 目录不存在，跳过"
+        # 如果不是 go 类型，检查是否有 go 服务端存在（向后兼容）
+        if [ -d "server-go" ]; then
+            target_dir="server-go"
+        elif [ -d "server" ]; then
+            target_dir="server"
+        fi
+    fi
+
+    if [ -z "$target_dir" ]; then
+        log_warn "未找到 Go 服务端目录，跳过"
+        return 0
+    fi
+
+    if [ -f "$target_dir/go.mod" ]; then
+        log_info "处理 $target_dir Go 依赖..."
+        cd "$target_dir"
+
+        # 检查是否需要下载依赖
+        if [ ! -f "go.sum" ] || [ ! -d "vendor" ]; then
+            log_info "正在下载 $target_dir Go 依赖..."
+            go mod download
+            log_success "$target_dir Go 依赖下载完成"
+        else
+            log_success "$target_dir Go 依赖已安装"
+        fi
+
+        # 检查依赖是否需要更新
+        if go mod verify >/dev/null 2>&1; then
+            log_success "$target_dir Go 依赖验证通过"
+        else
+            log_warn "$target_dir Go 依赖需要更新，正在更新..."
+            go mod download
+            log_success "$target_dir Go 依赖更新完成"
+        fi
+
+        cd ..
+    else
+        log_warn "$target_dir/go.mod 不存在，跳过"
     fi
 
     return 0
@@ -830,54 +924,77 @@ install_playwright_browsers() {
 setup_server_env() {
     log_info "配置 server 环境变量..."
 
-    if [ ! -d "server" ]; then
-        log_warn "server 目录不存在，跳过"
-        return 0
+    # 优先处理配置的服务端目录
+    if [ -d "$SERVER_DIR" ]; then
+        configure_server_env_for_dir "$SERVER_DIR"
     fi
 
+    # 如果有其他服务端目录，也进行配置（向后兼容）
+    local other_dirs=()
+    for dir in "server-go" "server-nodejs" "server"; do
+        if [ -d "$dir" ] && [ "$dir" != "$SERVER_DIR" ]; then
+            other_dirs+=("$dir")
+        fi
+    done
+
+    if [ ${#other_dirs[@]} -gt 0 ]; then
+        log_info "同时配置其他服务端目录的环境变量..."
+        for dir in "${other_dirs[@]}"; do
+            configure_server_env_for_dir "$dir"
+        done
+    fi
+
+    return 0
+}
+
+# 为指定的服务端目录配置环境变量
+configure_server_env_for_dir() {
+    local server_dir=$1
+
     # 检查 .env 文件是否存在
-    if [ -f "server/.env" ]; then
-        log_success "server/.env 已存在"
+    if [ -f "$server_dir/.env" ]; then
+        log_success "$server_dir/.env 已存在"
         return 0
     fi
 
     # 检查 .env.example 是否存在
-    if [ ! -f "server/.env.example" ]; then
-        log_warn "server/.env.example 不存在，无法自动配置"
+    if [ ! -f "$server_dir/.env.example" ]; then
+        log_warn "$server_dir/.env.example 不存在，无法自动配置"
         return 0
     fi
 
     # 复制 .env.example 到 .env
-    log_info "从 .env.example 创建 .env 文件..."
-    cp server/.env.example server/.env
+    log_info "从 $server_dir/.env.example 创建 .env 文件..."
+    cp "$server_dir/.env.example" "$server_dir/.env"
 
     # 根据操作系统配置数据库密码
     if [ "$OS" == "macos" ]; then
         # macOS 上 Homebrew 安装的 PostgreSQL 默认不需要密码
-        # 使用当前用户名作为数据库用户
-        local current_user=$(whoami)
+        # 使用配置的数据库用户名（来自 server.config 的 DB_USER）
 
         # 更新 .env 文件中的数据库配置
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s/DB_USER=postgres/DB_USER=$current_user/g" server/.env
-            sed -i '' "s/DB_PASSWORD=your_password_here/DB_PASSWORD=/g" server/.env
-            sed -i '' "s/DB_NAME=workflow_engine/DB_NAME=workflow_engine/g" server/.env
+            sed -i '' "s/DB_USER=postgres/DB_USER=$DB_USER/g" "$server_dir/.env"
+            sed -i '' "s/DB_USER=.*/DB_USER=$DB_USER/g" "$server_dir/.env"
+            sed -i '' "s/DB_PASSWORD=your_password_here/DB_PASSWORD=/g" "$server_dir/.env" 2>/dev/null || true
+            sed -i '' "s/DB_PASSWORD=.*/DB_PASSWORD=/g" "$server_dir/.env" 2>/dev/null || true
+            sed -i '' "s/DB_NAME=.*/DB_NAME=$DB_NAME/g" "$server_dir/.env"
         else
-            sed -i "s/DB_USER=postgres/DB_USER=$current_user/g" server/.env
-            sed -i "s/DB_PASSWORD=your_password_here/DB_PASSWORD=/g" server/.env
-            sed -i "s/DB_NAME=workflow_engine/DB_NAME=workflow_engine/g" server/.env
+            sed -i "s/DB_USER=postgres/DB_USER=$DB_USER/g" "$server_dir/.env"
+            sed -i "s/DB_USER=.*/DB_USER=$DB_USER/g" "$server_dir/.env"
+            sed -i "s/DB_PASSWORD=your_password_here/DB_PASSWORD=/g" "$server_dir/.env" 2>/dev/null || true
+            sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=/g" "$server_dir/.env" 2>/dev/null || true
+            sed -i "s/DB_NAME=.*/DB_NAME=$DB_NAME/g" "$server_dir/.env"
         fi
 
-        log_success "server/.env 已创建（macOS 默认配置）"
-        log_info "数据库用户: $current_user"
-        log_info "数据库密码: (空)"
-        log_info "数据库名称: workflow_engine"
+        log_success "$server_dir/.env 已创建（macOS 默认配置）"
+        log_info "  数据库用户: $DB_USER"
+        log_info "  数据库密码: (空)"
+        log_info "  数据库名称: $DB_NAME"
     else
-        log_success "server/.env 已创建"
-        log_warn "请手动编辑 server/.env 文件，配置数据库密码"
+        log_success "$server_dir/.env 已创建"
+        log_warn "请手动编辑 $server_dir/.env 文件，配置数据库密码"
     fi
-
-    return 0
 }
 
 # 配置 hosts 文件
@@ -938,9 +1055,9 @@ configure_hosts() {
 configure_database_permissions() {
     log_info "配置数据库用户权限..."
 
-    # 检查 server/.env 文件是否存在
-    if [ ! -f "server/.env" ]; then
-        log_warn "server/.env 不存在，跳过权限配置"
+    # 检查 $SERVER_DIR/.env 文件是否存在
+    if [ ! -f "$SERVER_DIR/.env" ]; then
+        log_warn "$SERVER_DIR/.env 不存在，跳过权限配置"
         return 0
     fi
 
@@ -951,9 +1068,9 @@ configure_database_permissions() {
     fi
 
     # 读取 .env 文件中的数据库配置
-    local db_user=$(grep "^DB_USER=" server/.env | cut -d'=' -f2 | tr -d ' "')
-    local db_name=$(grep "^DB_NAME=" server/.env | cut -d'=' -f2 | tr -d ' "')
-    local db_disabled=$(grep "^DB_DISABLED=" server/.env | cut -d'=' -f2 | tr -d ' "' || echo "false")
+    local db_user=$(grep "^DB_USER=" "$SERVER_DIR/.env" | cut -d'=' -f2 | tr -d ' "')
+    local db_name=$(grep "^DB_NAME=" "$SERVER_DIR/.env" | cut -d'=' -f2 | tr -d ' "')
+    local db_disabled=$(grep "^DB_DISABLED=" "$SERVER_DIR/.env" | cut -d'=' -f2 | tr -d ' "' || echo "false")
 
     if [ "$db_disabled" = "true" ]; then
         log_info "数据库已禁用（DB_DISABLED=true），跳过权限配置"
@@ -973,11 +1090,28 @@ configure_database_permissions() {
 
     log_info "为用户 $db_user 配置数据库 $db_name 的权限..."
 
+    # 检查数据库用户是否存在，如果不存在则创建
+    local current_user=$(whoami)
+    if [ "$db_user" != "$current_user" ]; then
+        if ! psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$db_user'" 2>/dev/null | grep -q 1; then
+            log_info "创建数据库用户 $db_user..."
+            if psql -d postgres -c "CREATE ROLE $db_user WITH LOGIN CREATEDB;" 2>/dev/null; then
+                log_success "数据库用户 $db_user 创建成功"
+            else
+                log_error "无法创建数据库用户 $db_user"
+                log_info "请手动创建: psql -d postgres -c \"CREATE ROLE $db_user WITH LOGIN CREATEDB;\""
+                return 1
+            fi
+        else
+            log_success "数据库用户 $db_user 已存在"
+        fi
+    fi
+
     # 设置 public schema 的所有者为 DB_USER（PostgreSQL 15+ 需要）
     if psql -d "$db_name" -c "ALTER SCHEMA public OWNER TO $db_user;" 2>/dev/null; then
         log_success "成功设置 schema 所有者为 $db_user"
     else
-        log_warn "设置 schema 所有者失败，可能用户不存在或权限不足"
+        log_warn "设置 schema 所有者失败，可能权限不足"
     fi
 
     # 授予所有权限
@@ -995,27 +1129,33 @@ configure_database_permissions() {
 run_database_migration() {
     log_info "运行数据库迁移..."
 
-    # 检查 server 目录是否存在
-    if [ ! -d "server" ]; then
-        log_warn "server 目录不存在，跳过数据库迁移"
-        return 0
+    # 数据库迁移在 server-go 中，如果使用 nodejs server，也需要运行 server-go 的迁移
+    local migration_dir="server-go"
+    if [ ! -d "$migration_dir" ]; then
+        # 向后兼容：如果没有 server-go，尝试使用 server 目录
+        if [ -d "server" ]; then
+            migration_dir="server"
+        else
+            log_warn "未找到 Go 服务端目录（server-go 或 server），跳过数据库迁移"
+            return 0
+        fi
     fi
 
-    # 检查 .env 文件是否存在
-    if [ ! -f "server/.env" ]; then
-        log_warn "server/.env 不存在，跳过数据库迁移"
-        log_info "请先配置 server/.env 文件后手动运行: cd server && make migrate-up"
+    # 检查 .env 文件是否存在（从配置的 SERVER_DIR 读取）
+    if [ ! -f "$SERVER_DIR/.env" ]; then
+        log_warn "$SERVER_DIR/.env 不存在，跳过数据库迁移"
+        log_info "请先配置 $SERVER_DIR/.env 文件后手动运行: cd $migration_dir && make migrate-up"
         return 0
     fi
 
     # 检查 migrations 目录是否存在
-    if [ ! -d "server/migrations" ]; then
-        log_warn "server/migrations 目录不存在，跳过数据库迁移"
+    if [ ! -d "$migration_dir/migrations" ]; then
+        log_warn "$migration_dir/migrations 目录不存在，跳过数据库迁移"
         return 0
     fi
 
     # 读取 .env 文件中的 DB_DISABLED 配置
-    local db_disabled=$(grep "^DB_DISABLED=" server/.env | cut -d'=' -f2 | tr -d ' "' || echo "false")
+    local db_disabled=$(grep "^DB_DISABLED=" "$SERVER_DIR/.env" | cut -d'=' -f2 | tr -d ' "' || echo "false")
     if [ "$db_disabled" = "true" ]; then
         log_info "数据库已禁用（DB_DISABLED=true），跳过数据库迁移"
         return 0
@@ -1033,16 +1173,21 @@ run_database_migration() {
         return 0
     fi
 
-    # 进入 server 目录
-    cd server
+    # 进入迁移目录
+    cd "$migration_dir"
 
-    # 加载环境变量
-    log_info "加载数据库配置..."
-    export $(grep -v '^#' .env | grep -v '^$' | xargs)
+    # 加载环境变量（从 SERVER_DIR 复制到迁移目录，如果不同的话）
+    if [ "$migration_dir" != "$SERVER_DIR" ]; then
+        log_info "从 $SERVER_DIR/.env 加载数据库配置..."
+        export $(grep -v '^#' "../$SERVER_DIR/.env" | grep -v '^$' | xargs)
+    else
+        log_info "加载数据库配置..."
+        export $(grep -v '^#' .env | grep -v '^$' | xargs)
+    fi
 
     # 检查必需的环境变量
     if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ]; then
-        log_error "数据库配置不完整，请检查 server/.env 文件"
+        log_error "数据库配置不完整，请检查 $SERVER_DIR/.env 文件"
         cd ..
         return 1
     fi
@@ -1062,7 +1207,7 @@ run_database_migration() {
         log_success "数据库迁移完成"
     else
         log_error "数据库迁移失败"
-        log_info "你可以稍后手动运行: cd server && make migrate-up"
+        log_info "你可以稍后手动运行: cd $migration_dir && make migrate-up"
         cd ..
         return 1
     fi
@@ -1168,9 +1313,10 @@ main() {
     echo "  项目环境安装脚本"
     echo "=========================================="
     echo ""
-    
+
     detect_os
-    
+    show_config_info
+
     log_info "开始安装项目依赖..."
     echo ""
     
@@ -1209,7 +1355,7 @@ main() {
     
     echo ""
     log_info "下一步操作："
-    echo "  1. 配置数据库: 参考 server/DATABASE_SETUP.md"
+    echo "  1. 配置数据库: 参考 $SERVER_DIR/DATABASE_SETUP.md（如适用）"
     echo "  2. 启动服务: ./console.sh start"
     echo ""
 }

@@ -23,10 +23,15 @@ test.describe('核心功能测试', () => {
   });
 
   test('路由导航正常', async ({ page }) => {
-    // 测试根路径 - 应该重定向到工作流列表
+    // 测试根路径 - 应该显示首页
     await page.goto('/');
-    // 根路径会重定向到 /workflows
-    await expect(page).toHaveURL(/\/(workflows)?$/);
+    await page.waitForLoadState('networkidle');
+    // 根路径应该停留在 / (不再重定向)
+    await expect(page).toHaveURL(/\/$/);
+
+    // 验证首页有"查看工作流列表"或"创建新工作流"按钮
+    const hasActions = await page.locator('button').filter({ hasText: /查看|创建|Workflow|List/i }).count();
+    expect(hasActions).toBeGreaterThan(0);
 
     // 测试工具页面（如果存在）
     await page.goto('/tool');
@@ -37,8 +42,8 @@ test.describe('核心功能测试', () => {
   });
 
   test('BPMN编辑器可以加载 @quick', async ({ page }) => {
-    // 首页是工作流列表，需要点击创建按钮进入编辑器
-    const newButton = page.locator('button:has-text("创建新工作流")').first();
+    // 从首页点击"创建新工作流"按钮进入编辑器
+    const newButton = page.locator('button').filter({ hasText: /创建新工作流|Create.*Workflow/i }).first();
     await expect(newButton).toBeVisible({ timeout: 5000 });
 
     await newButton.click();
@@ -52,13 +57,14 @@ test.describe('核心功能测试', () => {
   });
 
   test('可以创建新图表 @quick', async ({ page }) => {
-    // 查找"New"、"新建"或"创建新工作流"按钮
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流"), button:has-text("新"), button:has-text("创建新工作流"), [data-testid="new-diagram"]').first();
+    // 从首页点击"创建新工作流"按钮
+    const newButton = page.locator('button').filter({ hasText: /创建新工作流|Create.*Workflow/i }).first();
     expect(await newButton.count()).not.toBe(0);
 
     await newButton.click();
 
-    // 等待编辑器加载
+    // 等待导航到编辑器
+    await page.waitForURL(/\/editor/, { timeout: 5000 });
     await page.waitForTimeout(1000);
 
     // 验证编辑器已加载（通过检查是否有编辑器元素）
@@ -68,10 +74,11 @@ test.describe('核心功能测试', () => {
   });
 
   test('可以打开文件选择对话框', async ({ page }) => {
-    // 首先进入编辑器页面
-    const newButton = page.locator('button:has-text("创建新工作流")').first();
+    // 首先从首页进入编辑器页面
+    const newButton = page.locator('button').filter({ hasText: /创建新工作流|Create.*Workflow/i }).first();
     await expect(newButton).toBeVisible({ timeout: 5000 });
     await newButton.click();
+    await page.waitForURL(/\/editor/, { timeout: 5000 });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
@@ -94,10 +101,11 @@ test.describe('核心功能测试', () => {
   });
 
   test('工具栏按钮可见', async ({ page }) => {
-    // 首先进入编辑器页面
-    const newButton = page.locator('button:has-text("创建新工作流")').first();
+    // 首先从首页进入编辑器页面
+    const newButton = page.locator('button').filter({ hasText: /创建新工作流|Create.*Workflow/i }).first();
     await expect(newButton).toBeVisible({ timeout: 5000 });
     await newButton.click();
+    await page.waitForURL(/\/editor/, { timeout: 5000 });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
@@ -115,10 +123,11 @@ test.describe('核心功能测试', () => {
   });
 
   test('状态栏显示正确', async ({ page }) => {
-    // 首先进入编辑器页面
-    const newButton = page.locator('button:has-text("创建新工作流")').first();
+    // 首先从首页进入编辑器页面
+    const newButton = page.locator('button').filter({ hasText: /创建新工作流|Create.*Workflow/i }).first();
     await expect(newButton).toBeVisible({ timeout: 5000 });
     await newButton.click();
+    await page.waitForURL(/\/editor/, { timeout: 5000 });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
@@ -160,7 +169,7 @@ test.describe('文件操作测试', () => {
   });
 
   test('可以创建新图表 @quick', async ({ page }) => {
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 
     await newButton.click();
@@ -173,10 +182,11 @@ test.describe('文件操作测试', () => {
   });
 
   test('可以打开文件选择对话框', async ({ page }) => {
-    // 首先进入编辑器页面
-    const newButton = page.locator('button:has-text("创建新工作流")').first();
+    // 首先从首页进入编辑器页面
+    const newButton = page.locator('button').filter({ hasText: /创建新工作流|Create.*Workflow/i }).first();
     await expect(newButton).toBeVisible({ timeout: 5000 });
     await newButton.click();
+    await page.waitForURL(/\/editor/, { timeout: 5000 });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
@@ -198,7 +208,7 @@ test.describe('文件操作测试', () => {
 
   test('可以保存 BPMN 文件', async ({ page }) => {
     // 先创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 
     await newButton.click();
@@ -291,7 +301,7 @@ test.describe('编辑器元素操作测试', () => {
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       // 等待编辑器和调色板完全加载
@@ -380,7 +390,7 @@ test.describe('连线操作测试', () => {
     await page.waitForLoadState('networkidle');
     
     // 创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       await page.waitForTimeout(2000);
@@ -419,7 +429,7 @@ test.describe('属性编辑测试', () => {
     await page.waitForLoadState('networkidle');
 
     // 创建新图表
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     if (await newButton.count() > 0) {
       await newButton.click();
       // 等待编辑器和右侧面板完全加载
@@ -472,7 +482,7 @@ test.describe('BPMN编辑器基本操作', () => {
 
   test('编辑器加载后可以交互', async ({ page }) => {
     // 点击创建按钮进入编辑器
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     await expect(newButton).toBeVisible({ timeout: 5000 });
     await newButton.click();
 
@@ -505,7 +515,7 @@ test.describe('BPMN编辑器基本操作', () => {
 
   test('编辑器加载和初始化 @quick', async ({ page }) => {
     // 创建新图表以触发编辑器加载
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 
     await newButton.click();
@@ -522,7 +532,7 @@ test.describe('BPMN编辑器基本操作', () => {
 
   test('调色板显示和隐藏', async ({ page }) => {
     // 先创建新图表
-    const newButton = page.locator('button:has-text("Create New Diagram"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
 
     await newButton.click();
@@ -550,7 +560,7 @@ test.describe('BPMN编辑器基本操作', () => {
 
   test('属性面板显示和隐藏', async ({ page }) => {
     // 先创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
     
     await newButton.click();
@@ -572,7 +582,7 @@ test.describe('BPMN编辑器基本操作', () => {
 
   test('缩放控制 - 放大和缩小', async ({ page }) => {
     // 先创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
     
     await newButton.click();
@@ -600,7 +610,7 @@ test.describe('BPMN编辑器基本操作', () => {
 
   test('缩放控制 - 适应画布和重置', async ({ page }) => {
     // 先创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
     
     await newButton.click();
@@ -631,7 +641,7 @@ test.describe('BPMN编辑器基本操作', () => {
 
   test('编辑器画布交互 - 点击和拖拽', async ({ page }) => {
     // 先创建新图表
-    const newButton = page.locator('button:has-text("New"), button:has-text("新建"), button:has-text("创建新工作流")').first();
+    const newButton = page.locator('button:has-text("创建新工作流"), button:has-text("创建新工作流")').first();
     expect(await newButton.count()).not.toBe(0);
     
     await newButton.click();

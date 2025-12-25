@@ -55,7 +55,7 @@ test.describe('回归测试', () => {
     
     // 多次加载编辑器（如果存在）
     for (let i = 0; i < 3; i++) {
-      const newButton = page.locator('button:has-text("New"), button:has-text("新建")').first();
+      const newButton = page.locator('button:has-text("创建新工作流")').first();
       if (await newButton.count() > 0) {
         await newButton.click();
         await page.waitForTimeout(1000);

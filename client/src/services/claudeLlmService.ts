@@ -264,6 +264,10 @@ export class ClaudeLLMService {
       if (currentRound === 0 && this.context.tools && this.context.tools.length > 0) {
         console.log('📋 Available tools:', this.context.tools.map(t => t.name))
       }
+      // 调试：打印系统提示词前100个字符
+      if (currentRound === 0) {
+        console.log('📝 System prompt preview:', this.context.systemPrompt.substring(0, 200))
+      }
 
       // 调用 Claude API
       const response = await this.client.generateWithTools(
