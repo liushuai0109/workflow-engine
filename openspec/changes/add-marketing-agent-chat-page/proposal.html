@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>proposal.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%E5%8F%98%E6%9B%B4%E6%B7%BB%E5%8A%A0%E8%90%A5%E9%94%80%E6%99%BA%E8%83%BD%E4%BD%93%E8%81%8A%E5%A4%A9%E9%A1%B5%E9%9D%A2">变更：添加营销智能体聊天页面</h1>
+<h2 id="why">Why</h2>
+<p>当前系统中的 <code>ChatBox.vue</code> 组件是一个内嵌于编辑器页面的轻量级聊天组件，主要用于辅助 BPMN 编辑。对于营销智能体场景，需要：</p>
+<ol>
+<li><strong>更大的交互空间</strong>：全屏页面提供更好的阅读和输入体验</li>
+<li><strong>营销方案预览</strong>：右侧面板实时展示 AI 生成的营销方案，便于用户审阅</li>
+<li><strong>多会话管理</strong>：左侧面板提供会话列表，支持多个营销项目的独立对话</li>
+<li><strong>专业化功能</strong>：针对营销场景的特定工具和提示模板</li>
+</ol>
+<h2 id="what-changes">What Changes</h2>
+<h3 id="%E5%89%8D%E7%AB%AF%E5%8F%98%E6%9B%B4">前端变更</h3>
+<ul>
+<li><strong>ADDED</strong>: <code>MarketingAgentPage.vue</code> - 营销智能体主页面（三栏布局容器）</li>
+<li><strong>ADDED</strong>: <code>MarketingConversationList.vue</code> - 左侧会话列表组件</li>
+<li><strong>ADDED</strong>: <code>MarketingChatArea.vue</code> - 中间聊天区域组件</li>
+<li><strong>ADDED</strong>: <code>MarketingPlanPreview.vue</code> - 右侧营销方案预览组件（只读展示完整方案）</li>
+<li><strong>ADDED</strong>: <code>MarketingPlanForm.vue</code> - 可交互的营销方案表单组件（嵌入聊天窗口）</li>
+<li><strong>ADDED</strong>: <code>AudienceSelector.vue</code> - 人群选择组件（嵌入聊天窗口）</li>
+<li><strong>ADDED</strong>: <code>AudienceRecommendation.vue</code> - 人群推荐详情组件（嵌入聊天窗口）</li>
+<li><strong>ADDED</strong>: <code>MarketingFlowChart.vue</code> - 营销流程图展示组件（用户旅程图）</li>
+<li><strong>ADDED</strong>: <code>ReachStrategyChart.vue</code> - 触达策略流程图组件（步骤5）</li>
+<li><strong>ADDED</strong>: <code>ProductConfigForm.vue</code> - 商品推荐配置表单组件（步骤6）</li>
+<li><strong>ADDED</strong>: <code>SmartStrategyDisplay.vue</code> - 智能策略展示组件（步骤7）</li>
+<li><strong>ADDED</strong>: <code>ChannelSelector.vue</code> - 推广渠道选择组件（步骤8）</li>
+<li><strong>ADDED</strong>: <code>ChannelCopyEditor.vue</code> - 个性化渠道文案编辑组件（步骤9）</li>
+<li><strong>ADDED</strong>: <code>BpmnFlowChart.vue</code> - BPMN 可执行流程图组件（步骤10）</li>
+<li><strong>ADDED</strong>: <code>CampaignReport.vue</code> - 活动复盘报告组件（步骤11）</li>
+<li><strong>ADDED</strong>: <code>useMarketingPlanForm.ts</code> - 表单生成和管理的封装方法</li>
+<li><strong>ADDED</strong>: <code>useAudienceSelection.ts</code> - 人群选择和推荐的封装方法</li>
+<li><strong>ADDED</strong>: <code>useConversationFlow.ts</code> - 11步对话流程状态管理</li>
+<li><strong>ADDED</strong>: <code>useMermaidParser.ts</code> - Mermaid 代码解析封装方法</li>
+<li><strong>MODIFIED</strong>: <code>router/index.ts</code> - 添加新路由 <code>/marketing-agent</code></li>
+<li><strong>MODIFIED</strong>: <code>HomePage.vue</code> - 添加营销智能体入口</li>
+</ul>
+<h3 id="%E4%BE%9D%E8%B5%96%E5%BA%93">依赖库</h3>
+<ul>
+<li><strong>ADDED</strong>: <code>mermaid</code> - Mermaid 流程图解析和渲染库，用于解析 MA 回复的 Mermaid 格式流程图</li>
+</ul>
+<h3 id="%E5%90%8E%E7%AB%AF%E5%8F%98%E6%9B%B4">后端变更</h3>
+<ul>
+<li><strong>ADDED</strong>: <code>/api/marketing-plans</code> - 营销方案 CRUD API</li>
+<li><strong>ADDED</strong>: <code>/api/audiences</code> - 人群数据 API（获取已划分人群列表）</li>
+<li><strong>ADDED</strong>: <code>/api/audiences/:id/recommendation</code> - 人群推荐详情 API</li>
+<li><strong>ADDED</strong>: 营销方案数据模型（MarketingPlan）</li>
+<li><strong>ADDED</strong>: 人群数据模型（Audience、AudienceRecommendation）</li>
+</ul>
+<h3 id="%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B">数据模型</h3>
+<p>营销方案包含以下核心字段：</p>
+<ul>
+<li><strong>活动主题（title）</strong>：营销活动的名称和主题</li>
+<li><strong>活动时间（timeline）</strong>：活动的开始和结束时间</li>
+<li><strong>活动目标（objectives）</strong>：营销活动的目标和 KPI</li>
+<li><strong>触达渠道（channels）</strong>：营销触达的渠道列表</li>
+<li><strong>活动人群（targetAudience）</strong>：目标受众定义</li>
+<li><strong>活动策略（strategies）</strong>：具体的营销策略</li>
+</ul>
+<h3 id="%E5%A4%8D%E7%94%A8%E5%86%85%E5%AE%B9">复用内容</h3>
+<ul>
+<li><code>chatApiService.ts</code> - 会话和消息管理 API</li>
+<li><code>claudeLlmService.ts</code> - Claude API 调用（用于处理用户输入消息）</li>
+<li><code>utils/markdown.ts</code> - Markdown 渲染</li>
+<li><code>BpmnEditor</code> - 现有 AI 画流程图能力，用于生成营销方案执行流程图</li>
+<li><code>bpmnAiService.ts</code> - BPMN AI 生成服务</li>
+</ul>
+<h3 id="llm-%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B">LLM 处理流程</h3>
+<p>用户输入的所有消息都必须经过 LLM 处理后再生成对应的交互组件：</p>
+<ol>
+<li><strong>消息输入</strong> → LLM 分析用户意图和内容</li>
+<li><strong>LLM 响应</strong> → 返回结构化数据（JSON 格式）</li>
+<li><strong>前端解析</strong> → 根据响应类型渲染对应组件</li>
+</ol>
+<h4 id="llm-%E5%93%8D%E5%BA%94%E6%A0%BC%E5%BC%8F%E7%A4%BA%E4%BE%8B">LLM 响应格式示例</h4>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"responseType"</span>: <span class="hljs-string">"plan_form"</span>,
+  <span class="hljs-attr">"data"</span>: {
+    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"双十一大促销活动"</span>,
+    <span class="hljs-attr">"timeline"</span>: { <span class="hljs-attr">"startDate"</span>: <span class="hljs-string">"2024-11-01"</span>, <span class="hljs-attr">"endDate"</span>: <span class="hljs-string">"2024-11-11"</span> },
+    <span class="hljs-attr">"objectives"</span>: <span class="hljs-string">"提升品牌知名度，增加销售额30%"</span>,
+    <span class="hljs-attr">"channels"</span>: [<span class="hljs-string">"wechat_official"</span>, <span class="hljs-string">"douyin"</span>],
+    <span class="hljs-attr">"targetAudience"</span>: <span class="hljs-string">"18-35岁年轻用户"</span>,
+    <span class="hljs-attr">"strategies"</span>: <span class="hljs-string">"前期预热 + 限时优惠 + 会员专属"</span>
+  },
+  <span class="hljs-attr">"message"</span>: <span class="hljs-string">"好的，我已根据您的需求生成了初步方案，请确认或修改："</span>
+}
+</div></code></pre>
+<h4 id="%E5%93%8D%E5%BA%94%E7%B1%BB%E5%9E%8B%E6%9E%9A%E4%B8%BE">响应类型枚举</h4>
+<ul>
+<li><code>plan_form</code> - 营销方案表单</li>
+<li><code>audience_selector</code> - 人群选择界面</li>
+<li><code>audience_recommendation</code> - 人群推荐详情</li>
+<li><code>reach_strategy</code> - 触达策略流程图（Mermaid 格式）</li>
+<li><code>product_config</code> - 商品推荐配置</li>
+<li><code>smart_strategy</code> - 智能策略详情</li>
+<li><code>channel_selector</code> - 推广渠道选择</li>
+<li><code>channel_copy</code> - 个性化渠道文案</li>
+<li><code>bpmn_flow</code> - BPMN 可执行流程图</li>
+<li><code>campaign_report</code> - 活动复盘报告</li>
+</ul>
+<h2 id="impact">Impact</h2>
+<ul>
+<li><strong>受影响的规范</strong>：新增 <code>marketing-agent-ui</code> 规范能力领域</li>
+<li><strong>受影响的代码</strong>：
+<ul>
+<li>前端：新增 15 个 Vue 组件，3 个 composables，修改路由和首页</li>
+<li>后端：新增营销方案 API 端点和数据模型</li>
+</ul>
+</li>
+<li><strong>数据库</strong>：新增 <code>marketing_plans</code> 表</li>
+<li><strong>外部依赖</strong>：
+<ul>
+<li>WorkflowEngine：生成和执行 BPMN 流程</li>
+<li>低代码平台：生成和托管营销页</li>
+<li>短信服务：发送营销短信</li>
+<li>企业微信：发送企微消息</li>
+<li>App：推送通知和展示营销页</li>
+</ul>
+</li>
+</ul>
+<h3 id="%E4%BA%A4%E4%BA%92%E6%B5%81%E7%A8%8B">交互流程</h3>
+<h4 id="%E4%BA%A4%E4%BA%92%E6%97%B6%E5%BA%8F%E5%9B%BE">交互时序图</h4>
+<pre><code class="language-mermaid"><div class="mermaid">sequenceDiagram
+    participant 运营 as 运营人员
+
+    box rgb(232, 245, 233) 策划工具
+        participant MA as MarketAgent
+    end
+
+    box rgb(255, 243, 224) 执行工具
+        participant WE as WorkflowEngine
+    end
+
+    box rgb(227, 242, 253) 物料供应
+        participant LCP as 低代码平台
+        participant Figma as Figma
+    end
+
+    box rgb(252, 228, 236) 传播平台
+        participant SMS as 短信服务
+        participant WeCom as 企业微信
+        participant App as App
+    end
+
+    participant 用户 as 终端用户
+
+    Note over 运营,App: 运营人员可与所有系统交互（AI 自动执行 或 人工操作）
+
+    %% ========== 营销活动策划阶段 ==========
+    rect rgba(100, 150, 200, 0.1)
+        Note over 运营,MA: 营销活动策划阶段
+        运营->>MA: 沟通生成营销方案
+        Note right of MA: 11 步对话流程：<br/>1. 活动描述<br/>2. 方案确认<br/>3. 人群选择<br/>4. 人群推荐<br/>5. 触达策略<br/>6. 商品配置<br/>7. 智能策略<br/>8. 推广渠道<br/>9. 渠道文案
+        MA->>WE: 生成活动执行流程图
+        WE->>MA: 返回执行流程图
+        MA->>运营: 返回完整营销方案（含执行流程图）
+    end
+
+    %% ========== 物料准备阶段 ==========
+    rect rgba(100, 180, 220, 0.1)
+        Note over 运营,Figma: 物料准备阶段（AI 自动 或 人工操作）
+
+        alt AI 自动生成
+            MA->>Figma: 请求生成营销素材
+            Figma->>MA: 返回营销素材（图片/视频）
+            MA->>LCP: 请求生成营销页
+            LCP->>MA: 返回营销页配置
+        else 人工操作
+            运营->>Figma: 上传/编辑营销素材
+            Figma->>运营: 确认素材就绪
+            运营->>LCP: 配置营销页
+            LCP->>运营: 确认营销页就绪
+        end
+    end
+
+    %% ========== 流程编排阶段 ==========
+    rect rgba(220, 180, 100, 0.1)
+        Note over 运营,WE: 流程编排阶段（AI 自动 或 人工操作）
+
+        alt AI 自动生成
+            MA->>WE: 请求生成执行流程
+            WE->>MA: 返回可执行流程图
+            MA->>运营: 展示完整方案预览
+        else 人工操作
+            运营->>WE: 手动编排执行流程
+            WE->>运营: 确认流程就绪
+        end
+    end
+
+    %% ========== 活动执行阶段 ==========
+    rect rgba(200, 100, 150, 0.1)
+        Note over 运营,用户: 活动执行阶段
+
+        运营->>WE: 确认并启动活动
+        WE->>WE: 部署并执行流程
+
+        par 多渠道消息推送
+            WE->>LCP: 获取营销页链接
+            LCP->>WE: 返回营销页链接
+        and
+            WE->>Figma: 获取营销素材
+            Figma->>WE: 返回素材 URL
+        end
+
+        WE->>SMS: 发送营销短信
+        SMS->>用户: 推送短信通知
+        WE->>WeCom: 发送企业微信消息
+        WeCom->>用户: 推送企微通知
+        WE->>App: 发送 Push 通知
+        App->>用户: 推送 App 通知
+    end
+
+    %% ========== 用户触达阶段 ==========
+    rect rgba(100, 200, 150, 0.1)
+        Note over 用户,App: 终端用户进入 App
+        用户->>App: 打开 App
+        App->>WE: 获取运营策略
+        WE->>App: 返回个性化运营策略
+        App->>LCP: 请求营销页内容
+        LCP->>App: 返回营销页渲染数据
+        App->>Figma: 请求营销素材
+        Figma->>App: 返回素材资源
+        App->>用户: 展示个性化营销页
+    end
+
+    %% ========== 活动复盘阶段 ==========
+    rect rgba(150, 150, 200, 0.1)
+        Note over 运营,MA: 活动复盘阶段（AI 自动 或 人工操作）
+
+        WE->>MA: 活动执行完成通知
+
+        alt AI 自动分析
+            MA->>MA: 分析活动数据
+            MA->>运营: 生成复盘报告
+        else 人工分析
+            运营->>WE: 导出活动数据
+            WE->>运营: 返回执行数据
+            运营->>运营: 人工分析复盘
+        end
+    end
+</div></code></pre>
+<h4 id="%E6%B5%81%E7%A8%8B%E6%AD%A5%E9%AA%A4%E8%AF%A6%E8%A7%A3">流程步骤详解</h4>
+<h5 id="%E8%90%A5%E9%94%80%E6%B4%BB%E5%8A%A8%E7%AD%96%E5%88%92%E9%98%B6%E6%AE%B5">营销活动策划阶段</h5>
+<ol>
+<li>
+<p><strong>活动描述输入</strong>：运营人员在聊天区域输入活动描述</p>
+<ul>
+<li>用户消息发送至 LLM 进行分析</li>
+<li>LLM 解析活动需求，返回结构化方案数据</li>
+<li>MA 根据 LLM 响应渲染方案确认表单（活动主题、时间、目标等）</li>
+<li>MA 更新右侧预览面板</li>
+</ul>
+</li>
+<li>
+<p><strong>方案确认</strong>：运营人员编辑表单后点击&quot;确定&quot;提交</p>
+<ul>
+<li>MA 回复人群选择界面</li>
+<li>展示已划分好的人群列表及筛选条件</li>
+<li>提供&quot;新建人群&quot;选项</li>
+</ul>
+</li>
+<li>
+<p><strong>人群选择</strong>：运营人员选择目标人群后点击&quot;确定&quot;</p>
+<ul>
+<li>MA 回复人群推荐详情</li>
+<li>包含：人群价值分层标签、画像指标标签、转化概率、大盘占比、人群规模</li>
+</ul>
+</li>
+<li>
+<p><strong>人群推荐确认</strong>：运营人员编辑标签后点击&quot;确定&quot;</p>
+<ul>
+<li>LLM 根据人群特征生成触达策略</li>
+<li>MA 回复触达策略流程图（Mermaid 格式用户旅程图）</li>
+<li>使用 Mermaid 解析库渲染流程图</li>
+</ul>
+</li>
+<li>
+<p><strong>触达策略确认</strong>：运营人员确认触达策略后点击&quot;确定&quot;</p>
+<ul>
+<li>MA 回复商品推荐配置表单</li>
+<li>包含：推荐商品、优惠券、权益配置等</li>
+</ul>
+</li>
+<li>
+<p><strong>商品配置确认</strong>：运营人员配置商品后点击&quot;确定&quot;</p>
+<ul>
+<li>LLM 基于人群特征和商品配置生成智能策略</li>
+<li>MA 回复智能策略详情（个性化推荐规则）</li>
+</ul>
+</li>
+<li>
+<p><strong>智能策略确认</strong>：运营人员确认智能策略后点击&quot;确定&quot;</p>
+<ul>
+<li>MA 回复推广渠道选择界面</li>
+<li>包含：微信公众号、微信小程序、抖音、小红书、短信、邮件、APP Push 等渠道</li>
+</ul>
+</li>
+<li>
+<p><strong>推广渠道确认</strong>：运营人员选择渠道后点击&quot;确定&quot;</p>
+<ul>
+<li>LLM 针对不同渠道生成适配的营销文案</li>
+<li>MA 回复个性化渠道文案</li>
+</ul>
+</li>
+<li>
+<p><strong>渠道文案确认</strong>：运营人员确认文案后点击&quot;确定&quot;</p>
+<ul>
+<li>MA 调用低代码平台生成营销页</li>
+<li>MA 调用现有 AI 画流程图能力生成 BPMN 可执行流程图</li>
+<li>在右侧预览面板嵌入 BPMN 画布展示完整流程图</li>
+<li>回复完整的 BPMN 流程图（含营销页配置）</li>
+</ul>
+</li>
+</ol>
+<h5 id="%E6%B4%BB%E5%8A%A8%E6%89%A7%E8%A1%8C%E9%98%B6%E6%AE%B5">活动执行阶段</h5>
+<ol start="10">
+<li><strong>活动启动</strong>：运营人员确认 BPMN 流程后启动活动
+<ul>
+<li>WorkflowEngine 部署并执行 BPMN 流程</li>
+<li>WorkflowEngine 从低代码平台获取营销页链接</li>
+<li>多渠道消息推送（含营销页链接）：
+<ul>
+<li>短信服务：发送营销短信</li>
+<li>企业微信：发送企微消息</li>
+<li>App：发送 Push 通知</li>
+</ul>
+</li>
+<li>终端用户进入 App 时：
+<ul>
+<li>App 从 WorkflowEngine 获取运营策略</li>
+<li>App 从低代码平台请求营销页内容</li>
+<li>App 展示个性化营销页（优惠券、商品推荐等）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h5 id="%E6%B4%BB%E5%8A%A8%E5%A4%8D%E7%9B%98%E9%98%B6%E6%AE%B5">活动复盘阶段</h5>
+<ol start="11">
+<li><strong>活动复盘</strong>：活动执行结束后
+<ul>
+<li>WorkflowEngine 通知 MA 活动执行完成</li>
+<li>LLM 分析活动数据，生成洞察和建议</li>
+<li>MA 自动生成活动复盘和分析报告</li>
+<li>包含：执行效果、转化数据、渠道表现、AI 洞察、优化建议</li>
+</ul>
+</li>
+</ol>
+<h3 id="%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84">系统架构</h3>
+<h4 id="%E5%8F%82%E4%B8%8E%E8%80%85%E8%AF%B4%E6%98%8E">参与者说明</h4>
+<table>
+<thead>
+<tr>
+<th>参与者</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>运营人员</td>
+<td>使用营销智能体的运营用户，负责策划和启动营销活动</td>
+</tr>
+<tr>
+<td>MarketAgent (MA)</td>
+<td>营销智能体，负责对话交互、调用 LLM 处理用户消息、方案生成、流程编排</td>
+</tr>
+<tr>
+<td>WorkflowEngine (WE)</td>
+<td>工作流引擎，负责生成和执行 BPMN 流程</td>
+</tr>
+<tr>
+<td>低代码平台 (LCP)</td>
+<td>低代码平台，负责生成和托管营销页</td>
+</tr>
+<tr>
+<td>短信服务</td>
+<td>短信推送服务，负责发送营销短信</td>
+</tr>
+<tr>
+<td>企业微信</td>
+<td>企微消息服务，负责发送企微通知</td>
+</tr>
+<tr>
+<td>App</td>
+<td>移动应用端，负责 Push 通知和展示营销页</td>
+</tr>
+<tr>
+<td>终端用户</td>
+<td>营销活动的目标受众，接收营销信息的用户</td>
+</tr>
+</tbody>
+</table>
+<h3 id="%E9%A3%8E%E9%99%A9%E4%B8%8E%E7%BC%93%E8%A7%A3">风险与缓解</h3>
+<table>
+<thead>
+<tr>
+<th>风险</th>
+<th>缓解措施</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>与现有 ChatBox 功能重复</td>
+<td>提取共享逻辑到 composable，两者复用</td>
+</tr>
+<tr>
+<td>营销方案格式不确定</td>
+<td>定义标准 JSON Schema，LLM 输出遵循该格式</td>
+</tr>
+<tr>
+<td>表单字段复杂</td>
+<td>封装 <code>useMarketingPlanForm</code> composable 统一管理</td>
+</tr>
+<tr>
+<td>11 步流程复杂</td>
+<td>封装 <code>useConversationFlow</code> composable 统一管理状态</td>
+</tr>
+<tr>
+<td>外部系统依赖</td>
+<td>使用 Mock 数据进行开发，预留真实 API 接口</td>
+</tr>
+<tr>
+<td>低代码平台集成</td>
+<td>定义标准接口规范，支持异步生成营销页</td>
+</tr>
+<tr>
+<td>LLM 响应格式不稳定</td>
+<td>定义严格的响应 Schema，增加格式校验和容错处理</td>
+</tr>
+<tr>
+<td>Mermaid 解析失败</td>
+<td>添加解析错误处理，降级显示原始代码</td>
+</tr>
+<tr>
+<td>BPMN 生成失败</td>
+<td>复用现有 AI 画流程图能力，确保稳定性</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>
