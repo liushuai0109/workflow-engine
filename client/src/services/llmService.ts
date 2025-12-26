@@ -128,13 +128,11 @@ class LLMService {
     const data = await this.generateContentWithTools(messages, [], systemPrompt)
 
     // 提取响应文本
-    if (data.candidates && data.candidates.length > 0) {
-      const candidate = data.candidates[0]
-      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-        const firstPart = candidate.content.parts[0]
-        if (firstPart.text) {
-          return firstPart.text
-        }
+    const candidate = data.candidates?.[0]
+    if (candidate?.content?.parts?.length) {
+      const firstPart = candidate.content.parts[0]
+      if (firstPart?.text) {
+        return firstPart.text
       }
     }
 
@@ -217,10 +215,11 @@ class LLMService {
 
             try {
               const data: GenerateContentResponse = JSON.parse(jsonStr)
-              if (data.candidates && data.candidates.length > 0) {
-                const candidate = data.candidates[0]
-                if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-                  yield candidate.content.parts[0].text
+              const candidate = data.candidates?.[0]
+              if (candidate?.content?.parts?.length) {
+                const text = candidate.content.parts[0]?.text
+                if (text) {
+                  yield text
                 }
               }
             } catch (e) {

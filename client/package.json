@@ -35,8 +35,10 @@
     "ant-design-vue": "^4.2.6",
     "bpmn-js": "^11.5.0",
     "bpmn-js-properties-panel": "^1.26.0",
+    "dayjs": "^1.11.19",
     "diagram-js": "^15.4.0",
     "markdown-it": "^14.1.0",
+    "mermaid": "^11.12.2",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },

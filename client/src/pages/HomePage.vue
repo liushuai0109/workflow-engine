@@ -13,6 +13,10 @@
           <template #icon><FileAddOutlined /></template>
           创建新工作流
         </a-button>
+        <a-button size="large" @click="goToMarketingAgent" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+          <template #icon><RobotOutlined /></template>
+          营销智能体
+        </a-button>
       </div>
 
       <div class="home-features">
@@ -54,6 +58,10 @@ const goToWorkflowList = () => {
 
 const createNewWorkflow = () => {
   router.push('/editor')
+}
+
+const goToMarketingAgent = () => {
+  router.push('/marketing-agent')
 }
 </script>
 

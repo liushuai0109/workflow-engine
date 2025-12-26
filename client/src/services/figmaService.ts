@@ -49,11 +49,14 @@ class FigmaService {
       }
       
       const fileKey = pathParts[1]
+      if (!fileKey) {
+        return null
+      }
       const fileName = pathParts.slice(2).join('/')
-      
+
       // 提取 nodeId（查询参数）
       const nodeId = urlObj.searchParams.get('node-id') || undefined
-      
+
       return {
         fileKey,
         nodeId,

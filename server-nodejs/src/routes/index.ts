@@ -14,6 +14,8 @@ import { WorkflowInstanceService } from '../services/workflowInstanceService';
 import { WorkflowExecutionService } from '../services/workflowExecutionService';
 import { WorkflowEngineService } from '../services/workflowEngineService';
 import { WorkflowExecutorHandler } from '../handlers/workflowExecutorHandler';
+import { MarketingPlanService } from '../services/marketingPlanService';
+import { MarketingPlanHandler } from '../handlers/marketingPlanHandler';
 
 export function setupRoutes(db: Database, logger: Logger): Router {
   const router = new Router();
@@ -30,6 +32,7 @@ export function setupRoutes(db: Database, logger: Logger): Router {
     workflowInstanceService,
     workflowExecutionService
   );
+  const marketingPlanService = new MarketingPlanService(db, logger);
 
   // Initialize handlers
   const workflowHandler = new WorkflowHandler(workflowService, logger);
@@ -46,6 +49,7 @@ export function setupRoutes(db: Database, logger: Logger): Router {
     workflowInstanceService,
     logger
   );
+  const marketingPlanHandler = new MarketingPlanHandler(marketingPlanService, logger);
 
   // Health check
   router.get('/health', async (ctx) => {
@@ -85,6 +89,14 @@ export function setupRoutes(db: Database, logger: Logger): Router {
   // Legacy workflow execution routes (for backward compatibility)
   router.post(`${api}/execute`, workflowExecutorHandler.executeWorkflowMock);
   router.post(`${api}/execute/:workflowInstanceId`, workflowExecutorHandler.executeWorkflow);
+
+  // Marketing plan routes
+  router.post(`${api}/marketing-plans`, marketingPlanHandler.createPlan);
+  router.get(`${api}/marketing-plans`, marketingPlanHandler.listPlans);
+  router.get(`${api}/marketing-plans/:id`, marketingPlanHandler.getPlan);
+  router.put(`${api}/marketing-plans/:id`, marketingPlanHandler.updatePlan);
+  router.delete(`${api}/marketing-plans/:id`, marketingPlanHandler.deletePlan);
+  router.get(`${api}/conversations/:id/plan`, marketingPlanHandler.getPlanByConversation);
 
   return router;
 }

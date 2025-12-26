@@ -13,10 +13,11 @@ export function convertGeminiToClaudeMessage(geminiMessage: GeminiMessage): Clau
   const role = geminiMessage.role === 'model' ? 'assistant' : 'user'
 
   // 如果只有一个文本 part，直接使用字符串
-  if (geminiMessage.parts.length === 1 && geminiMessage.parts[0].text) {
+  const firstPart = geminiMessage.parts[0]
+  if (geminiMessage.parts.length === 1 && firstPart?.text) {
     return {
       role,
-      content: geminiMessage.parts[0].text
+      content: firstPart.text
     }
   }
 

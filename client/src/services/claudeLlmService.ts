@@ -266,7 +266,7 @@ export class ClaudeLLMService {
       }
       // 调试：打印系统提示词前100个字符
       if (currentRound === 0) {
-        console.log('📝 System prompt preview:', this.context.systemPrompt.substring(0, 200))
+        console.log('📝 System prompt preview:', this.context.systemPrompt?.substring(0, 200) || '')
       }
 
       // 调用 Claude API

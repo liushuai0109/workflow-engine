@@ -19,6 +19,7 @@ export interface ContentBlock {
   input?: Record<string, any>
   content?: string | any[]
   is_error?: boolean
+  tool_use_id?: string  // For tool_result blocks
 }
 
 // Tool Use 专用类型

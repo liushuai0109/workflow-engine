@@ -100,7 +100,8 @@ export default defineConfig({
     {
       name: 'performance',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: ['**/performance.spec.ts'],
+      testMatch: ['**/performance.spec.ts', '**/marketing-agent.spec.ts'],
+      grep: /@performance/,
       timeout: 60 * 1000, // 性能测试可能需要更长时间
     },
     
@@ -108,7 +109,7 @@ export default defineConfig({
     {
       name: 'ui',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: ['**/core-features.spec.ts', '**/workflow-operations.spec.ts', '**/mock-debug.spec.ts', '**/chat.spec.ts'],
+      testMatch: ['**/core-features.spec.ts', '**/workflow-operations.spec.ts', '**/mock-debug.spec.ts', '**/chat.spec.ts', '**/marketing-agent.spec.ts'],
       grep: /@ui|界面|交互/,
       timeout: 30 * 1000,
     },
@@ -124,6 +125,7 @@ export default defineConfig({
         '**/workflow-operations.spec.ts',
         '**/mock-debug.spec.ts',
         '**/chat.spec.ts',
+        '**/marketing-agent.spec.ts',
       ],
       timeout: 30 * 1000,
     },

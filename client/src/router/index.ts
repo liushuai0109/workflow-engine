@@ -26,6 +26,15 @@ const routes: RouteRecordRaw[] = [
     path: '/tool',
     name: 'Tool',
     component: () => import('../pages/RequestBodyConverter.vue')
+  },
+  {
+    path: '/marketing-agent',
+    name: 'MarketingAgent',
+    component: () => import('../pages/MarketingAgentPage.vue'),
+    meta: {
+      title: '营销智能体',
+      requiresAuth: false
+    }
   }
 ]
 
